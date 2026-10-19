@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#24456B">
+<title>Stube – Familien-Chat</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="48x48" href="data:image/png;base64,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">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stube">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Literata:opsz,wght@7..72,400;7..72,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<style>
+:root{
+  --bg:#EEF2F5; --surface:#FFFFFF; --surface2:#E3E9EE; --ink:#1B2733; --ink2:#5A6B7B; --line:#D3DCE3;
+  --accent:#24456B; --on-accent:#FFFFFF; --danger:#B3261E;
+  --ui:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --read:"Literata",Georgia,"Times New Roman",serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#121A22;--surface:#1A242E;--surface2:#24303C;--ink:#E4EAF0;--ink2:#9AAAB8;--line:#2E3B48;--danger:#F2B8B5}
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--ui);overflow:hidden;-webkit-tap-highlight-color:transparent}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.icon{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--ink)}
+.iconbtn:hover{background:var(--surface2)}
+
+/* App shell */
+#app{height:100%;display:flex;flex-direction:column;max-width:860px;margin:0 auto;position:relative}
+.topbar{display:flex;align-items:center;gap:4px;padding:6px 6px;min-height:56px}
+.topbar .title{flex:1;min-width:0;font-weight:600;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:700;font-size:15px;flex:none}
+.avatar.lg{width:64px;height:64px;font-size:26px}
+
+/* Messages */
+#scroller{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:8px 16px 16px}
+.msg{margin:14px 0;max-width:100%}
+.msg.user{display:flex;justify-content:flex-end}
+.bubble{background:var(--surface2);padding:10px 14px;border-radius:20px 20px 6px 20px;max-width:85%;white-space:pre-wrap;word-wrap:break-word}
+.bubble img{display:block;max-width:100%;max-height:240px;border-radius:12px;margin-bottom:8px}
+.msg.assistant .body{font-family:var(--read);font-size:17px;line-height:1.65;word-wrap:break-word}
+.body p{margin:0 0 .8em}
+.body h1,.body h2,.body h3{font-family:var(--ui);line-height:1.3;margin:1.1em 0 .4em}
+.body h1{font-size:1.3em}.body h2{font-size:1.15em}.body h3{font-size:1.05em}
+.body ul,.body ol{padding-left:1.4em;margin:0 0 .8em}
+.body li{margin:.2em 0}
+.body a{color:var(--accent)}
+.body code{font:14px/1.5 ui-monospace,"SF Mono",Menlo,Consolas,monospace;background:var(--surface2);padding:1px 5px;border-radius:5px}
+.body pre{background:var(--surface2);padding:12px;border-radius:12px;overflow-x:auto}
+.body pre code{background:none;padding:0}
+.body table{border-collapse:collapse;display:block;overflow-x:auto;margin:0 0 .8em;font-family:var(--ui);font-size:15px}
+.body th,.body td{border:1px solid var(--line);padding:6px 10px;text-align:left}
+.body blockquote{margin:0 0 .8em;padding-left:12px;border-left:3px solid var(--line);color:var(--ink2)}
+.msg-actions{display:flex;gap:4px;margin-top:2px;color:var(--ink2);font-size:13px;align-items:center}
+.msg-actions button{padding:6px 8px;border-radius:8px;color:var(--ink2)}
+.msg-actions button:hover{background:var(--surface2)}
+.err{color:var(--danger);font-family:var(--ui);font-size:15px;background:color-mix(in srgb,var(--danger) 10%,transparent);padding:10px 12px;border-radius:12px}
+.typing{display:inline-flex;gap:5px;padding:8px 0}
+.typing i{width:8px;height:8px;border-radius:50%;background:var(--accent);opacity:.35;animation:blink 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.typing i{animation:none;opacity:.7}}
+
+/* Empty state */
+.empty{height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 8px 10vh}
+.empty h1{font-family:var(--read);font-weight:400;font-size:clamp(28px,7vw,40px);line-height:1.2;margin:0 0 20px}
+.empty h1 span{color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:999px;font-size:15px;text-align:left}
+.chip:hover{border-color:var(--accent)}
+
+/* Composer */
+.composer{padding:8px 12px 12px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:6px 6px 6px 6px}
+.previews{display:flex;gap:8px;padding:6px 8px 0;flex-wrap:wrap}
+.previews div{position:relative}
+.previews img{width:56px;height:56px;object-fit:cover;border-radius:10px;display:block}
+.previews button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:14px;line-height:1}
+#input{width:100%;border:0;background:none;resize:none;outline:none;padding:8px 12px;max-height:180px;font-size:16px;display:block}
+.row{display:flex;align-items:center;gap:4px}
+.row .spacer{flex:1}
+.modelchip{display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:999px;font-size:14px;color:var(--ink2)}
+.modelchip:hover{background:var(--surface2)}
+.modelchip select{border:0;background:none;outline:none;font-size:14px;color:var(--ink2);max-width:150px;cursor:pointer}
+#send{width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center}
+#send:disabled{opacity:.35;cursor:default}
+#send .icon{width:20px;height:20px}
+
+/* Drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(320px,86vw);background:var(--surface);z-index:11;transform:translateX(-102%);transition:transform .22s ease;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);border-radius:0 20px 20px 0}
+.drawer.open{transform:none}
+@media (prefers-reduced-motion:reduce){.drawer,.scrim{transition:none}}
+.drawer-head{padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line)}
+.drawer-head .who{flex:1;min-width:0}
+.drawer-head .who b{display:block}
+.drawer-head .who button{color:var(--accent);font-size:14px;padding:0}
+.newchat{margin:12px 12px 4px;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--surface2);font-weight:600}
+.chatlist{flex:1;overflow-y:auto;padding:4px 8px}
+.chatlist h3{font-size:13px;font-weight:600;color:var(--ink2);margin:14px 8px 4px}
+.chatitem{display:flex;align-items:center;border-radius:12px}
+.chatitem.active{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.chatitem .open{flex:1;min-width:0;text-align:left;padding:10px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chatitem .del{width:36px;height:36px;color:var(--ink2);border-radius:50%;display:grid;place-items:center;opacity:.6}
+.chatitem .del:hover{opacity:1;background:var(--surface2)}
+.chatitem .del .icon{width:18px;height:18px}
+.drawer-foot{border-top:1px solid var(--line);padding:6px 8px}
+.drawer-foot button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 10px;border-radius:12px;text-align:left}
+.drawer-foot button:hover,.chatitem:hover{background:var(--surface2)}
+
+/* Full screens */
+.screen{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.screen .inner{max-width:640px;margin:0 auto;padding:0 16px 40px}
+.screen .topbar{position:sticky;top:0;background:var(--bg);z-index:1;margin:0 -10px}
+.card{background:var(--surface);border-radius:20px;padding:16px;margin:12px 0}
+.card h2{font-size:17px;margin:0 0 4px}
+.card p.hint{color:var(--ink2);font-size:14px;margin:0 0 12px}
+label.f{display:block;font-size:14px;font-weight:600;margin:12px 0 4px}
+.inp{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);outline:none}
+.inp:focus{border-color:var(--accent)}
+textarea.inp{min-height:90px;resize:vertical}
+.btn{padding:11px 18px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:600}
+.btn.ghost{background:var(--surface2);color:var(--ink)}
+.btn.danger{background:none;color:var(--danger);border:1px solid currentColor}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.check{display:flex;gap:10px;align-items:flex-start;margin:12px 0;font-size:15px}
+.check input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent)}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.swatches button{width:36px;height:36px;border-radius:50%;border:3px solid transparent}
+.swatches button.on{border-color:var(--ink)}
+.tablewrap{overflow-x:auto}
+table.models{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+table.models th{text-align:left;font-weight:600;color:var(--ink2);padding:4px}
+table.models td{padding:4px}
+table.models .inp{padding:8px}
+.plist button.pitem{display:flex;align-items:center;gap:12px;width:100%;padding:10px 8px;border-radius:12px;text-align:left}
+.plist button.pitem:hover{background:var(--surface2)}
+.plist .meta{color:var(--ink2);font-size:13px}
+
+/* Profile picker */
+.picker{min-height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;text-align:center}
+.picker h1{font-family:var(--read);font-weight:400;font-size:32px;margin:0 0 28px}
+.pgrid{display:flex;flex-wrap:wrap;gap:24px;justify-content:center;max-width:520px}
+.pgrid button{display:flex;flex-direction:column;align-items:center;gap:8px;width:96px;padding:8px;border-radius:16px}
+.pgrid button:hover{background:var(--surface2)}
+.pinpad{display:grid;grid-template-columns:repeat(3,64px);gap:12px;justify-content:center;margin-top:20px}
+.pinpad button{height:64px;border-radius:50%;background:var(--surface);font-size:22px;font-weight:600}
+.pindots{display:flex;gap:12px;justify-content:center;min-height:16px}
+.pindots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink2)}
+.pindots i.on{background:var(--ink);border-color:var(--ink)}
+.usage-row{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+.usage-row:last-child{border:0}
+.usage-row .n{color:var(--ink2);font-size:13px}
+.big{font-family:var(--read);font-size:28px}
+.filecard{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;margin:0 0 .8em;font-family:var(--ui)}
+.fc-icon{width:44px;height:52px;border-radius:8px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+.fc-meta{flex:1;min-width:140px;display:flex;flex-direction:column;font-size:15px;line-height:1.35}
+.fc-meta b{word-break:break-all}
+.fc-meta span{color:var(--ink2);font-size:13px}
+.fc-btns{display:flex;gap:8px}
+.fc-btns .btn{padding:8px 14px;font-size:14px}
+.btn:disabled{opacity:.5}
+.filecard.ready{cursor:pointer}
+.filecard.ready:hover{border-color:var(--accent)}
+.screen.noscroll{overflow:hidden}
+.pv{height:100%;display:flex;flex-direction:column}
+.pv-bar{background:var(--bg);padding:6px}
+.pv-bar .title{display:flex;flex-direction:column;line-height:1.25}
+.pv-type{font-size:12px;font-weight:500;color:var(--ink2)}
+.pv-content{flex:1;overflow:auto;padding:12px;background:var(--surface2)}
+.pv-content.frame{padding:0;background:#fff}
+.pv-content iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+.pv-foot{padding:10px 12px;background:var(--bg);border-top:1px solid var(--line)}
+.pv-btns{justify-content:flex-end}
+.paper{background:#fff;color:#1a1a1a;max-width:794px;margin:0 auto;padding:clamp(20px,6vw,56px);border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.15);min-height:60vh}
+.paper .body{font-family:Georgia,"Times New Roman",serif;font-size:16px;line-height:1.6;color:#1a1a1a}
+.paper .body a{color:#1a4d8c}
+.paper .body code,.paper .body pre{background:#f2f4f6}
+.paper .body th,.paper .body td{border-color:#bbb}
+.paper .body th{background:#E3E9EE}
+.paper .raw{margin:0;white-space:pre-wrap;word-wrap:break-word;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace}
+.sheet{background:#fff;color:#1a1a1a;border-radius:4px;overflow:auto;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.sheet table{border-collapse:collapse;font:14px/1.4 var(--ui);min-width:100%}
+.sheet th,.sheet td{border:1px solid #d5d9dd;padding:6px 10px;white-space:nowrap;text-align:left}
+.sheet thead th{background:#eef1f4;font-weight:600;position:sticky;top:0}
+.sheet .rn{background:#eef1f4;color:#6b7680;text-align:center;font-size:12px;width:1%}
+.sheet td.num{text-align:right;font-variant-numeric:tabular-nums}
+#micBtn.rec{background:var(--danger);color:#fff;animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--danger) 50%,transparent)}70%{box-shadow:0 0 0 12px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){#micBtn.rec{animation:none}}
+#webBtn.on{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+.status{font:14px/1.4 var(--ui);color:var(--ink2);min-height:0}
+.status:not(:empty){margin-top:4px}
+.msg-actions .usage{margin-left:auto;text-align:right;font-size:12px}
+.msg-actions{flex-wrap:wrap}
+.sources{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 2px;font:13px var(--ui);color:var(--ink2)}
+.sources a{padding:4px 10px;border-radius:999px;background:var(--surface2);color:var(--ink);text-decoration:none;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.art-icon{font-size:18px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#E8774D))}
+.artcard .fc-meta span{font-size:13px}
+.pv-tabs{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px 8px;background:var(--bg)}
+.seg{display:inline-flex;background:var(--surface2);border-radius:999px;padding:3px;gap:2px}
+.seg button{padding:6px 16px;border-radius:999px;font-size:14px;color:var(--ink2)}
+.seg button.on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.pv-content.codeview{padding:0;background:var(--surface)}
+.code{margin:0;padding:16px;font:13px/1.55 ui-monospace,"SF Mono",Menlo,Consolas,monospace;white-space:pre;overflow:auto;min-height:100%;color:var(--ink);tab-size:2}
+.pv-btns{flex-wrap:wrap}
+.iconbtn:disabled{opacity:.3;cursor:default}
+.avatar.prov{background:var(--surface2);color:var(--ink)}
+.screen .err{margin:12px 0}
+@media (prefers-color-scheme:dark){
+  .empty h1 span,.body a,.drawer-head .who button,#webBtn.on{color:color-mix(in srgb,var(--accent) 45%,white)}
+  #send,.btn:not(.ghost):not(.danger),.fc-icon,.avatar:not(.prov){background:color-mix(in srgb,var(--accent) 72%,white)}
+  .chatitem.active{background:color-mix(in srgb,var(--accent) 35%,transparent)}
+}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;z-index:50}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <button class="iconbtn" id="menuBtn" aria-label="Menü öffnen"><svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+    <div class="title" id="chatTitle">Stube</div>
+    <button class="iconbtn" id="newBtn" aria-label="Neuer Chat"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+  </header>
+  <main id="scroller" aria-live="polite"></main>
+  <div class="composer">
+    <div class="box">
+      <div class="previews" id="previews"></div>
+      <textarea id="input" rows="1" placeholder="Schreib eine Nachricht" aria-label="Nachricht"></textarea>
+      <div class="row">
+        <button class="iconbtn" id="attachBtn" aria-label="Bild anhängen"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
+        <button class="iconbtn hidden" id="webBtn" aria-label="Websuche" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></button>
+        <label class="modelchip" id="modelChip"><select id="modelSelect" aria-label="Modell"></select></label>
+        <span class="spacer"></span>
+        <button class="iconbtn hidden" id="micBtn" aria-label="Spracheingabe"><svg class="icon" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+        <button id="send" aria-label="Senden" disabled><svg class="icon" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<nav class="drawer" id="drawer" aria-label="Chats">
+  <div class="drawer-head">
+    <div class="avatar" id="dAvatar"></div>
+    <div class="who"><b id="dName"></b><button id="switchBtn">Profil wechseln</button></div>
+  </div>
+  <button class="newchat" id="newBtn2"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Neuer Chat</button>
+  <div class="chatlist" id="chatList"></div>
+  <div class="drawer-foot">
+    <button id="usageBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Verbrauch</button>
+    <button id="settingsBtn"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>Einstellungen</button>
+  </div>
+</nav>
+
+<div class="screen hidden" id="screen"></div>
+
+<script>
+"use strict";
+/* ---------- Storage: IndexedDB -> localStorage -> Arbeitsspeicher ---------- */
+let STORAGE_MODE = "idb";
+const DB = (() => {
+  const mem = {};
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+  // IndexedDB backend
+  let dbp;
+  const idbOpen = () => dbp || (dbp = withTimeout(new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error("no idb"));
+    const r = indexedDB.open("stube", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("kv");
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+    r.onblocked = () => rej(new Error("blocked"));
+  }), 2500));
+  const idbTx = async (mode, fn) => {
+    const db = await idbOpen();
+    return withTimeout(new Promise((res, rej) => {
+      const t = db.transaction("kv", mode); const req = fn(t.objectStore("kv"));
+      t.oncomplete = () => res(req && req.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    }), 4000);
+  };
+  const idb = {
+    get: k => idbTx("readonly", s => s.get(k)),
+    set: (k, v) => idbTx("readwrite", s => s.put(v, k)),
+    del: k => idbTx("readwrite", s => s.delete(k)),
+    clear: () => idbTx("readwrite", s => s.clear()),
+  };
+  // localStorage backend
+  const LS = "stube:";
+  const ls = {
+    get: async k => { const v = localStorage.getItem(LS + k); return v == null ? undefined : JSON.parse(v); },
+    set: async (k, v) => { localStorage.setItem(LS + k, JSON.stringify(v)); },
+    del: async k => { localStorage.removeItem(LS + k); },
+    clear: async () => { Object.keys(localStorage).filter(x => x.startsWith(LS)).forEach(x => localStorage.removeItem(x)); },
+  };
+  // memory backend (last resort, nothing persists)
+  const memB = {
+    get: async k => mem[k], set: async (k, v) => { mem[k] = v; }, del: async k => { delete mem[k]; }, clear: async () => { for (const k in mem) delete mem[k]; },
+  };
+  let backend = null;
+  const pick = async () => {
+    if (backend) return backend;
+    try { await idb.set("__test", 1); await idb.get("__test"); backend = idb; STORAGE_MODE = "idb"; return backend; } catch (e) { console.warn("IndexedDB nicht nutzbar:", e); }
+    try { localStorage.setItem(LS + "__test", "1"); localStorage.removeItem(LS + "__test"); backend = ls; STORAGE_MODE = "ls"; return backend; } catch (e) { console.warn("localStorage nicht nutzbar:", e); }
+    backend = memB; STORAGE_MODE = "mem"; return backend;
+  };
+  const call = async (op, ...a) => {
+    const b = await pick();
+    try { return await b[op](...a); }
+    catch (e) {
+      if (op === "get") return undefined;
+      if (b === ls && e && e.name === "QuotaExceededError") throw new Error("Der Speicher ist voll. Lösche ein paar alte Chats, vor allem solche mit Bildern.");
+      throw e;
+    }
+  };
+  return { get: k => call("get", k), set: (k, v) => call("set", k, v), del: k => call("del", k), clear: () => call("clear"), init: pick };
+})();
+
+/* ---------- Defaults ---------- */
+const COLORS = ["#24456B", "#2F6F5E", "#8A3B6B", "#B5651D", "#5B4FA8", "#2C7A8C", "#9A3A2E", "#4E6B2A"];
+const PRESETS = {
+  anthropic: { type: "anthropic", name: "Anthropic (Claude)", baseUrl: "https://api.anthropic.com", keyHint: "sk-ant-…", where: "console.anthropic.com → API Keys" },
+  openai: { type: "openai", name: "OpenAI (ChatGPT)", baseUrl: "https://api.openai.com/v1", keyHint: "sk-…", where: "platform.openai.com → API keys" },
+  openrouter: { type: "openai", name: "OpenRouter", baseUrl: "https://openrouter.ai/api/v1", keyHint: "sk-or-…", where: "openrouter.ai → Keys" },
+  gemini: { type: "openai", name: "Google Gemini", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", keyHint: "AIza…", where: "aistudio.google.com → Get API key" },
+  custom: { type: "openai", name: "Eigener Anbieter", baseUrl: "", keyHint: "", where: "beim jeweiligen Anbieter (Mistral, Groq, DeepSeek, Ollama …)" },
+};
+function defaultModels() {
+  return [
+    { key: uid(), provider: "anthropic", id: "claude-haiku-4-5-20251001", label: "Haiku 4.5 (günstig)", inP: 1, outP: 5, on: true },
+    { key: uid(), provider: "anthropic", id: "claude-sonnet-5-5", label: "Sonnet 5.5", inP: 3, outP: 15, on: true },
+    { key: uid(), provider: "anthropic", id: "claude-opus-5-5", label: "Opus 5.5 (stark)", inP: 5, outP: 25, on: true },
+  ];
+}
+const KID_PROMPT = "Du sprichst mit einem Kind oder Jugendlichen. Antworte freundlich, geduldig und altersgerecht in einfacher Sprache. Vermeide Inhalte, die für Kinder ungeeignet sind (z. B. explizite Gewalt, Sexualität, Drogen, gefährliche Anleitungen). Bei Hausaufgaben erkläre den Lösungsweg und stelle Rückfragen, statt nur die fertige Lösung vorzugeben. Wenn das Kind von Sorgen, Angst, Mobbing oder etwas Gefährlichem erzählt, nimm es ernst und ermutige es, mit seinen Eltern oder einer anderen Vertrauensperson zu sprechen.";
+
+const FILE_PROMPT = `Du kannst Dateien erstellen, die die Person herunterladen kann. Tu das nur, wenn sie eine Datei, ein Dokument zum Herunterladen oder ein bestimmtes Dateiformat möchte. Schreibe dafür den gesamten Inhalt in einen Block, der mit einer eigenen Zeile ~~~~datei:DATEINAME.ENDUNG beginnt und mit einer eigenen Zeile ~~~~ endet. Verwende genau vier Tilden. Schreibe außerhalb des Blocks höchstens ein, zwei Sätze dazu und wiederhole den Inhalt nicht.
+Unterstützte Formate:
+- .docx (Word) und .pdf: Inhalt als Markdown mit Überschriften (#, ##, ###), Absätzen, **fett**, *kursiv*, Listen und Tabellen.
+- .html: ein vollständiges, eigenständiges HTML-Dokument mit eingebettetem CSS.
+- .xlsx (Excel): Inhalt als CSV, Komma als Trennzeichen, erste Zeile sind die Spaltenüberschriften, Texte mit Komma in Anführungszeichen, Dezimalzahlen mit Punkt.
+- .csv, .md, .txt, .json, .svg: der Rohinhalt.
+Wähle einen kurzen, sinnvollen Dateinamen ohne Leerzeichen.`;
+
+const ARTIFACT_PROMPT = `Du kannst Artefakte erstellen: eigenständige, sichtbare Inhalte, die in einer eigenen Vorschau geöffnet, ausprobiert, geteilt und später überarbeitet werden können. Nutze ein Artefakt für kleine Apps, Rechner, Spiele, Quiz, Lernkarten, interaktive Erklärungen, Webseiten, Diagramme, Zeichnungen und längere eigenständige Texte, die man behalten möchte (z. B. Geschichten, Pläne, Anleitungen). Nutze KEIN Artefakt für kurze Antworten, Erklärungen im Gespräch oder kurze Codebeispiele.
+Format: eine eigene Zeile ~~~~artefakt:TYP:Titel, danach der vollständige Inhalt, danach eine eigene Zeile ~~~~ . Genau vier Tilden, kein zusätzlicher Codeblock darum.
+Typen:
+- html: ein vollständiges HTML-Dokument mit eingebettetem CSS und JavaScript. Externe Skripte nur von https://cdnjs.cloudflare.com.
+- react: eine React-Komponente in JSX mit "export default function App()". Hooks über import { useState } from "react". Tailwind-CSS-Klassen sind verfügbar. Importiere keine anderen Bibliotheken.
+- svg: ein einzelnes <svg>-Element mit viewBox.
+- mermaid: Mermaid-Diagrammcode (Flussdiagramm, Ablauf, Mindmap, Zeitstrahl usw.).
+- markdown: ein formatiertes Dokument.
+Artefakte laufen abgeschottet: kein localStorage, keine Cookies, keine Anfragen an Server. Halte Zustände im Arbeitsspeicher. Gestalte sie so, dass sie auf einem Handy gut bedienbar sind.
+Wenn die Person ein bestehendes Artefakt ändern möchte, gib es mit genau demselben Titel vollständig neu aus; dann entsteht automatisch eine neue Version. Schreibe außerhalb des Artefakts nur ein, zwei Sätze.
+Dateien (~~~~datei:) sind dagegen für Downloads in bestimmten Formaten wie Word, PDF oder Excel gedacht.`;
+
+const ROUTER_PROMPT = `Du bist ein Verteiler in einer Chat-App. Ordne die letzte Nachricht der Person genau einer Kategorie zu:
+einfach = kurze Fragen, Smalltalk, einfache Erklärungen, Übersetzungen, kurze Texte, Rechtschreibung
+aktuell = braucht aktuelle Informationen aus dem Internet: Nachrichten, Wetter, Preise, Öffnungszeiten, Sportergebnisse, Termine, aktuelle Produkte oder alles, was sich in letzter Zeit geändert haben könnte
+komplex = Hausaufgaben mit Lösungsweg, längere oder wichtige Texte, Programmieren, Analysen, Planung, Dateien, Dokumente, Apps, Spiele, Diagramme, Bilder auswerten, schwierige Fragen
+Antworte nur mit einem einzigen Wort: einfach, aktuell oder komplex.`;
+const ROUTES = [["einfach", "Einfache Fragen"], ["aktuell", "Aktuelle Infos (mit Websuche)"], ["komplex", "Anspruchsvolle Aufgaben"]];
+
+let S = null;        // settings
+let P = [];          // profiles
+let me = null;       // active profile
+let chats = [];      // chats of active profile
+let cur = null;      // active chat
+let pending = [];    // pending images
+let streaming = null;// AbortController
+
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const month = (d = new Date()) => d.toISOString().slice(0, 7);
+const fmtUSD = n => "$" + (n < 0.01 && n > 0 ? n.toFixed(4) : n.toFixed(2));
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), t.length > 40 ? 5000 : 2200); }
+
+/* ---------- Blöcke "~~~~datei:NAME" und "~~~~artefakt:TYP:Titel" erkennen ---------- */
+const ART_TYPES = { html: "HTML", react: "React", svg: "SVG", mermaid: "Diagramm", markdown: "Dokument", md: "Dokument" };
+function splitFiles(text) {
+  // liefert abwechselnd Text-, Datei- und Artefakt-Teile
+  const parts = []; let pos = 0;
+  const OPEN = /(^|\n)[ \t]*~~~~[ \t]*(datei|artefakt):[ \t]*([^\n]+)\n/g;
+  let m;
+  while ((m = OPEN.exec(text))) {
+    parts.push({ text: text.slice(pos, m.index) });
+    const start = m.index + m[0].length;
+    const closeRe = /\n[ \t]*~~~~[ \t]*(?=\n|$)/g; closeRe.lastIndex = start - 1;
+    const c = closeRe.exec(text);
+    const done = !!c;
+    let content = done ? text.slice(start, c.index) : text.slice(start);
+    if (m[2] === "datei") {
+      parts.push({ file: { name: m[3].trim().replace(/[\\/:*?"<>|]/g, "_"), content, done } });
+    } else {
+      let head = m[3].trim(), type = "html", title = head;
+      const i = head.indexOf(":");
+      if (i > 0 && ART_TYPES[head.slice(0, i).trim().toLowerCase()]) { type = head.slice(0, i).trim().toLowerCase(); title = head.slice(i + 1).trim(); }
+      if (type === "md") type = "markdown";
+      // falls das Modell doch einen Codeblock darum legt
+      content = content.replace(/^\s*```[a-zA-Z]*\s*\n/, "").replace(/\n```\s*$/, "");
+      parts.push({ art: { type, title: title || "Artefakt", content, done } });
+    }
+    pos = done ? c.index + c[0].length : text.length;
+    OPEN.lastIndex = pos;
+  }
+  parts.push({ text: text.slice(pos) });
+  return parts;
+}
+function renderBody(el, text) {
+  el.innerHTML = "";
+  for (const p of splitFiles(text)) {
+    if (p.file) el.append(fileCard(p.file));
+    else if (p.art) el.append(artCard(p.art));
+    else if (p.text.trim()) { const d = document.createElement("div"); d.innerHTML = md(p.text); el.append(d); }
+  }
+}
+
+function md(text) {
+  if (window.marked) {
+    const html = marked.parse(text, { breaks: true, gfm: true });
+    return window.DOMPurify ? DOMPurify.sanitize(html) : esc(text).replace(/\n/g, "<br>");
+  }
+  return esc(text).replace(/\n/g, "<br>");
+}
+
+/* ---------- Boot ---------- */
+async function boot() {
+  await DB.init();
+  S = await DB.get("settings");
+  P = (await DB.get("profiles")) || [];
+  if (!S || !P.length) return showOnboarding();
+  if (migrate()) { await saveSettings(); await saveProfiles(); }
+  if (P.length === 1 && !P[0].pin) return enterProfile(P[0]);
+  showPicker();
+}
+
+// ältere Einstellungen (nur Anthropic) auf das Anbieter-System umstellen
+function migrate() {
+  let ch = false;
+  if (!S.providers) {
+    S.providers = [{ id: "anthropic", preset: "anthropic", type: "anthropic", name: PRESETS.anthropic.name, baseUrl: PRESETS.anthropic.baseUrl, apiKey: S.apiKey || "" }];
+    delete S.apiKey; ch = true;
+  }
+  S.models = (S.models || []).map(m => {
+    if (m.key && m.provider) return m;
+    ch = true; return Object.assign({ key: uid(), provider: "anthropic" }, m);
+  });
+  const byIdOrKey = v => S.models.find(m => m.key === v) || S.models.find(m => m.id === v);
+  if (S.defaultModel && S.defaultModel !== "auto" && !S.models.find(m => m.key === S.defaultModel)) {
+    const m = byIdOrKey(S.defaultModel); S.defaultModel = m ? m.key : ""; ch = true;
+  }
+  if (!S.router) {
+    const ant = S.models.filter(m => m.provider === "anthropic");
+    const haiku = ant.find(m => /haiku/i.test(m.id)) || ant[0] || S.models[0] || {};
+    const sonnet = ant.find(m => /sonnet/i.test(m.id)) || haiku;
+    S.router = { model: haiku.key || "", einfach: haiku.key || "", aktuell: haiku.key || "", komplex: sonnet.key || "" };
+    ch = true;
+  }
+  if (S.webSearch === undefined) { S.webSearch = true; S.webMax = 3; S.searchPrice = 10; ch = true; }
+  if (S.artifacts === undefined) { S.artifacts = true; ch = true; }
+  for (const p of P) {
+    if (p.model && !S.models.find(m => m.key === p.model)) { const m = byIdOrKey(p.model); p.model = m ? m.key : ""; ch = true; }
+    if (p.external === undefined) { p.external = !p.kid; ch = true; }
+  }
+  return ch;
+}
+function localStorageSafe(op, k, v) { try { return op === "get" ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch { return null; } }
+const saveSettings = () => DB.set("settings", S);
+const saveProfiles = () => DB.set("profiles", P);
+const saveChats = () => DB.set("chats:" + me.id, chats);
+
+/* ---------- Screens ---------- */
+function openScreen(html) { const sc = $("#screen"); sc.innerHTML = html; sc.classList.remove("hidden"); sc.scrollTop = 0; return sc; }
+function closeScreen() { $("#screen").classList.add("hidden"); $("#screen").innerHTML = ""; }
+
+function showOnboarding() {
+  const sc = openScreen(`<div class="inner">
+    <div style="padding:48px 0 8px"><img src="icon-192.png" alt="" width="72" height="72" style="border-radius:18px;display:block;margin-bottom:16px" onerror="this.remove()"><h1 style="font-family:var(--read);font-weight:400;font-size:34px;margin:0">Willkommen in der Stube</h1>
+    <p style="color:var(--ink2)">Ein gemeinsamer Chat für die ganze Familie. Jede Person bekommt ein eigenes Profil mit eigenen Unterhaltungen. Bezahlt wird nach Verbrauch über deinen API-Schlüssel. Weitere Anbieter wie ChatGPT, Gemini oder kostenlose Modelle über OpenRouter kannst du später in den Einstellungen hinzufügen.</p></div>
+    <div class="card"><h2>Claude-API-Schlüssel</h2>
+      <p class="hint">Erstelle einen Schlüssel unter console.anthropic.com → API Keys. Er wird nur auf diesem Gerät gespeichert.</p>
+      <input class="inp" id="obKey" type="password" placeholder="sk-ant-..." autocomplete="off">
+    </div>
+    <div class="card"><h2>Dein Profil</h2>
+      <label class="f" for="obName">Name</label>
+      <input class="inp" id="obName" placeholder="z. B. Papa">
+    </div>
+    <div class="btnrow"><button class="btn" id="obGo">Los geht's</button></div>
+    <p class="err hidden" id="obErr" style="margin-top:12px"></p></div>`);
+  sc.querySelector("#obGo").onclick = async () => {
+    const key = sc.querySelector("#obKey").value.trim(), name = sc.querySelector("#obName").value.trim();
+    const err = sc.querySelector("#obErr");
+    if (!key.startsWith("sk-")) { err.textContent = "Der API-Schlüssel beginnt mit „sk-“. Bitte prüfe die Eingabe."; err.classList.remove("hidden"); return; }
+    if (!name) { err.textContent = "Bitte gib einen Namen ein."; err.classList.remove("hidden"); return; }
+    S = { providers: [{ id: "anthropic", preset: "anthropic", type: "anthropic", name: PRESETS.anthropic.name, baseUrl: PRESETS.anthropic.baseUrl, apiKey: key }], adminPin: "", maxTokens: 8192, history: 30, models: defaultModels(), defaultModel: "" };
+    P = [{ id: uid(), name, color: COLORS[0], pin: "", kid: false, prompt: "", model: "", external: true }];
+    migrate(); S.defaultModel = S.models[1].key;
+    const btn = sc.querySelector("#obGo"); btn.disabled = true; btn.textContent = "Speichere …";
+    try {
+      await saveSettings(); await saveProfiles();
+      await enterProfile(P[0]);
+      if (STORAGE_MODE === "mem") toast("Hinweis: Dieser Browser erlaubt kein Speichern. Daten gehen beim Schließen verloren.");
+    } catch (e) {
+      err.textContent = "Speichern fehlgeschlagen: " + (e && e.message || e); err.classList.remove("hidden");
+      btn.disabled = false; btn.textContent = "Los geht's";
+    }
+  };
+}
+
+function showPicker() {
+  const sc = openScreen(`<div class="picker"><h1>Wer bist du?</h1><div class="pgrid">${P.map(p => `
+    <button data-id="${p.id}"><span class="avatar lg" style="background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span><span>${esc(p.name)}</span></button>`).join("")}</div></div>`);
+  sc.querySelectorAll(".pgrid button").forEach(b => b.onclick = () => {
+    const p = P.find(x => x.id === b.dataset.id);
+    if (p.pin) askPin(`Hallo ${p.name}`, p.pin, () => enterProfile(p), showPicker); else enterProfile(p);
+  });
+}
+
+function askPin(title, pin, ok, cancel) {
+  let v = "";
+  const sc = openScreen(`<div class="picker"><h1 style="margin-bottom:16px">${esc(title)}</h1><p style="color:var(--ink2);margin:0 0 16px">PIN eingeben</p>
+    <div class="pindots">${[...pin].map(() => "<i></i>").join("")}</div>
+    <div class="pinpad">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-n="${n}">${n}</button>`).join("")}<button data-n="x" aria-label="Abbrechen">✕</button><button data-n="0">0</button><button data-n="b" aria-label="Löschen">⌫</button></div></div>`);
+  const dots = () => sc.querySelectorAll(".pindots i").forEach((d, i) => d.classList.toggle("on", i < v.length));
+  sc.querySelectorAll(".pinpad button").forEach(b => b.onclick = () => {
+    const n = b.dataset.n;
+    if (n === "x") return cancel();
+    if (n === "b") v = v.slice(0, -1); else if (v.length < pin.length) v += n;
+    dots();
+    if (v.length === pin.length) {
+      if (v === pin) ok(); else { toast("Falsche PIN"); v = ""; setTimeout(dots, 150); }
+    }
+  });
+}
+
+function applyAccent(c) {
+  document.documentElement.style.setProperty("--accent", c);
+  document.querySelector('meta[name="theme-color"]').content = c;
+}
+async function enterProfile(p) {
+  me = p; localStorageSafe("set", "stube-last", p.id);
+  applyAccent(p.color);
+  chats = (await DB.get("chats:" + p.id)) || [];
+  closeScreen(); closeDrawer();
+  $("#dAvatar").textContent = (p.name[0] || "?").toUpperCase(); $("#dName").textContent = p.name;
+  fillModelSelect();
+  newChat();
+}
+
+/* ---------- Modelle und Anbieter ---------- */
+let webOn = false;
+const provById = id => S.providers.find(p => p.id === id);
+const provOf = m => m && provById(m.provider);
+const modelByKey = k => S.models.find(m => m.key === k);
+const isFree = m => /:free$/.test(m.id);
+function modelAllowed(m, prof = me) {
+  const p = provOf(m);
+  return !!(m && m.on && m.id.trim() && p && (prof.external !== false || p.type === "anthropic"));
+}
+function allowedModels() { return S.models.filter(m => modelAllowed(m)); }
+function routerReady() { const r = S.router && modelByKey(S.router.model); return !!(r && r.on && provOf(r)); }
+function fillModelSelect() {
+  const sel = $("#modelSelect"); const ms = allowedModels();
+  let html = routerReady() && ms.length ? `<option value="auto">Automatisch</option>` : "";
+  for (const p of S.providers) {
+    const list = ms.filter(m => m.provider === p.id);
+    if (list.length) html += `<optgroup label="${esc(p.name)}">${list.map(m => `<option value="${esc(m.key)}">${esc(m.label || m.id)}${isFree(m) ? " · gratis" : ""}</option>`).join("")}</optgroup>`;
+  }
+  sel.innerHTML = html;
+  const locked = me.model && ms.find(m => m.key === me.model);
+  const pref = locked ? me.model : S.defaultModel;
+  const opts = [...sel.options].map(o => o.value);
+  sel.value = opts.includes(pref) ? pref : (opts.includes("auto") ? "auto" : (opts[0] || ""));
+  $("#modelChip").classList.toggle("hidden", !!locked || opts.length < 2);
+  updateWebBtn();
+}
+function updateWebBtn() {
+  const v = $("#modelSelect").value; const m = modelByKey(v);
+  const ok = S.webSearch !== false && (v === "auto" || (m && provOf(m) && provOf(m).type === "anthropic"));
+  const b = $("#webBtn"); b.classList.toggle("hidden", !ok);
+  b.classList.toggle("on", ok && webOn); b.setAttribute("aria-pressed", ok && webOn ? "true" : "false");
+  b.title = v === "auto" ? "Websuche immer nutzen (sonst entscheidet die Automatik)" : "Websuche";
+}
+function resolveRoute(cat) {
+  const want = modelByKey(S.router[cat]);
+  if (want && modelAllowed(want)) return want;
+  const komplex = modelByKey(S.router.komplex);
+  if (komplex && modelAllowed(komplex)) return komplex;
+  const ms = allowedModels();
+  return ms.find(m => provOf(m).type === "anthropic") || ms[0] || null;
+}
+
+/* ---------- Drawer ---------- */
+function openDrawer() { renderChatList(); $("#drawer").classList.add("open"); $("#scrim").classList.add("open"); }
+function closeDrawer() { $("#drawer").classList.remove("open"); $("#scrim").classList.remove("open"); }
+function renderChatList() {
+  const list = $("#chatList"); const sorted = [...chats].sort((a, b) => b.updated - a.updated);
+  if (!sorted.length) { list.innerHTML = `<p style="color:var(--ink2);padding:12px 10px;font-size:15px">Noch keine Chats. Deine Unterhaltungen erscheinen hier.</p>`; return; }
+  const now = new Date(); const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const groups = [["Heute", c => c.updated >= today], ["Letzte 7 Tage", c => c.updated >= today - 6 * 864e5], ["Älter", () => true]];
+  const used = new Set(); let html = "";
+  for (const [name, f] of groups) {
+    const items = sorted.filter(c => !used.has(c.id) && f(c)); items.forEach(c => used.add(c.id));
+    if (items.length) html += `<h3>${name}</h3>` + items.map(c => `<div class="chatitem ${cur && cur.id === c.id ? "active" : ""}"><button class="open" data-id="${c.id}">${esc(c.title)}</button><button class="del" data-del="${c.id}" aria-label="Chat löschen"><svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>`).join("");
+  }
+  list.innerHTML = html;
+  list.querySelectorAll(".open").forEach(b => b.onclick = () => { cur = chats.find(c => c.id === b.dataset.id); renderChat(); closeDrawer(); });
+  list.querySelectorAll(".del").forEach(b => b.onclick = async () => {
+    if (!confirm("Diesen Chat löschen?")) return;
+    chats = chats.filter(c => c.id !== b.dataset.del); await saveChats();
+    if (cur && cur.id === b.dataset.del) newChat();
+    renderChatList();
+  });
+}
+
+/* ---------- Chat rendering ---------- */
+function newChat() { TTS.stop(); if (streaming) streaming.abort(); cur = null; pending = []; renderPreviews(); renderChat(); $("#input").focus({ preventScroll: true }); }
+
+function suggestions() {
+  return me.kid
+    ? ["Erklär mir, warum der Himmel blau ist", "Hilf mir beim Üben fürs Diktat", "Erzähl mir eine kurze Geschichte über einen Drachen"]
+    : ["Plan ein Abendessen für vier mit dem, was im Kühlschrank ist", "Formuliere eine höfliche E-Mail an die Schule", "Erklär mir einen Begriff ganz einfach"];
+}
+
+function renderChat() {
+  const sc = $("#scroller");
+  $("#chatTitle").textContent = cur ? cur.title : "Stube";
+  if (!cur || !cur.messages.length) {
+    const h = new Date().getHours(); const g = h < 11 ? "Guten Morgen" : h < 18 ? "Hallo" : "Guten Abend";
+    sc.innerHTML = `<div class="empty"><h1>${g}, <span>${esc(me.name)}</span>.<br>Was steht an?</h1><div class="chips">${suggestions().map(s => `<button class="chip">${esc(s)}</button>`).join("")}</div></div>`;
+    sc.querySelectorAll(".chip").forEach(b => b.onclick = () => { $("#input").value = b.textContent; autoGrow(); updateSend(); $("#input").focus(); });
+    return;
+  }
+  sc.innerHTML = "";
+  cur.messages.forEach(m => sc.append(msgEl(m)));
+  sc.scrollTop = sc.scrollHeight;
+}
+
+function msgEl(m) {
+  const d = document.createElement("div"); d.className = "msg " + m.role;
+  if (m.role === "user") {
+    const b = document.createElement("div"); b.className = "bubble";
+    (m.images || []).forEach(i => { const im = document.createElement("img"); im.src = `data:${i.media_type};base64,${i.data}`; im.alt = "Angehängtes Bild"; b.append(im); });
+    b.append(document.createTextNode(m.text)); d.append(b);
+  } else {
+    d.innerHTML = `<div class="body"></div>`;
+    const body = d.querySelector(".body");
+    if (m.text) renderBody(body, m.text);
+    if (m.error) { const e = document.createElement("div"); e.className = "err"; e.textContent = m.error; body.append(e); }
+    if ((m.sources || []).length) {
+      const s = document.createElement("div"); s.className = "sources";
+      s.innerHTML = `<span>Quellen</span>` + m.sources.map(x => { let host = x.url; try { host = new URL(x.url).hostname.replace(/^www\./, ""); } catch {} return `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" title="${esc(x.title)}">${esc(host)}</a>`; }).join("");
+      d.append(s);
+    }
+    if (m.text || m.usage) d.append(actionsEl(m));
+  }
+  return d;
+}
+function actionsEl(m) {
+  const a = document.createElement("div"); a.className = "msg-actions";
+  if (m.text) {
+    const c = document.createElement("button"); c.textContent = "Kopieren";
+    c.onclick = async () => { try { await navigator.clipboard.writeText(m.text); toast("Kopiert"); } catch { toast("Kopieren nicht möglich"); } };
+    a.append(c);
+    if (TTS.ok) {
+      const v = document.createElement("button"); v.textContent = "Vorlesen"; v.dataset.speak = "";
+      v.onclick = () => TTS.toggle(m.text, v);
+      a.append(v);
+    }
+  }
+  if (m.usage) {
+    const u = m.usage; const s = document.createElement("span"); s.className = "usage";
+    const who = u.model ? (u.route ? "Auto → " : "") + u.model + (u.used ? ` (${u.used.split("/").pop()})` : "") : "";
+    s.textContent = [who, `${u.est ? "≈ " : ""}${(u.in + u.out).toLocaleString("de-DE")} Tokens`, u.searches ? `${u.searches} ${u.searches === 1 ? "Suche" : "Suchen"}` : "", `ca. ${fmtUSD(u.cost)}`].filter(Boolean).join(" · ");
+    a.append(s);
+  }
+  return a;
+}
+
+/* ---------- Sprachausgabe ---------- */
+function speakableText(t) {
+  return splitFiles(t).map(p => p.file ? ` Ich habe die Datei ${p.file.name.replace(/\.[^.]+$/, "").replace(/[_-]/g, " ")} erstellt. ` : p.art ? ` Ich habe ${p.art.title} erstellt. ` : p.text).join("")
+    .replace(/```[\s\S]*?```/g, " (Codeblock) ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^\s*\|?[\s:|-]+\|[\s:|-]*$/gm, "")
+    .replace(/^[ \t]*\|[ \t]*|[ \t]*\|[ \t]*$/gm, "")
+    .replace(/\s*\|\s*/g, ", ")
+    .replace(/^#{1,6}\s*/gm, "").replace(/^\s*[-*+]\s+/gm, "").replace(/^\s*>\s?/gm, "")
+    .replace(/[*_~]{1,3}([^*_~]+)[*_~]{1,3}/g, "$1")
+    .replace(/https?:\/\/\S+/g, "Link")
+    .replace(/\n{2,}/g, "\n").replace(/([^.!?:;,\s])[ \t]*\n/g, "$1. ").replace(/\n/g, " ").replace(/\.\s*\./g, ".").replace(/\s{2,}/g, " ").trim();
+}
+const TTS = {
+  ok: "speechSynthesis" in window && "SpeechSynthesisUtterance" in window,
+  btn: null,
+  voice() {
+    const vs = speechSynthesis.getVoices().filter(v => /^de(-|_|$)/i.test(v.lang));
+    return vs.find(v => /google/i.test(v.name)) || vs.find(v => v.localService) || vs[0] || null;
+  },
+  stop() { if (!this.ok) return; speechSynthesis.cancel(); if (this.btn) this.btn.textContent = "Vorlesen"; this.btn = null; },
+  speak(text, btn) {
+    if (!this.ok) return;
+    this.stop();
+    const clean = speakableText(text); if (!clean) return;
+    // in Sätze aufteilen, weil Chrome lange Texte sonst nach ca. 15 s abbricht
+    const parts = clean.match(/[^.!?]+[.!?]*\s*/g) || [clean];
+    const chunks = []; let cur = "";
+    for (const p of parts) { if ((cur + p).length > 220 && cur) { chunks.push(cur); cur = ""; } cur += p; }
+    if (cur.trim()) chunks.push(cur);
+    const voice = this.voice(); const rate = (S && S.ttsRate) || 1;
+    this.btn = btn || null; if (btn) btn.textContent = "Stopp";
+    chunks.forEach((c, i) => {
+      const u = new SpeechSynthesisUtterance(c.trim()); u.lang = "de-DE"; u.rate = rate; if (voice) u.voice = voice;
+      if (i === chunks.length - 1) u.onend = () => { if (this.btn === btn) { if (btn) btn.textContent = "Vorlesen"; this.btn = null; } };
+      u.onerror = () => { if (btn) btn.textContent = "Vorlesen"; };
+      speechSynthesis.speak(u);
+    });
+  },
+  toggle(text, btn) { if (this.btn === btn) this.stop(); else this.speak(text, btn); },
+};
+if (TTS.ok) { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); }
+
+/* ---------- Spracheingabe ---------- */
+const STT = {
+  Rec: window.SpeechRecognition || window.webkitSpeechRecognition,
+  rec: null, active: false, base: "", used: false,
+  start() {
+    if (this.active) return this.stop();
+    TTS.stop();
+    const r = new this.Rec(); this.rec = r;
+    r.lang = "de-DE"; r.interimResults = true; r.continuous = true; r.maxAlternatives = 1;
+    this.base = input.value ? input.value.replace(/\s*$/, " ") : "";
+    let finalText = "";
+    r.onresult = e => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += t + " "; else interim += t;
+      }
+      input.value = (this.base + finalText + interim).replace(/\s+/g, " ").trimStart();
+      autoGrow(); updateSend();
+    };
+    r.onerror = e => {
+      const local = !/^https?:$/.test(location.protocol);
+      const msg = { "not-allowed": local ? "Das Mikrofon geht nur, wenn die App über eine Webadresse (https://…) geöffnet wird, nicht als lokale Datei." : "Mikrofon-Zugriff wurde verweigert. Erlaube ihn in den Browser-Einstellungen.", "service-not-allowed": "Spracheingabe ist in dieser Umgebung nicht erlaubt. Öffne die App in Chrome.", "no-speech": "Ich habe nichts gehört.", "network": "Für die Spracheingabe wird eine Internetverbindung gebraucht.", "audio-capture": "Kein Mikrofon gefunden." }[e.error];
+      if (msg) toast(msg);
+    };
+    r.onend = () => {
+      this.active = false; $("#micBtn").classList.remove("rec");
+      const auto = S && S.voiceAutoSend;
+      if (auto && input.value.trim() && !streaming) { this.used = true; send(); }
+      else if (input.value.trim()) this.used = true;
+    };
+    try { r.start(); this.active = true; $("#micBtn").classList.add("rec"); }
+    catch (e) { toast("Spracheingabe konnte nicht gestartet werden"); }
+  },
+  stop() { if (this.rec) this.rec.stop(); },
+};
+if (STT.Rec) { $("#micBtn").classList.remove("hidden"); $("#micBtn").onclick = () => STT.start(); }
+
+/* ---------- Dateien bauen ---------- */
+const MIME = {
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  pdf: "application/pdf", html: "text/html", htm: "text/html", md: "text/markdown", txt: "text/plain",
+  csv: "text/csv", json: "application/json", svg: "image/svg+xml",
+};
+const LIBS = {
+  docx: { test: () => window.docx, urls: ["https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"] },
+  pdf: { test: () => window.html2pdf, urls: ["https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js", "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"] },
+  xlsx: { test: () => window.XLSX, urls: ["https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js", "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"] },
+};
+const libLoading = {};
+function loadLib(key) {
+  const lib = LIBS[key]; if (lib.test()) return Promise.resolve();
+  return libLoading[key] || (libLoading[key] = (async () => {
+    for (const url of lib.urls) {
+      try {
+        await new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = url; sc.onload = res; sc.onerror = rej; document.head.append(sc); });
+        if (lib.test()) return;
+      } catch {}
+    }
+    libLoading[key] = null;
+    throw new Error("Die Bibliothek für ." + key + " konnte nicht geladen werden. Besteht eine Internetverbindung?");
+  })());
+}
+const extOf = name => (name.split(".").pop() || "txt").toLowerCase();
+
+async function buildFile(f) {
+  const ext = extOf(f.name); const type = MIME[ext] || "text/plain";
+  if (ext === "docx") { await loadLib("docx"); return new Blob([await mdToDocx(f.content, f.name)], { type }); }
+  if (ext === "pdf") { await loadLib("pdf"); return mdToPdf(f.content); }
+  if (ext === "xlsx") {
+    await loadLib("xlsx");
+    const wb = XLSX.read(f.content.trim(), { type: "string", raw: false });
+    const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    return new Blob([out], { type });
+  }
+  if (ext === "html" || ext === "htm") {
+    let c = f.content.trim();
+    if (!/^<!doctype|^<html/i.test(c)) c = `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(f.name)}</title></head><body>${c}</body></html>`;
+    return new Blob([c], { type: type + ";charset=utf-8" });
+  }
+  return new Blob([f.content], { type: type + ";charset=utf-8" });
+}
+
+function inlineRuns(tokens, fmt = {}) {
+  const D = window.docx; const runs = [];
+  for (const t of tokens || []) {
+    if (t.type === "strong") runs.push(...inlineRuns(t.tokens, { ...fmt, bold: true }));
+    else if (t.type === "em") runs.push(...inlineRuns(t.tokens, { ...fmt, italics: true }));
+    else if (t.type === "del") runs.push(...inlineRuns(t.tokens, { ...fmt, strike: true }));
+    else if (t.type === "codespan") runs.push(new D.TextRun({ text: decodeEnt(t.text), font: "Consolas", ...fmt }));
+    else if (t.type === "br") runs.push(new D.TextRun({ text: "", break: 1 }));
+    else if (t.type === "link") runs.push(new D.ExternalHyperlink({ link: t.href, children: [new D.TextRun({ text: decodeEnt(t.text), style: "Hyperlink", ...fmt })] }));
+    else if (t.tokens && t.tokens.length) runs.push(...inlineRuns(t.tokens, fmt));
+    else {
+      const parts = decodeEnt(t.text || t.raw || "").split("\n");
+      parts.forEach((p, i) => runs.push(new D.TextRun({ text: p, break: i ? 1 : 0, ...fmt })));
+    }
+  }
+  return runs;
+}
+function decodeEnt(s) { const ta = document.createElement("textarea"); ta.innerHTML = s; return ta.value; }
+
+async function mdToDocx(text, name) {
+  const D = window.docx; const tokens = marked.lexer(text);
+  let listInstance = 0; const H = [D.HeadingLevel.HEADING_1, D.HeadingLevel.HEADING_2, D.HeadingLevel.HEADING_3, D.HeadingLevel.HEADING_4, D.HeadingLevel.HEADING_5, D.HeadingLevel.HEADING_6];
+  const blocks = (toks, level = 0, quote = false) => {
+    const out = [];
+    for (const t of toks) {
+      if (t.type === "heading") out.push(new D.Paragraph({ heading: H[t.depth - 1], children: inlineRuns(t.tokens) }));
+      else if (t.type === "paragraph" || t.type === "text") out.push(new D.Paragraph({ children: inlineRuns(t.tokens || [{ type: "text", text: t.text }]), indent: quote ? { left: 567 } : undefined, spacing: { after: 160 } }));
+      else if (t.type === "list") {
+        const inst = ++listInstance;
+        for (const item of t.items) {
+          const inner = item.tokens || []; let first = true;
+          for (const it of inner) {
+            if (it.type === "list") { out.push(...blocks([it], level + 1)); continue; }
+            const runs = inlineRuns(it.tokens || [{ type: "text", text: it.text }]);
+            if (first) {
+              out.push(new D.Paragraph(t.ordered ? { numbering: { reference: "num", level, instance: inst }, children: runs } : { bullet: { level }, children: runs }));
+              first = false;
+            } else out.push(new D.Paragraph({ children: runs, indent: { left: 720 * (level + 1) } }));
+          }
+        }
+      }
+      else if (t.type === "table") {
+        const cell = (c, head) => new D.TableCell({ children: [new D.Paragraph({ children: inlineRuns(c.tokens, head ? { bold: true } : {}) })], shading: head ? { fill: "E3E9EE", type: D.ShadingType.CLEAR, color: "auto" } : undefined, margins: { top: 60, bottom: 60, left: 100, right: 100 } });
+        out.push(new D.Table({ width: { size: 100, type: D.WidthType.PERCENTAGE }, rows: [new D.TableRow({ tableHeader: true, children: t.header.map(c => cell(c, true)) }), ...t.rows.map(r => new D.TableRow({ children: r.map(c => cell(c, false)) }))] }));
+        out.push(new D.Paragraph({ children: [] }));
+      }
+      else if (t.type === "code") t.text.split("\n").forEach(line => out.push(new D.Paragraph({ children: [new D.TextRun({ text: line, font: "Consolas", size: 20 })], shading: { fill: "F2F4F6", type: D.ShadingType.CLEAR, color: "auto" } })));
+      else if (t.type === "blockquote") out.push(...blocks(t.tokens, level, true));
+      else if (t.type === "hr") out.push(new D.Paragraph({ children: [], border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: "999999", space: 1 } } }));
+    }
+    return out;
+  };
+  const numLevels = [0, 1, 2, 3].map(l => ({ level: l, format: D.LevelFormat.DECIMAL, text: `%${l + 1}.`, alignment: D.AlignmentType.START, style: { paragraph: { indent: { left: 720 * (l + 1), hanging: 360 } } } }));
+  const doc = new D.Document({
+    creator: "Stube", title: name.replace(/\.docx$/i, ""),
+    styles: { default: { document: { run: { font: "Calibri", size: 24 } } } },
+    numbering: { config: [{ reference: "num", levels: numLevels }] },
+    sections: [{ properties: { page: { margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 } } }, children: blocks(tokens) }],
+  });
+  return D.Packer.toBlob(doc);
+}
+
+async function mdToPdf(text) {
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "position:fixed;left:-10000px;top:0;width:180mm;background:#fff;color:#111;font:11pt/1.5 Georgia,'Times New Roman',serif";
+  wrap.innerHTML = `<style>.pdfdoc h1{font:700 20pt/1.25 Arial,sans-serif;margin:0 0 10pt}.pdfdoc h2{font:700 15pt/1.3 Arial,sans-serif;margin:14pt 0 6pt}.pdfdoc h3{font:700 12pt/1.3 Arial,sans-serif;margin:12pt 0 4pt}.pdfdoc p{margin:0 0 8pt}.pdfdoc table{border-collapse:collapse;width:100%;margin:0 0 10pt;font:10pt/1.4 Arial,sans-serif}.pdfdoc th,.pdfdoc td{border:1px solid #999;padding:4pt 6pt;text-align:left}.pdfdoc th{background:#E3E9EE}.pdfdoc pre{background:#F2F4F6;padding:6pt;white-space:pre-wrap;font:9pt Consolas,monospace}.pdfdoc code{font-family:Consolas,monospace}.pdfdoc tr,.pdfdoc li,.pdfdoc h2,.pdfdoc h3{page-break-inside:avoid}</style><div class="pdfdoc">${md(text)}</div>`;
+  document.body.append(wrap);
+  try {
+    return await html2pdf().set({ margin: [15, 15, 15, 15], image: { type: "jpeg", quality: 0.95 }, html2canvas: { scale: 2, backgroundColor: "#ffffff" }, jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }, pagebreak: { mode: ["css", "legacy"] } }).from(wrap.querySelector(".pdfdoc")).outputPdf("blob");
+  } finally { wrap.remove(); }
+}
+
+async function withBusy(btn, fn) {
+  const t = btn.textContent; btn.disabled = true; btn.textContent = "…";
+  try { await fn(); } catch (e) { toast((e && e.message) || "Datei konnte nicht erstellt werden"); }
+  btn.disabled = false; btn.textContent = t;
+}
+async function downloadFile(f) {
+  const blob = await buildFile(f);
+  const url = URL.createObjectURL(blob); const a = document.createElement("a");
+  a.href = url; a.download = f.name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+async function shareFile(f) {
+  const blob = await buildFile(f);
+  try { await navigator.share({ files: [new File([blob], f.name, { type: blob.type })], title: f.name }); }
+  catch (e) { if (e.name !== "AbortError") throw e; }
+}
+function canShareFiles() {
+  try { return !!(navigator.canShare && navigator.canShare({ files: [new File(["x"], "t.txt", { type: "text/plain" })] })); } catch { return false; }
+}
+function fileButtons(f, cls = "") {
+  const wrap = document.createElement("div"); wrap.className = "fc-btns " + cls;
+  const dl = document.createElement("button"); dl.className = "btn"; dl.textContent = "Herunterladen";
+  dl.onclick = e => { e.stopPropagation(); withBusy(dl, () => downloadFile(f)); };
+  wrap.append(dl);
+  if (canShareFiles()) {
+    const sh = document.createElement("button"); sh.className = "btn ghost"; sh.textContent = "Teilen";
+    sh.onclick = e => { e.stopPropagation(); withBusy(sh, () => shareFile(f)); };
+    wrap.append(sh);
+  }
+  return wrap;
+}
+
+function fileCard(f) {
+  const ext = extOf(f.name);
+  const card = document.createElement("div"); card.className = "filecard" + (f.done ? " ready" : "");
+  card.innerHTML = `<div class="fc-icon">${esc(ext.toUpperCase().slice(0, 4))}</div><div class="fc-meta"><b>${esc(f.name)}</b><span>${f.done ? "Tippen für Vorschau" : "Wird erstellt …"}</span></div>`;
+  if (!f.done) return card;
+  card.setAttribute("role", "button"); card.tabIndex = 0;
+  card.onclick = () => openPreview(f);
+  card.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPreview(f); } };
+  card.append(fileButtons(f));
+  return card;
+}
+
+/* ---------- Vorschau ---------- */
+function parseCSV(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  const sep = (text.split("\n")[0].match(/;/g) || []).length > (text.split("\n")[0].match(/,/g) || []).length ? ";" : ",";
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === sep) { row.push(cell); cell = ""; }
+    else if (c === "\n") { row.push(cell); rows.push(row); row = []; cell = ""; }
+    else if (c !== "\r") cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+function previewHTML(f) {
+  const ext = extOf(f.name);
+  if (ext === "html" || ext === "htm" || ext === "svg") return null; // iframe
+  if (ext === "docx" || ext === "pdf" || ext === "md") return `<div class="paper"><div class="body">${md(f.content)}</div></div>`;
+  if (ext === "xlsx" || ext === "csv") {
+    const rows = parseCSV(f.content.trim()); if (!rows.length) return `<div class="paper">Leere Tabelle</div>`;
+    const head = rows[0], body = rows.slice(1);
+    return `<div class="sheet"><table><thead><tr><th class="rn"></th>${head.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${body.map((r, i) => `<tr><td class="rn">${i + 2}</td>${r.map(c => `<td class="${/^-?\d+([.,]\d+)?$/.test(c.trim()) ? "num" : ""}">${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  }
+  let c = f.content;
+  if (ext === "json") { try { c = JSON.stringify(JSON.parse(c), null, 2); } catch {} }
+  return `<div class="paper"><pre class="raw">${esc(c)}</pre></div>`;
+}
+function openPreview(f) {
+  const ext = extOf(f.name);
+  const sc = openScreen(`<div class="pv">
+    <header class="topbar pv-bar"><button class="iconbtn" data-close aria-label="Zurück"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="title">${esc(f.name)}<span class="pv-type">${esc(ext.toUpperCase())}${ext === "pdf" ? " · Vorschau des Inhalts" : ""}</span></div></header>
+    <div class="pv-content" id="pvContent"></div>
+    <div class="pv-foot" id="pvFoot"></div></div>`);
+  sc.classList.add("noscroll");
+  const content = sc.querySelector("#pvContent");
+  const html = previewHTML(f);
+  if (html === null) {
+    const fr = document.createElement("iframe");
+    fr.setAttribute("sandbox", "allow-scripts allow-popups");
+    fr.title = "Vorschau " + f.name;
+    fr.srcdoc = ext === "svg" ? `<!DOCTYPE html><html><body style="margin:0;display:grid;place-items:center;min-height:100vh;background:#fff">${f.content}</body></html>` : f.content;
+    content.classList.add("frame"); content.append(fr);
+  } else content.innerHTML = html;
+  sc.querySelector("#pvFoot").append(fileButtons(f, "pv-btns"));
+  sc.querySelector("[data-close]").onclick = () => { sc.classList.remove("noscroll"); closeScreen(); };
+}
+
+/* ---------- Artefakte ---------- */
+const ART_EXT = { html: "html", react: "html", mermaid: "html", svg: "svg", markdown: "md" };
+const slug = s => (s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "artefakt").slice(0, 60);
+function chatArtifacts() {
+  const list = [];
+  if (cur) cur.messages.forEach(m => { if (m.role === "assistant" && !m.error && m.text) splitFiles(m.text).forEach(p => { if (p.art && p.art.done) list.push(p.art); }); });
+  return list;
+}
+function versionsOf(a) {
+  const k = a.title.trim().toLowerCase();
+  const vs = chatArtifacts().filter(x => x.title.trim().toLowerCase() === k);
+  if (!vs.some(x => x.content === a.content)) vs.push(a);
+  return vs;
+}
+function artCard(a) {
+  const card = document.createElement("div"); card.className = "filecard artcard" + (a.done ? " ready" : "");
+  const icon = { html: "</>", react: "⚛", svg: "◆", mermaid: "⇄", markdown: "¶" }[a.type] || "◇";
+  let meta;
+  if (!a.done) meta = `Wird erstellt … ${a.content.split("\n").length} Zeilen`;
+  else {
+    const vs = versionsOf(a); const n = vs.findIndex(x => x.content === a.content) + 1;
+    meta = `${ART_TYPES[a.type]}${vs.length > 1 ? ` · Version ${n}` : ""} · Tippen zum Öffnen`;
+  }
+  card.innerHTML = `<div class="fc-icon art-icon" aria-hidden="true">${esc(icon)}</div><div class="fc-meta"><b>${esc(a.title)}</b><span>${esc(meta)}</span></div>`;
+  if (!a.done) return card;
+  card.setAttribute("role", "button"); card.tabIndex = 0;
+  card.onclick = () => openArtifact(a);
+  card.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openArtifact(a); } };
+  return card;
+}
+
+const ERR_SCRIPT = `<script>window.__err=function(e){var p=document.createElement("pre");p.style.cssText="color:#B3261E;background:#FCEEEE;white-space:pre-wrap;padding:16px;margin:12px;border-radius:12px;font:13px/1.5 ui-monospace,Menlo,monospace";p.textContent="Fehler im Artefakt:\\n"+((e&&e.message)||e);document.body.appendChild(p)};window.addEventListener("error",function(e){window.__err(e.error||e.message)});<\/script>`;
+const jsonForScript = s => JSON.stringify(s).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+function artifactDoc(a) {
+  const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(a.title)}</title>`;
+  if (a.type === "html") {
+    const c = a.content.trim();
+    if (/^<!doctype|^<html/i.test(c)) return c;
+    return `<!DOCTYPE html><html lang="de"><head>${head}<style>body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:16px}</style></head><body>${c}</body></html>`;
+  }
+  if (a.type === "svg") return `<!DOCTYPE html><html><head>${head}<style>html,body{margin:0;height:100%;background:#fff}body{display:grid;place-items:center}svg{max-width:100%;max-height:100vh;height:auto}</style></head><body>${a.content}</body></html>`;
+  if (a.type === "mermaid") return `<!DOCTYPE html><html><head>${head}<style>body{margin:0;padding:16px;background:#fff;font-family:system-ui,sans-serif}.mermaid{display:flex;justify-content:center}.mermaid svg{max-width:100%;height:auto}</style>${ERR_SCRIPT}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"><\/script>
+<script>if(!window.mermaid)document.write('<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"><\\/script>')<\/script>
+</head><body><pre class="mermaid" id="m"></pre>
+<script>document.getElementById("m").textContent=${jsonForScript(a.content.trim())};
+if(!window.mermaid){window.__err("Die Diagramm-Bibliothek konnte nicht geladen werden. Besteht eine Internetverbindung?")}
+else{mermaid.initialize({startOnLoad:false,securityLevel:"strict"});mermaid.run({querySelector:"#m"}).catch(function(e){window.__err(e)});}<\/script></body></html>`;
+  if (a.type === "react") return `<!DOCTYPE html><html lang="de"><head>${head}${ERR_SCRIPT}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"><\/script>
+<script>if(!window.React)document.write('<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"><\\/script><script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"><\\/script>');if(!window.Babel)document.write('<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js"><\\/script>')<\/script>
+<script src="https://cdn.tailwindcss.com"><\/script>
+<style>body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}</style>
+</head><body><div id="root"></div>
+<script>
+(function(){
+  try {
+    if (!window.React || !window.Babel) throw new Error("React konnte nicht geladen werden. Besteht eine Internetverbindung?");
+    var code = ${jsonForScript(a.content)};
+    var name = null;
+    code = code.replace(/^[ \\t]*import\\s+([\\s\\S]*?)\\s+from\\s+['"]([^'"]+)['"];?[ \\t]*$/gm, function(all, what, mod){
+      if (mod === "react") {
+        var out = "", ns = what.match(/\\*\\s+as\\s+(\\w+)/), named = what.match(/\\{([^}]*)\\}/);
+        var def = what.replace(/\\{[^}]*\\}/, "").replace(/\\*\\s+as\\s+\\w+/, "").replace(/,/g, "").trim();
+        if (ns && ns[1] !== "React") out += "var " + ns[1] + " = React;";
+        if (def && def !== "React") out += "var " + def + " = React;";
+        if (named) out += "var {" + named[1].replace(/\\btype\\s+/g, "").replace(/\\s+as\\s+/g, ": ") + "} = React;";
+        return out;
+      }
+      if (/^react-dom/.test(mod)) return "";
+      return "/* nicht verfügbar: " + mod + " */";
+    });
+    code = code.replace(/^[ \\t]*import\\s+['"][^'"]+['"];?[ \\t]*$/gm, "");
+    code = code.replace(/export\\s+default\\s+function\\s*([A-Za-z0-9_$]*)/, function(a, n){ name = n || "__App"; return "function " + name; });
+    if (!name) code = code.replace(/export\\s+default\\s+class\\s+([A-Za-z0-9_$]+)/, function(a, n){ name = n; return "class " + n; });
+    if (!name) code = code.replace(/export\\s+default\\s+([A-Za-z0-9_$]+)\\s*;?\\s*$/m, function(a, n){ name = n; return ""; });
+    if (!name) code = code.replace(/export\\s+default\\s+/, function(){ name = "__App"; return "var __App = "; });
+    code = code.replace(/^[ \\t]*export\\s+(?=(const|let|var|function|class)\\b)/gm, "");
+    if (!name) { var f = code.match(/(?:function|const|let|var|class)\\s+(App)\\b/); name = f ? f[1] : null; }
+    if (!name) throw new Error("Keine Komponente gefunden (export default fehlt).");
+    var js = Babel.transform(code, { presets: [["typescript", { isTSX: true, allExtensions: true }], ["react", { runtime: "classic" }]], filename: "artefakt.tsx" }).code;
+    var Comp = new Function("React", "ReactDOM", js + "\\n;return " + name + ";")(React, ReactDOM);
+    var Boundary = (function(){ function B(p){ React.Component.call(this, p); this.state = { e: null }; }
+      B.prototype = Object.create(React.Component.prototype); B.prototype.constructor = B;
+      B.getDerivedStateFromError = function(e){ return { e: e }; };
+      B.prototype.render = function(){ return this.state.e ? React.createElement("pre", { style: { color: "#B3261E", background: "#FCEEEE", whiteSpace: "pre-wrap", padding: 16, margin: 12, borderRadius: 12, font: "13px/1.5 monospace" } }, "Fehler im Artefakt:\\n" + this.state.e.message) : this.props.children; };
+      return B; })();
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(Boundary, null, React.createElement(Comp)));
+  } catch (e) { window.__err(e); }
+})();
+<\/script></body></html>`;
+  return null; // markdown
+}
+function artifactFile(a) {
+  const ext = ART_EXT[a.type] || "html";
+  return { name: slug(a.title) + "." + ext, content: a.type === "markdown" || a.type === "svg" ? a.content : artifactDoc(a), done: true };
+}
+function openArtifact(a) {
+  const vs = versionsOf(a);
+  let idx = Math.max(0, vs.findIndex(x => x.content === a.content));
+  let tab = "preview";
+  const sc = openScreen(`<div class="pv">
+    <header class="topbar pv-bar"><button class="iconbtn" data-close aria-label="Zurück"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="title"><span id="aTitle"></span><span class="pv-type" id="aSub"></span></div>
+      <button class="iconbtn" id="aPrev" aria-label="Vorherige Version"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button class="iconbtn" id="aNext" aria-label="Nächste Version"><svg class="icon" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </header>
+    <div class="pv-tabs"><div class="seg" role="tablist"><button data-tab="preview" role="tab">Vorschau</button><button data-tab="code" role="tab">Code</button></div>
+      <button class="iconbtn" id="aReload" aria-label="Neu laden" title="Neu laden"><svg class="icon" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg></button></div>
+    <div class="pv-content" id="pvContent"></div>
+    <div class="pv-foot" id="pvFoot"></div></div>`);
+  sc.classList.add("noscroll");
+  const content = sc.querySelector("#pvContent"), foot = sc.querySelector("#pvFoot");
+  const render = () => {
+    const v = vs[idx];
+    sc.querySelector("#aTitle").textContent = v.title;
+    sc.querySelector("#aSub").textContent = ART_TYPES[v.type] + (vs.length > 1 ? ` · Version ${idx + 1} von ${vs.length}` : "");
+    sc.querySelector("#aPrev").classList.toggle("hidden", vs.length < 2); sc.querySelector("#aNext").classList.toggle("hidden", vs.length < 2);
+    sc.querySelector("#aPrev").disabled = idx === 0; sc.querySelector("#aNext").disabled = idx === vs.length - 1;
+    sc.querySelectorAll(".seg button").forEach(b => { b.classList.toggle("on", b.dataset.tab === tab); b.setAttribute("aria-selected", b.dataset.tab === tab); });
+    sc.querySelector("#aReload").classList.toggle("hidden", tab !== "preview" || v.type === "markdown");
+    content.className = "pv-content"; content.innerHTML = "";
+    if (tab === "code") { content.classList.add("codeview"); const pre = document.createElement("pre"); pre.className = "code"; pre.textContent = v.content; content.append(pre); }
+    else if (v.type === "markdown") content.innerHTML = `<div class="paper"><div class="body">${md(v.content)}</div></div>`;
+    else {
+      const fr = document.createElement("iframe");
+      fr.setAttribute("sandbox", "allow-scripts allow-popups allow-forms allow-modals");
+      fr.setAttribute("allow", "fullscreen");
+      fr.title = v.title; fr.srcdoc = artifactDoc(v);
+      content.classList.add("frame"); content.append(fr);
+    }
+    foot.innerHTML = "";
+    const f = artifactFile(v);
+    const btns = fileButtons(f, "pv-btns");
+    const cp = document.createElement("button"); cp.className = "btn ghost"; cp.textContent = "Code kopieren";
+    cp.onclick = async () => { try { await navigator.clipboard.writeText(v.content); toast("Kopiert"); } catch { toast("Kopieren nicht möglich"); } };
+    btns.prepend(cp); foot.append(btns);
+  };
+  sc.querySelectorAll(".seg button").forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+  sc.querySelector("#aPrev").onclick = () => { if (idx > 0) { idx--; render(); } };
+  sc.querySelector("#aNext").onclick = () => { if (idx < vs.length - 1) { idx++; render(); } };
+  sc.querySelector("#aReload").onclick = render;
+  sc.querySelector("[data-close]").onclick = () => { sc.classList.remove("noscroll"); closeScreen(); };
+  render();
+}
+
+/* ---------- Composer ---------- */
+const input = $("#input");
+function autoGrow() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 180) + "px"; }
+function updateSend() {
+  const btn = $("#send");
+  if (streaming) { btn.disabled = false; btn.setAttribute("aria-label", "Stoppen"); btn.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>'; return; }
+  btn.setAttribute("aria-label", "Senden"); btn.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+  btn.disabled = !input.value.trim() && !pending.length;
+}
+input.addEventListener("input", e => { if (e.isTrusted && !STT.active && !input.value.trim()) STT.used = false; autoGrow(); updateSend(); });
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey && !e.isComposing && matchMedia("(pointer:fine)").matches) { e.preventDefault(); if (!streaming) send(); }
+});
+$("#send").onclick = () => streaming ? streaming.abort() : send();
+$("#attachBtn").onclick = () => $("#fileInput").click();
+$("#webBtn").onclick = () => { webOn = !webOn; updateWebBtn(); toast(webOn ? "Websuche an" : "Websuche aus"); };
+$("#modelSelect").onchange = updateWebBtn;
+$("#fileInput").onchange = async e => {
+  for (const f of [...e.target.files].slice(0, 5)) { try { pending.push(await shrinkImage(f)); } catch { toast("Bild konnte nicht gelesen werden"); } }
+  e.target.value = ""; renderPreviews(); updateSend();
+};
+function renderPreviews() {
+  const pv = $("#previews");
+  pv.innerHTML = pending.map((p, i) => `<div><img src="data:${p.media_type};base64,${p.data}" alt=""><button data-i="${i}" aria-label="Bild entfernen">×</button></div>`).join("");
+  pv.querySelectorAll("button").forEach(b => b.onclick = () => { pending.splice(+b.dataset.i, 1); renderPreviews(); updateSend(); });
+}
+function shrinkImage(file) {
+  return new Promise((res, rej) => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const max = 1568; let { width: w, height: h } = img; const s = Math.min(1, max / Math.max(w, h));
+      w = Math.round(w * s); h = Math.round(h * s);
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      res({ media_type: "image/jpeg", data: c.toDataURL("image/jpeg", 0.85).split(",")[1] });
+    };
+    img.onerror = rej; img.src = url;
+  });
+}
+
+/* ---------- Sending ---------- */
+function systemPrompt(web) {
+  const date = new Date().toLocaleDateString("de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  let s = `Du bist ein hilfreicher Assistent in der Familien-App „Stube“. Du sprichst gerade mit ${me.name}. Heute ist ${date}. Antworte auf Deutsch, außer die Person schreibt in einer anderen Sprache.`;
+  if (web) s += "\n\nDu kannst im Internet suchen. Nutze die Suche für aktuelle Informationen. Die Quellen werden automatisch unter deiner Antwort angezeigt, liste sie nicht noch einmal auf.";
+  s += "\n\n" + FILE_PROMPT;
+  if (S.artifacts !== false) s += "\n\n" + ARTIFACT_PROMPT;
+  if (me.kid) s += "\n\n" + KID_PROMPT;
+  if (me.prompt && me.prompt.trim()) s += "\n\nZusätzliche Hinweise:\n" + me.prompt.trim();
+  return s;
+}
+// neutraler Verlauf: [{role, text, images}]
+function apiMessages() {
+  let msgs = cur.messages.filter(m => !m.error && (m.text || (m.images || []).length));
+  msgs = msgs.slice(-Math.max(2, S.history || 30));
+  while (msgs.length && msgs[0].role !== "user") msgs.shift();
+  const out = [];
+  for (const m of msgs) {
+    const last = out[out.length - 1];
+    if (last && last.role === m.role) { last.text = [last.text, m.text].filter(Boolean).join("\n\n"); last.images = last.images.concat(m.images || []); }
+    else out.push({ role: m.role, text: m.text || "", images: (m.images || []).slice() });
+  }
+  if (out.length && out[out.length - 1].role === "assistant") out.pop();
+  return out;
+}
+function friendlyError(e) {
+  const status = e.status, body = e.body || "", pn = e.provider ? e.provider.name : "dem Anbieter";
+  if (e.msg) return e.msg;
+  let msg = "";
+  try { let j = JSON.parse(body); if (Array.isArray(j)) j = j[0]; const er = j.error || j; msg = (typeof er === "string" ? er : er.message) || ""; } catch { msg = body.slice(0, 200); }
+  if (status === 401 || status === 403 && /key|auth|permission/i.test(msg)) return `Der API-Schlüssel für ${pn} wurde abgelehnt. Prüfe ihn in den Einstellungen.`;
+  if (status === 402 || /credit balance|insufficient|quota/i.test(msg)) return `Das Guthaben bei ${pn} ist aufgebraucht oder das Kontingent erreicht. (${msg})`;
+  if (status === 429) return `${pn}: Zu viele Anfragen oder Gratis-Limit erreicht. Warte etwas oder wähle ein anderes Modell. (${msg})`;
+  if (status === 529 || status === 503) return `${pn} ist gerade überlastet. Versuch es gleich noch einmal.`;
+  if (/web.?search/i.test(msg)) return "Die Websuche ist nicht freigeschaltet. Aktiviere sie in der Claude Console unter Einstellungen → Privatsphäre, oder schalte sie in der App aus. (" + msg + ")";
+  if (status === 404 || /model/i.test(msg)) return `Das Modell ist bei ${pn} nicht verfügbar. Prüfe die Modell-ID in den Einstellungen. (${msg})`;
+  if (status === 0 && !msg) return "Keine Antwort vom Anbieter. Prüfe die Adresse in den Einstellungen.";
+  return `Fehler ${status || ""} bei ${pn}: ${msg || "Unbekannter Fehler"}`;
+}
+function baseUrl(p) { return (p.baseUrl || PRESETS[p.preset || "custom"].baseUrl || "").replace(/\/+$/, ""); }
+function anthHeaders(p) { return { "content-type": "application/json", "x-api-key": p.apiKey || "", "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }; }
+function oaHeaders(p) { const h = { "content-type": "application/json" }; if (p.apiKey) h.Authorization = "Bearer " + p.apiKey; return h; }
+
+async function readSSE(res, onEvent) {
+  const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+  const flush = chunk => {
+    const data = chunk.split("\n").filter(l => l.startsWith("data:")).map(l => l.slice(5).trim()).join("");
+    if (!data || data === "[DONE]") return;
+    let ev; try { ev = JSON.parse(data); } catch { return; }
+    onEvent(ev);
+  };
+  while (true) {
+    const { value, done } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true }).replace(/\r/g, "");
+    let i;
+    while ((i = buf.indexOf("\n\n")) >= 0) { const chunk = buf.slice(0, i); buf = buf.slice(i + 2); flush(chunk); }
+  }
+  if (buf.trim()) flush(buf);
+}
+
+async function streamAnthropic(m, p, sys, msgs, web, signal, cb) {
+  const body = {
+    model: m.id, max_tokens: +S.maxTokens || 8192, system: sys, stream: true,
+    messages: msgs.map(x => ({ role: x.role, content: [
+      ...(x.images || []).map(i => ({ type: "image", source: { type: "base64", media_type: i.media_type, data: i.data } })),
+      ...(x.text ? [{ type: "text", text: x.text }] : []),
+    ] })),
+  };
+  if (web) body.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: +S.webMax || 3 }];
+  const res = await fetch(baseUrl(p) + "/v1/messages", { method: "POST", signal, headers: anthHeaders(p), body: JSON.stringify(body) });
+  if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+  const r = { inTok: 0, outTok: 0, searches: 0, sources: [] };
+  const kinds = {}; let toolJson = "";
+  await readSSE(res, ev => {
+    if (ev.type === "message_start") { const u = ev.message.usage || {}; r.inTok = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0); }
+    else if (ev.type === "content_block_start") {
+      const b = ev.content_block || {}; kinds[ev.index] = b.type;
+      if (b.type === "server_tool_use") { toolJson = ""; cb.status("Sucht im Internet …"); }
+      if (b.type === "web_search_tool_result" && Array.isArray(b.content)) {
+        for (const x of b.content) if (x.url && !r.sources.some(s => s.url === x.url)) r.sources.push({ url: x.url, title: x.title || x.url });
+        cb.status("Liest die Ergebnisse …");
+      }
+    }
+    else if (ev.type === "content_block_delta") {
+      const d = ev.delta || {};
+      if (d.type === "text_delta") cb.text(d.text);
+      else if (d.type === "input_json_delta") { toolJson += d.partial_json || ""; const q = toolJson.match(/"query"\s*:\s*"((?:[^"\\]|\\.)*)"/); if (q) cb.status(`Sucht: „${q[1].replace(/\\"/g, '"')}“`); }
+    }
+    else if (ev.type === "message_delta" && ev.usage) {
+      const u = ev.usage;
+      r.outTok = u.output_tokens || r.outTok;
+      const inNow = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
+      if (inNow > r.inTok) r.inTok = inNow;
+      if (u.server_tool_use && u.server_tool_use.web_search_requests) r.searches = u.server_tool_use.web_search_requests;
+    }
+    else if (ev.type === "error") throw { status: 0, body: JSON.stringify(ev), provider: p };
+  });
+  return r;
+}
+
+async function streamOpenAI(m, p, sys, msgs, signal, cb) {
+  const messages = [{ role: "system", content: sys }, ...msgs.map(x => ({
+    role: x.role,
+    content: x.role === "user" && (x.images || []).length
+      ? [...(x.text ? [{ type: "text", text: x.text }] : []), ...x.images.map(i => ({ type: "image_url", image_url: { url: `data:${i.media_type};base64,${i.data}` } }))]
+      : x.text,
+  }))];
+  const body = { model: m.id, messages, stream: true, stream_options: { include_usage: true } };
+  if (p.preset === "openai") body.max_completion_tokens = +S.maxTokens || 8192;
+  if (p.preset === "openrouter" && isFree(m)) {
+    // Gratis-Modelle sind oft überlastet: OpenRouter darf auf andere Gratis-Modelle ausweichen
+    const alts = S.models.filter(x => x.on && x.provider === p.id && isFree(x) && x.key !== m.key).map(x => x.id).slice(0, 2);
+    if (alts.length) body.models = [m.id, ...alts];
+  }
+  const post = () => fetch(baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+  let res = await post();
+  if (!res.ok) {
+    const t = await res.text();
+    if (res.status === 400 && /stream_options|include_usage|unknown|unrecognized/i.test(t)) { delete body.stream_options; res = await post(); if (!res.ok) throw { status: res.status, body: await res.text(), provider: p }; }
+    else throw { status: res.status, body: t, provider: p };
+  }
+  const r = { inTok: 0, outTok: 0, searches: 0, sources: [], modelUsed: "" };
+  let text = "";
+  await readSSE(res, ev => {
+    if (ev.error) throw { status: ev.error.code || 0, body: JSON.stringify(ev), provider: p };
+    if (ev.model) r.modelUsed = ev.model;
+    const ch = ev.choices && ev.choices[0];
+    if (ch && ch.delta && typeof ch.delta.content === "string" && ch.delta.content) { text += ch.delta.content; cb.text(ch.delta.content); }
+    if (ev.usage) { r.inTok = ev.usage.prompt_tokens || r.inTok; r.outTok = ev.usage.completion_tokens || r.outTok; }
+  });
+  if (!r.inTok && !r.outTok) {
+    // keine Verbrauchsangabe: grob schätzen (ca. 4 Zeichen pro Token)
+    r.inTok = Math.round((sys.length + msgs.reduce((s, x) => s + x.text.length, 0)) / 4); r.outTok = Math.round(text.length / 4); r.est = true;
+  }
+  return r;
+}
+
+// kurze, nicht gestreamte Anfrage (für die automatische Modellwahl)
+async function complete(m, sys, userText, signal) {
+  const p = provOf(m);
+  if (p.type === "anthropic") {
+    const res = await fetch(baseUrl(p) + "/v1/messages", { method: "POST", signal, headers: anthHeaders(p), body: JSON.stringify({ model: m.id, max_tokens: 10, system: sys, messages: [{ role: "user", content: userText }] }) });
+    if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+    const j = await res.json(); const u = j.usage || {};
+    return { text: (j.content || []).map(c => c.text || "").join(""), inTok: u.input_tokens || 0, outTok: u.output_tokens || 0 };
+  }
+  const body = { model: m.id, messages: [{ role: "system", content: sys }, { role: "user", content: userText }] };
+  if (p.preset === "openai") body.max_completion_tokens = 400; else body.max_tokens = 400;
+  const res = await fetch(baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+  if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+  const j = await res.json(); const u = j.usage || {};
+  return { text: (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "", inTok: u.prompt_tokens || 0, outTok: u.completion_tokens || 0 };
+}
+async function routeRequest(signal) {
+  const last = cur.messages[cur.messages.length - 1];
+  const empty = { in: 0, out: 0, cost: 0 };
+  if ((last.images || []).length) return { cat: "komplex", usage: empty };
+  const prev = cur.messages.slice(-3, -1).filter(m => !m.error).map(m => (m.role === "user" ? "Person: " : "Assistent: ") + (m.text || "").slice(0, 300)).join("\n");
+  const content = (prev ? "Bisheriger Verlauf (gekürzt):\n" + prev + "\n\n" : "") + "Letzte Nachricht:\n" + (last.text || "").slice(0, 1500);
+  const rm = modelByKey(S.router.model);
+  const r = await complete(rm, ROUTER_PROMPT, content, signal);
+  const t = r.text.toLowerCase();
+  const cat = /aktuell/.test(t) ? "aktuell" : /komplex/.test(t) ? "komplex" : /einfach/.test(t) ? "einfach" : "komplex";
+  return { cat, usage: { in: r.inTok, out: r.outTok, cost: (r.inTok * rm.inP + r.outTok * rm.outP) / 1e6 } };
+}
+
+async function send() {
+  const text = input.value.trim(); if (!text && !pending.length) return;
+  if (STT.active) STT.stop();
+  const viaVoice = STT.used; STT.used = false;
+  if (!cur) { cur = { id: uid(), title: (text || "Bild").slice(0, 48), updated: Date.now(), messages: [] }; chats.push(cur); }
+  const choice = $("#modelSelect").value;
+  cur.messages.push({ role: "user", text, images: pending });
+  pending = []; renderPreviews(); input.value = ""; autoGrow();
+  cur.updated = Date.now(); await saveChats();
+  renderChat();
+
+  const sc = $("#scroller");
+  const reply = { role: "assistant", text: "" };
+  const el = document.createElement("div"); el.className = "msg assistant";
+  el.innerHTML = `<div class="body"><span class="typing"><i></i><i></i><i></i></span></div><div class="status"></div>`;
+  sc.append(el); sc.scrollTop = sc.scrollHeight;
+  const body = el.querySelector(".body"), st = el.querySelector(".status");
+
+  streaming = new AbortController(); updateSend();
+  let raf = 0, r = null, m = null, cat = null, route = { in: 0, out: 0, cost: 0 };
+  const paint = () => { raf = 0; const nearBottom = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 120; renderBody(body, reply.text); if (nearBottom) sc.scrollTop = sc.scrollHeight; };
+  const cb = {
+    text: d => { reply.text += d; st.textContent = ""; if (!raf) raf = requestAnimationFrame(paint); },
+    status: t => { st.textContent = t; },
+  };
+  try {
+    let web = webOn;
+    if (choice === "auto") {
+      cb.status("Wählt das passende Modell …");
+      try { const rr = await routeRequest(streaming.signal); cat = rr.cat; route = rr.usage; }
+      catch (e) { if (e && e.name === "AbortError") throw e; cat = "komplex"; console.warn("Automatik fehlgeschlagen:", e); }
+      m = resolveRoute(cat);
+      if (cat === "aktuell") web = true;
+    } else m = modelByKey(choice);
+    if (!m || !provOf(m)) throw { msg: "Kein Modell verfügbar. Prüfe die Modelle und Anbieter in den Einstellungen." };
+    const p = provOf(m);
+    web = web && p.type === "anthropic" && S.webSearch !== false;
+    cb.status((cat ? "Automatisch → " : "") + (m.label || m.id) + (web ? " · mit Websuche" : ""));
+    const sys = systemPrompt(web), msgs = apiMessages();
+    r = p.type === "anthropic" ? await streamAnthropic(m, p, sys, msgs, web, streaming.signal, cb) : await streamOpenAI(m, p, sys, msgs, streaming.signal, cb);
+  } catch (e) {
+    if (e && e.name === "AbortError") { if (!reply.text) reply.text = "_(abgebrochen)_"; }
+    else if (e && ("status" in e || "msg" in e)) reply.error = friendlyError(e);
+    else reply.error = "Keine Verbindung zum Anbieter. Prüfe deine Internetverbindung" + (m && provOf(m) && provOf(m).type !== "anthropic" ? " und ob der Anbieter Anfragen direkt aus dem Browser erlaubt" : "") + ". (" + (e && e.message || e) + ")";
+  }
+  if (raf) cancelAnimationFrame(raf);
+  streaming = null; updateSend();
+  const inT = (r ? r.inTok : 0) + route.in, outT = (r ? r.outTok : 0) + route.out;
+  if (inT || outT) {
+    const searchCost = r ? r.searches * (S.searchPrice != null ? +S.searchPrice : 10) / 1000 : 0;
+    const cost = (r ? (r.inTok * m.inP + r.outTok * m.outP) / 1e6 : 0) + searchCost + route.cost;
+    reply.usage = { in: inT, out: outT, cost, model: m ? (m.label || m.id) : "", route: cat, searches: r ? r.searches : 0, est: !!(r && r.est) };
+    if (r && r.modelUsed && m && r.modelUsed !== m.id && !r.modelUsed.startsWith(m.id)) reply.usage.used = r.modelUsed;
+    await addUsage(inT, outT, cost);
+  }
+  if (r && r.sources.length) reply.sources = r.sources.slice(0, 8);
+  cur.messages.push(reply); cur.updated = Date.now(); await saveChats();
+  const done = msgEl(reply); el.replaceWith(done); sc.scrollTop = sc.scrollHeight;
+  if (viaVoice && S.voiceAutoSpeak !== false && !reply.error && reply.text) TTS.speak(reply.text, done.querySelector("[data-speak]"));
+}
+
+async function addUsage(i, o, c) {
+  const u = (await DB.get("usage")) || {}; const k = month();
+  u[me.id] = u[me.id] || {}; u[me.id][k] = u[me.id][k] || { in: 0, out: 0, cost: 0, n: 0 };
+  const r = u[me.id][k]; r.in += i; r.out += o; r.cost += c; r.n += 1;
+  await DB.set("usage", u);
+}
+
+/* ---------- Usage screen ---------- */
+async function showUsage() {
+  closeDrawer();
+  const u = (await DB.get("usage")) || {}; const k = month(); const d = new Date(); d.setMonth(d.getMonth() - 1); const k2 = month(d);
+  const row = (p, key) => { const r = (u[p.id] || {})[key] || { in: 0, out: 0, cost: 0, n: 0 }; return r; };
+  const total = key => P.reduce((s, p) => s + row(p, key).cost, 0);
+  const sc = openScreen(`<div class="inner">
+    <header class="topbar"><button class="iconbtn" data-close aria-label="Zurück"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><div class="title">Verbrauch</div></header>
+    <div class="card"><h2>Dieser Monat</h2><p class="hint">Geschätzt anhand der eingetragenen Preise, auf diesem Gerät gezählt. Die genaue Abrechnung siehst du bei den jeweiligen Anbietern.</p>
+      <div class="big">${fmtUSD(total(k))}</div>
+      ${P.map(p => { const r = row(p, k); return `<div class="usage-row"><span><span class="avatar" style="display:inline-grid;width:24px;height:24px;font-size:12px;vertical-align:middle;margin-right:8px;background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span>${esc(p.name)}</span><span style="text-align:right">${fmtUSD(r.cost)}<br><span class="n">${r.n} Antworten · ${(r.in + r.out).toLocaleString("de-DE")} Tokens</span></span></div>`; }).join("")}
+    </div>
+    <div class="card"><h2>Letzter Monat</h2><div class="big">${fmtUSD(total(k2))}</div>
+      ${P.map(p => `<div class="usage-row"><span>${esc(p.name)}</span><span>${fmtUSD(row(p, k2).cost)}</span></div>`).join("")}
+    </div></div>`);
+  sc.querySelector("[data-close]").onclick = closeScreen;
+}
+
+/* ---------- Settings ---------- */
+const BACK = `<button class="iconbtn" data-close aria-label="Zurück"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>`;
+const provShort = id => { const p = provById(id); return p ? p.name.split(" (")[0] : "?"; };
+function modelOptions(sel, filter = () => true) {
+  return S.models.filter(m => m.id && filter(m)).map(m => `<option value="${esc(m.key)}" ${m.key === sel ? "selected" : ""}>${esc(provShort(m.provider))} · ${esc(m.label || m.id)}</option>`).join("");
+}
+function guardSettings() {
+  closeDrawer();
+  if (S.adminPin) askPin("Einstellungen", S.adminPin, showSettings, closeScreen); else showSettings();
+}
+function showSettings() {
+  const sc = openScreen(`<div class="inner">
+    <header class="topbar">${BACK}<div class="title">Einstellungen</div></header>
+
+    <div class="card"><h2>Profile</h2><p class="hint">Jede Person hat eigene Chats. Eine PIN verhindert, dass andere sie lesen.</p>
+      <div class="plist">${P.map(p => `<button class="pitem" data-pid="${p.id}"><span class="avatar" style="background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${[p.kid ? "Kindermodus" : "", p.pin ? "PIN" : "", p.model ? "festes Modell" : "", p.external === false ? "nur Claude" : ""].filter(Boolean).join(", ") || "Standard"}</span></span></button>`).join("")}</div>
+      <div class="btnrow"><button class="btn ghost" id="addP">Profil hinzufügen</button></div>
+    </div>
+
+    <div class="card"><h2>Anbieter und Schlüssel</h2><p class="hint">Claude, ChatGPT, OpenRouter (viele Gratis- und Open-Source-Modelle), Gemini oder jeder andere OpenAI-kompatible Anbieter. Schlüssel bleiben auf diesem Gerät. Setze bei jedem Anbieter ein Ausgabenlimit.</p>
+      <div class="plist">${S.providers.map(p => { const n = S.models.filter(m => m.provider === p.id).length; return `<button class="pitem" data-prov="${esc(p.id)}"><span class="avatar prov">${esc((p.name[0] || "?").toUpperCase())}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${p.apiKey ? "Schlüssel hinterlegt" : p.preset === "custom" ? "ohne Schlüssel" : "⚠ Schlüssel fehlt"} · ${n} ${n === 1 ? "Modell" : "Modelle"}</span></span></button>`; }).join("")}</div>
+      <div class="btnrow"><button class="btn ghost" id="addProv">Anbieter hinzufügen</button></div>
+    </div>
+
+    <div class="card"><h2>Modelle und Preise</h2><p class="hint">Preise in US-Dollar pro Million Tokens, nur für die Kostenschätzung. Prüfe sie auf den Preisseiten der Anbieter. Modelle mit „:free“ am Ende sind bei OpenRouter kostenlos.</p>
+      <div class="tablewrap"><table class="models"><thead><tr><th>An</th><th>Anbieter</th><th>Name</th><th>Modell-ID</th><th>Eingabe</th><th>Ausgabe</th><th></th></tr></thead><tbody id="mRows">
+      ${S.models.map((m, i) => `<tr><td><input type="checkbox" data-i="${i}" data-k="on" ${m.on ? "checked" : ""} aria-label="Aktiv"></td>
+        <td><select class="inp" data-i="${i}" data-k="provider" style="width:120px">${S.providers.map(p => `<option value="${esc(p.id)}" ${p.id === m.provider ? "selected" : ""}>${esc(provShort(p.id))}</option>`).join("")}</select></td>
+        <td><input class="inp" data-i="${i}" data-k="label" value="${esc(m.label)}" style="min-width:130px"></td>
+        <td><input class="inp" data-i="${i}" data-k="id" value="${esc(m.id)}" style="min-width:170px"></td>
+        <td><input class="inp" data-i="${i}" data-k="inP" type="number" step="0.01" min="0" value="${m.inP}" style="width:76px"></td>
+        <td><input class="inp" data-i="${i}" data-k="outP" type="number" step="0.01" min="0" value="${m.outP}" style="width:76px"></td>
+        <td><button class="iconbtn" data-delm="${i}" aria-label="Modell entfernen"><svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></td></tr>`).join("")}
+      </tbody></table></div>
+      <div class="btnrow"><button class="btn ghost" id="addM">Modell von Hand hinzufügen</button></div>
+      <label class="f" for="sDef">Standardmodell</label>
+      <select class="inp" id="sDef"><option value="auto" ${S.defaultModel === "auto" ? "selected" : ""}>Automatisch</option>${modelOptions(S.defaultModel)}</select>
+      <label class="f" for="sMax">Maximale Antwortlänge (Tokens)</label>
+      <input class="inp" id="sMax" type="number" min="256" step="256" value="${S.maxTokens}">
+      <label class="f" for="sHist">Mitgesendete Nachrichten pro Anfrage</label>
+      <p class="hint" style="margin:0 0 6px">Weniger Verlauf heißt weniger Kosten bei langen Chats, aber die KI erinnert sich an weniger.</p>
+      <input class="inp" id="sHist" type="number" min="2" max="200" value="${S.history}">
+    </div>
+
+    <div class="card"><h2>Automatische Modellwahl</h2><p class="hint">Bei „Automatisch“ liest ein günstiges Verteiler-Modell kurz jede Nachricht und schickt sie an das passende Modell. Das kostet pro Nachricht nur einen Bruchteil eines Cents. Für aktuelle Infos sollte ein Claude-Modell gewählt sein, weil nur dort die Websuche eingebaut ist. Kinderprofile ohne Freigabe nutzen immer Claude.</p>
+      <label class="f" for="rModel">Verteiler-Modell</label>
+      <select class="inp" id="rModel"><option value="">Aus (keine Automatik)</option>${modelOptions(S.router.model)}</select>
+      ${ROUTES.map(([k, l]) => `<label class="f" for="r_${k}">${l}</label><select class="inp" id="r_${k}">${modelOptions(S.router[k])}</select>`).join("")}
+    </div>
+
+    <div class="card"><h2>Websuche und Artefakte</h2>
+      <label class="check"><input type="checkbox" id="sWeb" ${S.webSearch !== false ? "checked" : ""}><span><b>Websuche erlauben</b><br><span style="color:var(--ink2);font-size:14px">Für Claude-Modelle. Muss einmalig in der Claude Console unter Einstellungen → Privatsphäre freigeschaltet werden.</span></span></label>
+      <div class="row" style="gap:12px;flex-wrap:wrap">
+        <label style="flex:1;min-width:140px"><span class="f" style="margin-top:0">Max. Suchen pro Antwort</span><input class="inp" id="sWebMax" type="number" min="1" max="10" value="${S.webMax || 3}"></label>
+        <label style="flex:1;min-width:140px"><span class="f" style="margin-top:0">$ pro 1.000 Suchen</span><input class="inp" id="sWebPrice" type="number" min="0" step="0.5" value="${S.searchPrice != null ? S.searchPrice : 10}"></label>
+      </div>
+      <label class="check"><input type="checkbox" id="sArt" ${S.artifacts !== false ? "checked" : ""}><span><b>Artefakte</b><br><span style="color:var(--ink2);font-size:14px">Die KI kann kleine Apps, Spiele, Diagramme und Dokumente mit Live-Vorschau erstellen.</span></span></label>
+    </div>
+
+    <div class="card"><h2>Einstellungen schützen</h2><p class="hint">Mit einer Admin-PIN können nur Eltern Schlüssel, Modelle und Profile ändern. Leer lassen für keinen Schutz.</p>
+      <input class="inp" id="sPin" inputmode="numeric" maxlength="6" placeholder="4–6 Ziffern" value="${esc(S.adminPin)}">
+    </div>
+
+    <div class="card"><h2>Sprache</h2><p class="hint">Spracheingabe und Vorlesen nutzen die Funktionen deines Browsers bzw. Handys und kosten keine Tokens. Bei Chrome wird die Spracheingabe über Google-Server erkannt.</p>
+      <label class="check"><input type="checkbox" id="sAutoSend" ${S.voiceAutoSend ? "checked" : ""}><span>Nach der Spracheingabe automatisch senden</span></label>
+      <label class="check"><input type="checkbox" id="sAutoSpeak" ${S.voiceAutoSpeak !== false ? "checked" : ""}><span>Antworten auf Spracheingaben automatisch vorlesen</span></label>
+      <label class="f" for="sRate">Vorlesegeschwindigkeit</label>
+      <select class="inp" id="sRate">${[[0.8,"Langsam"],[1,"Normal"],[1.2,"Schneller"],[1.4,"Schnell"]].map(([v,l]) => `<option value="${v}" ${((S.ttsRate || 1) == v) ? "selected" : ""}>${l}</option>`).join("")}</select>
+      <div class="btnrow"><button class="btn ghost" id="tTest">Stimme testen</button></div>
+      <p class="hint" style="margin:8px 0 0">${STT.Rec ? "" : "Spracheingabe wird in diesem Browser nicht unterstützt. "}${TTS.ok ? "" : "Vorlesen wird in diesem Browser nicht unterstützt."}</p>
+    </div>
+
+    <div class="btnrow"><button class="btn" id="saveS">Speichern</button></div>
+
+    <div class="card" style="margin-top:28px"><h2>Daten auf diesem Gerät</h2><p class="hint">Löscht alle Profile, Chats, Schlüssel und den Verbrauch auf diesem Gerät.</p>
+      <button class="btn danger" id="wipe">Alles löschen</button></div>
+  </div>`);
+  const q = s => sc.querySelector(s);
+  const readForm = () => {
+    sc.querySelectorAll("#mRows [data-k]").forEach(inp => {
+      const m = S.models[+inp.dataset.i], k = inp.dataset.k;
+      m[k] = k === "on" ? inp.checked : (k === "inP" || k === "outP") ? parseFloat(inp.value) || 0 : inp.value.trim();
+    });
+    S.defaultModel = q("#sDef").value; S.maxTokens = +q("#sMax").value || 8192; S.history = +q("#sHist").value || 30;
+    S.router.model = q("#rModel").value; ROUTES.forEach(([k]) => { S.router[k] = q("#r_" + k).value; });
+    S.webSearch = q("#sWeb").checked; S.webMax = Math.min(10, Math.max(1, +q("#sWebMax").value || 3)); S.searchPrice = Math.max(0, parseFloat(q("#sWebPrice").value) || 0);
+    S.artifacts = q("#sArt").checked;
+    S.voiceAutoSend = q("#sAutoSend").checked; S.voiceAutoSpeak = q("#sAutoSpeak").checked; S.ttsRate = +q("#sRate").value || 1;
+    const pin = q("#sPin").value.trim();
+    if (pin && !/^\d{4,6}$/.test(pin)) { toast("Die PIN braucht 4 bis 6 Ziffern"); return false; }
+    S.adminPin = pin; return true;
+  };
+  const persist = async () => {
+    if (!readForm()) return false;
+    S.models = S.models.filter(m => m.id);
+    await saveSettings(); fillModelSelect(); return true;
+  };
+  q("[data-close]").onclick = async () => { if (await persist()) closeScreen(); };
+  q("#saveS").onclick = async () => { if (await persist()) { toast("Gespeichert"); showSettings(); } };
+  q("#addM").onclick = () => { readForm(); S.models.push({ key: uid(), provider: S.providers[0] ? S.providers[0].id : "", id: "", label: "", inP: 0, outP: 0, on: true }); showSettings(); };
+  sc.querySelectorAll("[data-delm]").forEach(b => b.onclick = () => { readForm(); S.models.splice(+b.dataset.delm, 1); showSettings(); });
+  q("#addProv").onclick = async () => { if (await persist()) editProvider(null); };
+  sc.querySelectorAll("[data-prov]").forEach(b => b.onclick = async () => { if (await persist()) editProvider(provById(b.dataset.prov)); });
+  q("#wipe").onclick = async () => {
+    if (!confirm("Wirklich alle Daten auf diesem Gerät löschen? Das lässt sich nicht rückgängig machen.")) return;
+    await DB.clear(); localStorageSafe("set", "stube-last", ""); location.reload();
+  };
+  q("#addP").onclick = async () => { if (await persist()) editProfile(null); };
+  q("#tTest").onclick = () => { if (!TTS.ok) return toast("Vorlesen wird nicht unterstützt"); const r = S.ttsRate; S.ttsRate = +q("#sRate").value || 1; TTS.speak(`Hallo ${me ? me.name : ""}, so klinge ich beim Vorlesen.`); S.ttsRate = r; };
+  sc.querySelectorAll("[data-pid]").forEach(b => b.onclick = async () => { if (await persist()) editProfile(P.find(p => p.id === b.dataset.pid)); });
+}
+
+/* ---------- Anbieter bearbeiten ---------- */
+function editProvider(p) {
+  const isNew = !p;
+  const d = p ? Object.assign({}, p) : { id: uid(), preset: "openrouter", type: "openai", name: PRESETS.openrouter.name, baseUrl: PRESETS.openrouter.baseUrl, apiKey: "" };
+  const models = S.models.filter(m => m.provider === d.id);
+  const sc = openScreen(`<div class="inner">
+    <header class="topbar">${BACK}<div class="title">${isNew ? "Anbieter hinzufügen" : esc(d.name)}</div></header>
+    <div class="card">
+      ${isNew ? `<label class="f" for="vPreset">Anbieter</label><select class="inp" id="vPreset">${["openrouter", "openai", "gemini", "anthropic", "custom"].map(k => `<option value="${k}" ${k === d.preset ? "selected" : ""}>${esc(PRESETS[k].name)}</option>`).join("")}</select>` : ""}
+      <label class="f" for="vName">Name</label><input class="inp" id="vName" value="${esc(d.name)}">
+      <label class="f" for="vKey">API-Schlüssel</label>
+      <div class="row"><input class="inp" id="vKey" type="password" autocomplete="off" value="${esc(d.apiKey)}" placeholder="${esc(PRESETS[d.preset].keyHint)}"><button class="btn ghost" id="vShow" style="margin-left:8px">Zeigen</button></div>
+      <p class="hint" id="vWhere" style="margin:6px 0 0"></p>
+      <label class="f" for="vUrl">Adresse der Schnittstelle</label><input class="inp" id="vUrl" value="${esc(d.baseUrl)}" placeholder="https://…/v1" inputmode="url">
+      <p class="hint" style="margin:6px 0 0">Muss mit https:// beginnen. Bei OpenAI-kompatiblen Anbietern endet sie meist auf /v1.</p>
+    </div>
+    <div class="card"><h2>Modelle dieses Anbieters</h2>
+      ${models.length ? `<div class="plist">${models.map(m => `<div class="pitem" style="cursor:default"><span style="flex:1"><b>${esc(m.label || m.id)}</b><br><span class="meta">${esc(m.id)}${isFree(m) ? " · gratis" : ""}${m.on ? "" : " · aus"}</span></span></div>`).join("")}</div>` : `<p class="hint">Noch keine Modelle. Rufe die Liste ab und wähle aus, oder trage sie in den Einstellungen von Hand ein.</p>`}
+      <div class="btnrow"><button class="btn ghost" id="vFetch">Modelle vom Anbieter abrufen</button></div>
+    </div>
+    <div class="btnrow"><button class="btn" id="vSave">${isNew ? "Anbieter anlegen" : "Speichern"}</button>${!isNew ? `<button class="btn danger" id="vDel">Anbieter löschen</button>` : ""}</div>
+  </div>`);
+  const q = s => sc.querySelector(s);
+  const where = () => { q("#vWhere").textContent = "Schlüssel bekommst du bei " + PRESETS[d.preset].where + "."; };
+  where();
+  if (isNew) q("#vPreset").onchange = e => {
+    const old = PRESETS[d.preset]; d.preset = e.target.value; const pr = PRESETS[d.preset]; d.type = pr.type;
+    if (!q("#vName").value.trim() || q("#vName").value === old.name) q("#vName").value = pr.name;
+    if (!q("#vUrl").value.trim() || q("#vUrl").value === old.baseUrl) q("#vUrl").value = pr.baseUrl;
+    q("#vKey").placeholder = pr.keyHint; where();
+  };
+  q("#vShow").onclick = e => { const k = q("#vKey"); k.type = k.type === "password" ? "text" : "password"; e.target.textContent = k.type === "password" ? "Zeigen" : "Verbergen"; };
+  const read = () => {
+    d.name = q("#vName").value.trim(); d.apiKey = q("#vKey").value.trim(); d.baseUrl = q("#vUrl").value.trim().replace(/\/+$/, "");
+    if (!d.name) { toast("Bitte gib einen Namen ein"); return false; }
+    if (!/^https?:\/\//i.test(d.baseUrl)) { toast("Die Adresse muss mit https:// beginnen"); return false; }
+    return true;
+  };
+  const store = async () => {
+    if (!read()) return false;
+    const ex = provById(d.id); if (ex) Object.assign(ex, d); else S.providers.push(Object.assign({}, d));
+    await saveSettings(); fillModelSelect(); return true;
+  };
+  q("[data-close]").onclick = showSettings;
+  q("#vSave").onclick = async () => { if (await store()) { toast("Gespeichert"); showSettings(); } };
+  q("#vFetch").onclick = async () => { if (await store()) pickModels(provById(d.id)); };
+  const del = q("#vDel");
+  if (del) del.onclick = async () => {
+    if (!confirm(`Anbieter „${d.name}“ mit seinen Modellen entfernen?`)) return;
+    S.providers = S.providers.filter(x => x.id !== d.id); S.models = S.models.filter(m => m.provider !== d.id);
+    await saveSettings(); fillModelSelect(); showSettings();
+  };
+}
+
+async function fetchModelList(p) {
+  let res;
+  if (p.type === "anthropic") res = await fetch(baseUrl(p) + "/v1/models?limit=100", { headers: anthHeaders(p) });
+  else res = await fetch(baseUrl(p) + "/models", { headers: oaHeaders(p) });
+  if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+  const j = await res.json();
+  let list = (j.data || j.models || []).map(x => {
+    const id = String(x.id || x.name || "").replace(/^models\//, "");
+    const pr = x.pricing || {};
+    let inP = pr.prompt != null ? Math.round(+pr.prompt * 1e6 * 1000) / 1000 : null, outP = pr.completion != null ? Math.round(+pr.completion * 1e6 * 1000) / 1000 : null;
+    if (p.type === "anthropic") { const g = /haiku/i.test(id) ? [1, 5] : /sonnet/i.test(id) ? [3, 15] : /opus/i.test(id) ? [5, 25] : [null, null]; inP = g[0]; outP = g[1]; }
+    return { id, label: (p.type === "anthropic" ? x.display_name : p.preset === "openrouter" ? x.name : x.display_name || x.displayName) || id, inP, outP };
+  }).filter(x => x.id);
+  if (p.preset === "openai") list = list.filter(x => /^(gpt|o\d|chatgpt)/i.test(x.id) && !/embed|tts|whisper|dall|moderation|audio|realtime|transcribe|image|search|instruct/i.test(x.id));
+  if (p.preset === "gemini") list = list.filter(x => /gemini|gemma/i.test(x.id) && !/embed|imagen|veo|tts|aqa|image|live|native-audio/i.test(x.id));
+  return list.sort((a, b) => a.label.localeCompare(b.label, "de"));
+}
+async function pickModels(p) {
+  const sc = openScreen(`<div class="inner">
+    <header class="topbar">${BACK}<div class="title">Modelle von ${esc(p.name)}</div></header>
+    <div class="card" style="position:sticky;top:56px;z-index:1">
+      <input class="inp" id="mSearch" type="search" placeholder="Suchen, z. B. llama, mistral, gpt" autocomplete="off">
+      ${p.preset === "openrouter" ? `<label class="check" style="margin-bottom:0"><input type="checkbox" id="mFree" checked><span>Nur Gratis-Modelle</span></label>` : ""}
+    </div>
+    <div id="mList"><p class="hint" style="padding:12px">Lade die Liste …</p></div>
+    <div class="btnrow" style="position:sticky;bottom:12px"><button class="btn" id="mAdd" disabled>Hinzufügen</button></div>
+  </div>`);
+  const q = s => sc.querySelector(s);
+  q("[data-close]").onclick = () => editProvider(p);
+  let list;
+  try { list = await fetchModelList(p); }
+  catch (e) { q("#mList").innerHTML = `<div class="err">${esc(e && ("status" in e) ? friendlyError(e) : "Die Liste konnte nicht geladen werden. Prüfe Adresse und Schlüssel, und ob der Anbieter Anfragen aus dem Browser erlaubt. (" + (e && e.message || e) + ")")}</div>`; return; }
+  const have = new Set(S.models.filter(m => m.provider === p.id).map(m => m.id));
+  const chosen = new Set();
+  const priceTxt = x => /:free$/.test(x.id) ? "gratis" : x.inP != null ? `$${x.inP} / $${x.outP} pro Mio. Tokens` : "Preis bitte selbst eintragen";
+  const draw = () => {
+    const s = q("#mSearch").value.trim().toLowerCase(), free = q("#mFree") && q("#mFree").checked;
+    const vis = list.filter(x => (!free || /:free$/.test(x.id)) && (!s || (x.id + " " + x.label).toLowerCase().includes(s)));
+    q("#mList").innerHTML = vis.length ? `<div class="card plist">${vis.slice(0, 250).map(x => `<label class="check" style="margin:8px 0"><input type="checkbox" data-id="${esc(x.id)}" ${have.has(x.id) || chosen.has(x.id) ? "checked" : ""} ${have.has(x.id) ? "disabled" : ""}><span><b>${esc(x.label)}</b><br><span class="meta" style="color:var(--ink2);font-size:13px">${esc(x.id)} · ${esc(priceTxt(x))}${have.has(x.id) ? " · bereits vorhanden" : ""}</span></span></label>`).join("")}${vis.length > 250 ? `<p class="hint">… und ${vis.length - 250} weitere. Grenze die Suche ein.</p>` : ""}</div>` : `<p class="hint" style="padding:12px">Nichts gefunden.</p>`;
+    q("#mList").querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { c.checked ? chosen.add(c.dataset.id) : chosen.delete(c.dataset.id); upd(); });
+  };
+  const upd = () => { q("#mAdd").disabled = !chosen.size; q("#mAdd").textContent = chosen.size ? `${chosen.size} hinzufügen` : "Hinzufügen"; };
+  q("#mSearch").oninput = draw; if (q("#mFree")) q("#mFree").onchange = draw;
+  draw();
+  q("#mAdd").onclick = async () => {
+    for (const id of chosen) {
+      const x = list.find(y => y.id === id);
+      S.models.push({ key: uid(), provider: p.id, id, label: x.label.replace(/\s*\(free\)\s*$/i, ""), inP: x.inP || 0, outP: x.outP || 0, on: true });
+    }
+    await saveSettings(); fillModelSelect(); toast(`${chosen.size} ${chosen.size === 1 ? "Modell" : "Modelle"} hinzugefügt`); editProvider(p);
+  };
+}
+
+function editProfile(p) {
+  const isNew = !p;
+  const d = p ? Object.assign({}, p) : { id: uid(), name: "", color: COLORS[P.length % COLORS.length], pin: "", kid: false, prompt: "", model: "", external: true };
+  const sc = openScreen(`<div class="inner">
+    <header class="topbar">${BACK}<div class="title">${isNew ? "Neues Profil" : "Profil bearbeiten"}</div></header>
+    <div class="card">
+      <label class="f" for="pName">Name</label><input class="inp" id="pName" value="${esc(d.name)}" placeholder="z. B. Lena">
+      <label class="f">Farbe</label><div class="swatches">${COLORS.map(c => `<button data-c="${c}" style="background:${c}" class="${c === d.color ? "on" : ""}" aria-label="Farbe ${c}"></button>`).join("")}</div>
+      <label class="f" for="pPin">PIN (optional)</label><input class="inp" id="pPin" inputmode="numeric" maxlength="6" placeholder="4–6 Ziffern" value="${esc(d.pin)}">
+      <label class="check"><input type="checkbox" id="pKid" ${d.kid ? "checked" : ""}><span><b>Kindermodus</b><br><span style="color:var(--ink2);font-size:14px">Altersgerechte, sichere Antworten und Hilfe beim Lernen statt fertiger Lösungen.</span></span></label>
+      <label class="check"><input type="checkbox" id="pExt" ${d.external !== false ? "checked" : ""}><span><b>Auch Nicht-Claude-Modelle erlauben</b><br><span style="color:var(--ink2);font-size:14px">Gratis- und Open-Source-Modelle, ChatGPT, Gemini usw. Für Kinder nicht empfohlen, weil deren Schutzmechanismen oft schwächer sind.</span></span></label>
+      <label class="f" for="pModel">Modell</label>
+      <select class="inp" id="pModel"><option value="">Frei wählbar</option>${modelOptions(d.model).replace(/<option value="([^"]*)"( selected)?>/g, '<option value="$1"$2>Immer ')}</select>
+      <label class="f" for="pPrompt">Persönliche Hinweise für die KI (optional)</label>
+      <textarea class="inp" id="pPrompt" placeholder="z. B. Ich bin 12 und gehe in die 6. Klasse.">${esc(d.prompt)}</textarea>
+    </div>
+    <div class="btnrow"><button class="btn" id="pSave">${isNew ? "Profil anlegen" : "Speichern"}</button>${!isNew && P.length > 1 ? `<button class="btn danger" id="pDel">Profil löschen</button>` : ""}</div>
+  </div>`);
+  sc.querySelectorAll(".swatches button").forEach(b => b.onclick = () => { d.color = b.dataset.c; sc.querySelectorAll(".swatches button").forEach(x => x.classList.toggle("on", x === b)); });
+  sc.querySelector("#pKid").onchange = e => { if (e.target.checked) sc.querySelector("#pExt").checked = false; };
+  sc.querySelector("[data-close]").onclick = showSettings;
+  sc.querySelector("#pSave").onclick = async () => {
+    d.name = sc.querySelector("#pName").value.trim(); d.pin = sc.querySelector("#pPin").value.trim();
+    d.kid = sc.querySelector("#pKid").checked; d.external = sc.querySelector("#pExt").checked; d.model = sc.querySelector("#pModel").value; d.prompt = sc.querySelector("#pPrompt").value;
+    if (!d.name) return toast("Bitte gib einen Namen ein");
+    if (d.pin && !/^\d{4,6}$/.test(d.pin)) return toast("Die PIN braucht 4 bis 6 Ziffern");
+    if (d.model && !modelAllowed(modelByKey(d.model), d)) return toast("Dieses Modell ist für das Profil nicht erlaubt");
+    if (isNew) P.push(d); else Object.assign(P.find(x => x.id === d.id), d);
+    await saveProfiles();
+    if (me && me.id === d.id) { me = P.find(x => x.id === d.id); applyAccent(me.color); $("#dAvatar").textContent = me.name[0].toUpperCase(); $("#dName").textContent = me.name; fillModelSelect(); }
+    showSettings();
+  };
+  const del = sc.querySelector("#pDel");
+  if (del) del.onclick = async () => {
+    if (!confirm(`Profil „${d.name}“ mit allen Chats löschen?`)) return;
+    P = P.filter(x => x.id !== d.id); await saveProfiles(); await DB.del("chats:" + d.id);
+    if (me && me.id === d.id) { showPicker(); return; }
+    showSettings();
+  };
+}
+
+/* ---------- Fehler sichtbar machen ---------- */
+window.addEventListener("error", e => toast("Fehler: " + (e.message || "unbekannt")));
+window.addEventListener("unhandledrejection", e => toast("Fehler: " + ((e.reason && e.reason.message) || e.reason || "unbekannt")));
+
+/* ---------- Wiring ---------- */
+$("#menuBtn").onclick = openDrawer;
+$("#scrim").onclick = closeDrawer;
+$("#newBtn").onclick = newChat;
+$("#newBtn2").onclick = () => { newChat(); closeDrawer(); };
+$("#switchBtn").onclick = () => { if (streaming) streaming.abort(); closeDrawer(); showPicker(); };
+$("#usageBtn").onclick = showUsage;
+$("#settingsBtn").onclick = guardSettings;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+boot();
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
