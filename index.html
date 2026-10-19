@@ -227,6 +227,29 @@ table.models .inp{padding:8px}
   #send,.btn:not(.ghost):not(.danger),.fc-icon,.avatar:not(.prov){background:color-mix(in srgb,var(--accent) 72%,white)}
   .chatitem.active{background:color-mix(in srgb,var(--accent) 35%,transparent)}
 }
+.offer{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px;font-family:var(--ui);display:flex;flex-direction:column;gap:10px}
+.offer-head{display:flex;gap:12px;align-items:flex-start}
+.offer-head b{display:block;font-size:16px}
+.offer-head span{color:var(--ink2);font-size:14px;line-height:1.4}
+.offer-ic{font-size:26px;line-height:1}
+.offer-prompt{resize:vertical;min-height:70px;font-size:15px}
+.offer-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.offer-row select{flex:1;min-width:180px;width:auto}
+.offer-ref{margin:0;align-items:center}
+.offer-ref img{width:44px;height:44px;object-fit:cover;border-radius:8px}
+.offer .btnrow{margin-top:2px}
+.gen-imgs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 .4em}
+.gen-img{padding:0;border-radius:16px;overflow:hidden;max-width:min(100%,420px);line-height:0;background:var(--surface2)}
+.gen-img img{width:100%;height:auto;display:block}
+.img-wait{width:min(100%,320px);aspect-ratio:1;border-radius:16px;background:linear-gradient(110deg,var(--surface2) 30%,var(--surface) 50%,var(--surface2) 70%);background-size:300% 100%;animation:shimmer 1.6s linear infinite}
+.img-wait.tall{aspect-ratio:2/3;width:min(70%,240px)}
+.img-wait.wide{aspect-ratio:3/2}
+@keyframes shimmer{to{background-position:-150% 0}}
+@media (prefers-reduced-motion:reduce){.img-wait{animation:none}}
+.pv-content.imgview{display:grid;place-items:center;background:#0d1117;padding:8px}
+.pv-content.imgview img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
+.chips.small .chip{font-size:14px;padding:6px 12px}
+.chip:disabled{opacity:.45;cursor:default}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;z-index:50}
 </style>
 </head>
@@ -373,9 +396,18 @@ Dateien (~~~~datei:) sind dagegen für Downloads in bestimmten Formaten wie Word
 const ROUTER_PROMPT = `Du bist ein Verteiler in einer Chat-App. Ordne die letzte Nachricht der Person genau einer Kategorie zu:
 einfach = kurze Fragen, Smalltalk, einfache Erklärungen, Übersetzungen, kurze Texte, Rechtschreibung
 aktuell = braucht aktuelle Informationen aus dem Internet: Nachrichten, Wetter, Preise, Öffnungszeiten, Sportergebnisse, Termine, aktuelle Produkte oder alles, was sich in letzter Zeit geändert haben könnte
-komplex = Hausaufgaben mit Lösungsweg, längere oder wichtige Texte, Programmieren, Analysen, Planung, Dateien, Dokumente, Apps, Spiele, Diagramme, Bilder auswerten, schwierige Fragen
-Antworte nur mit einem einzigen Wort: einfach, aktuell oder komplex.`;
-const ROUTES = [["einfach", "Einfache Fragen"], ["aktuell", "Aktuelle Infos (mit Websuche)"], ["komplex", "Anspruchsvolle Aufgaben"]];
+bild = die Person möchte, dass jetzt ein Bild, Foto, Logo, eine Illustration oder ein Gemälde erzeugt oder ein vorhandenes Bild verändert wird (nicht: Fragen darüber, ob oder wie das geht; nicht: Diagramme oder Tabellen)
+code = Programmieren, Code, Formeln, Technik-Probleme mit Computern, Handys oder Software
+komplex = Hausaufgaben mit Lösungsweg, längere oder wichtige Texte, Analysen, Planung, Dateien, Dokumente, Apps, Spiele, Diagramme, Bilder auswerten, schwierige Fragen
+Antworte nur mit einem einzigen Wort: einfach, aktuell, bild, code oder komplex.`;
+const ROUTES = [["einfach", "Einfache Fragen"], ["aktuell", "Aktuelle Infos (mit Websuche)"], ["code", "Programmieren und Technik"], ["komplex", "Anspruchsvolle Aufgaben"]];
+const IMG_PRESETS = [
+  { preset: "openai", id: "gpt-image-1-mini", label: "GPT Image Mini (günstig)", imgP: 0.011 },
+  { preset: "openai", id: "gpt-image-1.5", label: "GPT Image 1.5 (beste Qualität)", imgP: 0.034 },
+  { preset: "openrouter", id: "google/gemini-2.5-flash-image", label: "Gemini Flash Image („Nano Banana“)", imgP: 0.04 },
+  { preset: "openrouter", id: "black-forest-labs/flux.2-pro", label: "FLUX.2 Pro", imgP: 0.03 },
+];
+const ASPECTS = [["1:1", "Quadrat"], ["2:3", "Hochformat"], ["3:2", "Querformat"]];
 
 let S = null;        // settings
 let P = [];          // profiles
@@ -475,9 +507,13 @@ function migrate() {
   }
   if (S.webSearch === undefined) { S.webSearch = true; S.webMax = 3; S.searchPrice = 10; ch = true; }
   if (S.artifacts === undefined) { S.artifacts = true; ch = true; }
+  if (!S.router.code) { S.router.code = S.router.komplex; ch = true; }
+  if (S.imageOffer === undefined) { S.imageOffer = true; ch = true; }
+  S.models.forEach(m => { if (!m.kind) { m.kind = "chat"; ch = true; } });
   for (const p of P) {
     if (p.model && !S.models.find(m => m.key === p.model)) { const m = byIdOrKey(p.model); p.model = m ? m.key : ""; ch = true; }
     if (p.external === undefined) { p.external = !p.kid; ch = true; }
+    if (p.images === undefined) { p.images = !p.kid; ch = true; }
   }
   return ch;
 }
@@ -510,7 +546,7 @@ function showOnboarding() {
     if (!key.startsWith("sk-")) { err.textContent = "Der API-Schlüssel beginnt mit „sk-“. Bitte prüfe die Eingabe."; err.classList.remove("hidden"); return; }
     if (!name) { err.textContent = "Bitte gib einen Namen ein."; err.classList.remove("hidden"); return; }
     S = { providers: [{ id: "anthropic", preset: "anthropic", type: "anthropic", name: PRESETS.anthropic.name, baseUrl: PRESETS.anthropic.baseUrl, apiKey: key }], adminPin: "", maxTokens: 8192, history: 30, models: defaultModels(), defaultModel: "" };
-    P = [{ id: uid(), name, color: COLORS[0], pin: "", kid: false, prompt: "", model: "", external: true }];
+    P = [{ id: uid(), name, color: COLORS[0], pin: "", kid: false, prompt: "", model: "", external: true, images: true }];
     migrate(); S.defaultModel = S.models[1].key;
     const btn = sc.querySelector("#obGo"); btn.disabled = true; btn.textContent = "Speichere …";
     try {
@@ -574,7 +610,10 @@ function modelAllowed(m, prof = me) {
   const p = provOf(m);
   return !!(m && m.on && m.id.trim() && p && (prof.external !== false || p.type === "anthropic"));
 }
-function allowedModels() { return S.models.filter(m => modelAllowed(m)); }
+function allowedModels() { return S.models.filter(m => m.kind !== "image" && modelAllowed(m)); }
+function imageModels(prof = me) { return S.models.filter(m => m.kind === "image" && modelAllowed(m, prof) && provOf(m).type !== "anthropic"); }
+function imageAllowed(prof = me) { return prof.images !== false && imageModels(prof).length > 0; }
+function defaultImageModel() { const ims = imageModels(); return ims.find(m => m.key === S.imageModel) || ims[0] || null; }
 function routerReady() { const r = S.router && modelByKey(S.router.model); return !!(r && r.on && provOf(r)); }
 function fillModelSelect() {
   const sel = $("#modelSelect"); const ms = allowedModels();
@@ -583,6 +622,7 @@ function fillModelSelect() {
     const list = ms.filter(m => m.provider === p.id);
     if (list.length) html += `<optgroup label="${esc(p.name)}">${list.map(m => `<option value="${esc(m.key)}">${esc(m.label || m.id)}${isFree(m) ? " · gratis" : ""}</option>`).join("")}</optgroup>`;
   }
+  if (imageAllowed()) html += `<optgroup label="Bilder erstellen">${imageModels().map(m => `<option value="${esc(m.key)}">🎨 ${esc(m.label || m.id)}</option>`).join("")}</optgroup>`;
   sel.innerHTML = html;
   const locked = me.model && ms.find(m => m.key === me.model);
   const pref = locked ? me.model : S.defaultModel;
@@ -593,6 +633,7 @@ function fillModelSelect() {
 }
 function updateWebBtn() {
   const v = $("#modelSelect").value; const m = modelByKey(v);
+  input.placeholder = m && m.kind === "image" ? "Beschreibe das Bild, das du möchtest" : "Schreib eine Nachricht";
   const ok = S.webSearch !== false && (v === "auto" || (m && provOf(m) && provOf(m).type === "anthropic"));
   const b = $("#webBtn"); b.classList.toggle("hidden", !ok);
   b.classList.toggle("on", ok && webOn); b.setAttribute("aria-pressed", ok && webOn ? "true" : "false");
@@ -659,17 +700,30 @@ function msgEl(m) {
     const b = document.createElement("div"); b.className = "bubble";
     (m.images || []).forEach(i => { const im = document.createElement("img"); im.src = `data:${i.media_type};base64,${i.data}`; im.alt = "Angehängtes Bild"; b.append(im); });
     b.append(document.createTextNode(m.text)); d.append(b);
+  } else if (m.offer) {
+    d.append(offerEl(m));
   } else {
     d.innerHTML = `<div class="body"></div>`;
     const body = d.querySelector(".body");
     if (m.text) renderBody(body, m.text);
+    if ((m.images || []).length) {
+      const g = document.createElement("div"); g.className = "gen-imgs";
+      m.images.forEach(i => {
+        const b = document.createElement("button"); b.className = "gen-img"; b.setAttribute("aria-label", "Bild groß anzeigen");
+        const im = document.createElement("img"); im.alt = m.imgPrompt || "Erstelltes Bild";
+        im.onload = () => { const sc = $("#scroller"); if (sc.scrollHeight - sc.scrollTop - sc.clientHeight < im.clientHeight + 160) sc.scrollTop = sc.scrollHeight; };
+        im.src = imgSrc(i); b.append(im);
+        b.onclick = () => openImage(i, m.imgPrompt); g.append(b);
+      });
+      body.append(g);
+    }
     if (m.error) { const e = document.createElement("div"); e.className = "err"; e.textContent = m.error; body.append(e); }
     if ((m.sources || []).length) {
       const s = document.createElement("div"); s.className = "sources";
       s.innerHTML = `<span>Quellen</span>` + m.sources.map(x => { let host = x.url; try { host = new URL(x.url).hostname.replace(/^www\./, ""); } catch {} return `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" title="${esc(x.title)}">${esc(host)}</a>`; }).join("");
       d.append(s);
     }
-    if (m.text || m.usage) d.append(actionsEl(m));
+    if (m.text || m.usage || (m.images || []).length) d.append(actionsEl(m));
   }
   return d;
 }
@@ -685,10 +739,17 @@ function actionsEl(m) {
       a.append(v);
     }
   }
+  if ((m.images || []).length && m.imgPrompt) {
+    const v = document.createElement("button"); v.textContent = "Neue Variante";
+    v.onclick = () => { if (streaming) return; const im = modelByKey(m.imgModel); const model = im && modelAllowed(im) ? im : defaultImageModel(); if (!model) return toast("Kein Bildmodell verfügbar"); createImage({ model, prompt: m.imgPrompt, refs: [], aspect: m.imgAspect || "1:1" }); };
+    const e = document.createElement("button"); e.textContent = "Ändern";
+    e.onclick = () => { input.value = ""; input.placeholder = "Was soll ich am Bild ändern?"; input.focus(); };
+    a.append(v, e);
+  }
   if (m.usage) {
     const u = m.usage; const s = document.createElement("span"); s.className = "usage";
     const who = u.model ? (u.route ? "Auto → " : "") + u.model + (u.used ? ` (${u.used.split("/").pop()})` : "") : "";
-    s.textContent = [who, `${u.est ? "≈ " : ""}${(u.in + u.out).toLocaleString("de-DE")} Tokens`, u.searches ? `${u.searches} ${u.searches === 1 ? "Suche" : "Suchen"}` : "", `ca. ${fmtUSD(u.cost)}`].filter(Boolean).join(" · ");
+    s.textContent = [who, u.images ? `${u.images} ${u.images === 1 ? "Bild" : "Bilder"}` : `${u.est ? "≈ " : ""}${(u.in + u.out).toLocaleString("de-DE")} Tokens`, u.searches ? `${u.searches} ${u.searches === 1 ? "Suche" : "Suchen"}` : "", `ca. ${fmtUSD(u.cost)}`].filter(Boolean).join(" · ");
     a.append(s);
   }
   return a;
@@ -696,6 +757,7 @@ function actionsEl(m) {
 
 /* ---------- Sprachausgabe ---------- */
 function speakableText(t) {
+  if (!t) return "";
   return splitFiles(t).map(p => p.file ? ` Ich habe die Datei ${p.file.name.replace(/\.[^.]+$/, "").replace(/[_-]/g, " ")} erstellt. ` : p.art ? ` Ich habe ${p.art.title} erstellt. ` : p.text).join("")
     .replace(/```[\s\S]*?```/g, " (Codeblock) ")
     .replace(/`([^`]+)`/g, "$1")
@@ -806,6 +868,8 @@ function loadLib(key) {
 const extOf = name => (name.split(".").pop() || "txt").toLowerCase();
 
 async function buildFile(f) {
+  if (f.b64) return b64ToBlob(f.b64, f.type || "image/png");
+  if (f.url) { const r = await fetch(f.url); if (!r.ok) throw new Error("Das Bild konnte nicht geladen werden."); return await r.blob(); }
   const ext = extOf(f.name); const type = MIME[ext] || "text/plain";
   if (ext === "docx") { await loadLib("docx"); return new Blob([await mdToDocx(f.content, f.name)], { type }); }
   if (ext === "pdf") { await loadLib("pdf"); return mdToPdf(f.content); }
@@ -1184,20 +1248,26 @@ function systemPrompt(web) {
   if (web) s += "\n\nDu kannst im Internet suchen. Nutze die Suche für aktuelle Informationen. Die Quellen werden automatisch unter deiner Antwort angezeigt, liste sie nicht noch einmal auf.";
   s += "\n\n" + FILE_PROMPT;
   if (S.artifacts !== false) s += "\n\n" + ARTIFACT_PROMPT;
+  s += "\n\n" + (imageAllowed()
+    ? "Diese App hat ein eigenes Bildmodell. Wenn jemand ein Bild, Foto, Logo oder eine Illustration möchte, soll er es einfach beschreiben, z. B. „Erstelle ein Bild von …“. Die App bietet dann die Bilderstellung an. Du selbst erzeugst keine Bilddateien. Nachrichten in eckigen Klammern wie „[Bild erstellt …]“ stehen für Bilder, die die App erzeugt hat."
+    : "Fotos oder Bilddateien kannst du nicht erzeugen. Biete stattdessen eine Zeichnung als SVG-Artefakt an.");
   if (me.kid) s += "\n\n" + KID_PROMPT;
   if (me.prompt && me.prompt.trim()) s += "\n\nZusätzliche Hinweise:\n" + me.prompt.trim();
   return s;
 }
 // neutraler Verlauf: [{role, text, images}]
 function apiMessages() {
-  let msgs = cur.messages.filter(m => !m.error && (m.text || (m.images || []).length));
+  let msgs = cur.messages.filter(m => !m.error && !m.offer && (m.text || m.note || (m.images || []).length));
   msgs = msgs.slice(-Math.max(2, S.history || 30));
   while (msgs.length && msgs[0].role !== "user") msgs.shift();
   const out = [];
   for (const m of msgs) {
+    const text = m.text || m.note || "";
+    const imgs = m.role === "user" ? (m.images || []) : [];
+    if (!text && !imgs.length) continue;
     const last = out[out.length - 1];
-    if (last && last.role === m.role) { last.text = [last.text, m.text].filter(Boolean).join("\n\n"); last.images = last.images.concat(m.images || []); }
-    else out.push({ role: m.role, text: m.text || "", images: (m.images || []).slice() });
+    if (last && last.role === m.role) { last.text = [last.text, text].filter(Boolean).join("\n\n"); last.images = last.images.concat(imgs); }
+    else out.push({ role: m.role, text, images: imgs.slice() });
   }
   if (out.length && out[out.length - 1].role === "assistant") out.pop();
   return out;
@@ -1207,6 +1277,9 @@ function friendlyError(e) {
   if (e.msg) return e.msg;
   let msg = "";
   try { let j = JSON.parse(body); if (Array.isArray(j)) j = j[0]; const er = j.error || j; msg = (typeof er === "string" ? er : er.message) || ""; } catch { msg = body.slice(0, 200); }
+  if (/verif/i.test(msg) && /organi[sz]ation/i.test(msg)) return "OpenAI verlangt für Bildmodelle eine einmalige Verifizierung: platform.openai.com → Settings → Organization → General → Verify Organization. Danach kann es bis zu 15 Minuten dauern.";
+  if (/moderation|content.?policy|safety|blocked/i.test(msg)) return `${pn} hat die Anfrage mit seinem Inhaltsfilter abgelehnt. Formuliere die Beschreibung etwas anders.`;
+  if (/scoped to a workspace|anthropic-workspace-id/i.test(msg)) return "Dieser Claude-Schlüssel gehört zu keinem Workspace. Erstelle in der Claude Console einen Schlüssel innerhalb eines Workspaces und trage ihn ein, oder gib unter Einstellungen → Anbieter → Anthropic die Workspace-ID (wrkspc_…) ein.";
   if (status === 401 || status === 403 && /key|auth|permission/i.test(msg)) return `Der API-Schlüssel für ${pn} wurde abgelehnt. Prüfe ihn in den Einstellungen.`;
   if (status === 402 || /credit balance|insufficient|quota/i.test(msg)) return `Das Guthaben bei ${pn} ist aufgebraucht oder das Kontingent erreicht. (${msg})`;
   if (status === 429) return `${pn}: Zu viele Anfragen oder Gratis-Limit erreicht. Warte etwas oder wähle ein anderes Modell. (${msg})`;
@@ -1217,7 +1290,7 @@ function friendlyError(e) {
   return `Fehler ${status || ""} bei ${pn}: ${msg || "Unbekannter Fehler"}`;
 }
 function baseUrl(p) { return (p.baseUrl || PRESETS[p.preset || "custom"].baseUrl || "").replace(/\/+$/, ""); }
-function anthHeaders(p) { return { "content-type": "application/json", "x-api-key": p.apiKey || "", "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }; }
+function anthHeaders(p) { const h = { "content-type": "application/json", "x-api-key": p.apiKey || "", "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }; if (p.workspace) h["anthropic-workspace-id"] = p.workspace; return h; }
 function oaHeaders(p) { const h = { "content-type": "application/json" }; if (p.apiKey) h.Authorization = "Bearer " + p.apiKey; return h; }
 
 async function readSSE(res, onEvent) {
@@ -1339,7 +1412,7 @@ async function routeRequest(signal) {
   const rm = modelByKey(S.router.model);
   const r = await complete(rm, ROUTER_PROMPT, content, signal);
   const t = r.text.toLowerCase();
-  const cat = /aktuell/.test(t) ? "aktuell" : /komplex/.test(t) ? "komplex" : /einfach/.test(t) ? "einfach" : "komplex";
+  const cat = ["aktuell", "bild", "code", "komplex", "einfach"].find(c => t.includes(c)) || "komplex";
   return { cat, usage: { in: r.inTok, out: r.outTok, cost: (r.inTok * rm.inP + r.outTok * rm.outP) / 1e6 } };
 }
 
@@ -1349,11 +1422,22 @@ async function send() {
   const viaVoice = STT.used; STT.used = false;
   if (!cur) { cur = { id: uid(), title: (text || "Bild").slice(0, 48), updated: Date.now(), messages: [] }; chats.push(cur); }
   const choice = $("#modelSelect").value;
+  const userImgs = pending;
+  const intent = imageIntent(text, userImgs);
   cur.messages.push({ role: "user", text, images: pending });
-  pending = []; renderPreviews(); input.value = ""; autoGrow();
+  pending = []; renderPreviews(); input.value = ""; autoGrow(); updateWebBtn();
   cur.updated = Date.now(); await saveChats();
   renderChat();
+  const chosen = modelByKey(choice);
+  if (chosen && chosen.kind === "image") {
+    const refs = userImgs.length ? userImgs : (intent && intent.edit && lastImageMsg() ? [lastImageMsg().images[0]] : []);
+    return createImage({ model: chosen, prompt: text, refs, aspect: "1:1" });
+  }
+  if (intent && S.imageOffer !== false && imageAllowed()) return offerImage(text, intent);
+  return runChat(choice, viaVoice);
+}
 
+async function runChat(choice, viaVoice) {
   const sc = $("#scroller");
   const reply = { role: "assistant", text: "" };
   const el = document.createElement("div"); el.className = "msg assistant";
@@ -1374,10 +1458,20 @@ async function send() {
       cb.status("Wählt das passende Modell …");
       try { const rr = await routeRequest(streaming.signal); cat = rr.cat; route = rr.usage; }
       catch (e) { if (e && e.name === "AbortError") throw e; cat = "komplex"; console.warn("Automatik fehlgeschlagen:", e); }
+      if (cat === "bild") {
+        if (imageAllowed() && S.imageOffer !== false) {
+          streaming = null; updateSend(); el.remove();
+          if (route.cost) await addUsage(route.in, route.out, route.cost);
+          const last = cur.messages[cur.messages.length - 1];
+          return offerImage(last.text, { edit: !!((last.images || []).length || lastImageMsg()), fromUpload: !!(last.images || []).length });
+        }
+        cat = "komplex";
+      }
       m = resolveRoute(cat);
       if (cat === "aktuell") web = true;
     } else m = modelByKey(choice);
-    if (!m || !provOf(m)) throw { msg: "Kein Modell verfügbar. Prüfe die Modelle und Anbieter in den Einstellungen." };
+    if (!m || !provOf(m) || m.kind === "image") m = resolveRoute("komplex");
+    if (!m) throw { msg: "Kein Modell verfügbar. Prüfe die Modelle und Anbieter in den Einstellungen." };
     const p = provOf(m);
     web = web && p.type === "anthropic" && S.webSearch !== false;
     cb.status((cat ? "Automatisch → " : "") + (m.label || m.id) + (web ? " · mit Websuche" : ""));
@@ -1402,6 +1496,144 @@ async function send() {
   cur.messages.push(reply); cur.updated = Date.now(); await saveChats();
   const done = msgEl(reply); el.replaceWith(done); sc.scrollTop = sc.scrollHeight;
   if (viaVoice && S.voiceAutoSpeak !== false && !reply.error && reply.text) TTS.speak(reply.text, done.querySelector("[data-speak]"));
+}
+
+/* ---------- Bilder erstellen ---------- */
+const IMG_NOUN = /(bild|bilder|foto|fotos|grafik|illustration|logo|poster|plakat|wallpaper|zeichnung|gemälde|avatar|sticker|comic|porträt|portrait|image|picture|photo)/i;
+const IMG_VERB = /\b(erstell|generier|mach|mal|male|zeichne|entwirf|entwerf|design|kreier|gestalte|zauber|create|draw|generate|make|paint|render)/i;
+const EDIT_VERB = /\b(änder|bearbeit|entfern|ersetz|tausch|füg|heller|dunkler|bunter|realistischer|größer|kleiner|hintergrund|verwandl|im stil|als (comic|gemälde|zeichnung|aquarell|foto)|statt|andere farbe|noch ?mal|variante|mach (es|ihn|sie|das|den|die|ihm|ihr))/i;
+const IMG_STRONG = /\b(male|mal mir|mal uns|zeichne|draw|paint)\b/i;
+const NOT_IMG = /(diagramm|tabelle|mindmap|flussdiagramm|zeitstrahl|chart|liste|formel)/i;
+const imgSrc = i => i.url || `data:${i.media_type || "image/png"};base64,${i.data}`;
+function lastImageMsg() {
+  if (!cur) return null;
+  for (let i = cur.messages.length - 1; i >= 0; i--) {
+    const m = cur.messages[i];
+    if (m.role !== "assistant" || m.offer) continue;
+    return (m.images || []).length ? m : null;
+  }
+  return null;
+}
+function imageIntent(text, userImgs) {
+  const t = (text || "").trim(); if (!t) return null;
+  const question = /\?\s*$/.test(t) && /^(kannst|kann|könntest|wie|was|warum|wieso|gibt|geht|bist|hast|welche|wo)\b/i.test(t);
+  if (question) return null;
+  if (userImgs.length) return (EDIT_VERB.test(t) || (IMG_VERB.test(t) && IMG_NOUN.test(t))) ? { edit: true, fromUpload: true } : null;
+  if (lastImageMsg() && EDIT_VERB.test(t)) return { edit: true };
+  if ((IMG_NOUN.test(t) && IMG_VERB.test(t)) || (IMG_STRONG.test(t) && !NOT_IMG.test(t))) return { edit: false };
+  return null;
+}
+const centsTxt = p => !p ? "" : p < 0.015 ? "ca. 1 Cent" : `ca. ${Math.round(p * 100)} Cent`;
+async function offerImage(text, intent) {
+  const im = defaultImageModel();
+  const m = { role: "assistant", text: "", offer: { prompt: text, model: im ? im.key : "", aspect: "1:1", useRef: !!intent.edit, fromUpload: !!intent.fromUpload } };
+  cur.messages.push(m); cur.updated = Date.now(); await saveChats();
+  const sc = $("#scroller"); sc.append(msgEl(m)); sc.scrollTop = sc.scrollHeight;
+}
+function offerEl(m) {
+  const o = m.offer; const ims = imageModels();
+  const userMsg = cur.messages[cur.messages.indexOf(m) - 1];
+  const ref = o.fromUpload ? userMsg && (userMsg.images || [])[0] : (lastImageMsg() || {}).images && lastImageMsg().images[0];
+  const box = document.createElement("div"); box.className = "offer";
+  box.innerHTML = `<div class="offer-head"><span class="offer-ic" aria-hidden="true">🎨</span><div><b>${o.useRef ? "Bild verändern?" : "Bild erstellen?"}</b><span>Dafür nutze ich ein Spezial-Modell für Bilder. Du kannst die Beschreibung noch anpassen.</span></div></div>
+    <textarea class="inp offer-prompt" rows="2" aria-label="Bildbeschreibung">${esc(o.prompt)}</textarea>
+    <div class="offer-row">
+      <select class="inp offer-model" aria-label="Bildmodell">${ims.map(x => `<option value="${esc(x.key)}" ${x.key === o.model ? "selected" : ""}>${esc(x.label || x.id)}${x.imgP ? " · " + centsTxt(x.imgP) : ""}</option>`).join("")}</select>
+      <div class="seg offer-aspect" role="radiogroup" aria-label="Format">${ASPECTS.map(([v, l]) => `<button data-a="${v}" class="${v === o.aspect ? "on" : ""}" role="radio" aria-checked="${v === o.aspect}">${l}</button>`).join("")}</div>
+    </div>
+    ${ref ? `<label class="check offer-ref"><input type="checkbox" ${o.useRef ? "checked" : ""}><img src="${esc(imgSrc(ref))}" alt=""><span>${o.fromUpload ? "Dein Foto als Vorlage verwenden" : "Letztes Bild als Vorlage verwenden"}</span></label>` : ""}
+    <div class="btnrow"><button class="btn offer-go"></button><button class="btn ghost offer-no">Lieber als Text antworten</button></div>`;
+  const q = s => box.querySelector(s);
+  const label = () => { const x = modelByKey(q(".offer-model").value); const useRef = ref && q(".offer-ref input").checked; q(".offer-go").textContent = (useRef ? "Bild verändern" : "Bild erstellen") + (x && x.imgP ? " · " + centsTxt(x.imgP) : ""); };
+  label();
+  q(".offer-model").onchange = () => { o.model = q(".offer-model").value; label(); };
+  if (ref) q(".offer-ref input").onchange = label;
+  box.querySelectorAll(".offer-aspect button").forEach(b => b.onclick = () => { o.aspect = b.dataset.a; box.querySelectorAll(".offer-aspect button").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", x === b); }); });
+  const drop = async () => { cur.messages = cur.messages.filter(x => x !== m); await saveChats(); box.closest(".msg").remove(); };
+  q(".offer-go").onclick = async () => {
+    if (streaming) return;
+    const prompt = q(".offer-prompt").value.trim(); if (!prompt) return toast("Bitte beschreibe das Bild");
+    const model = modelByKey(q(".offer-model").value); if (!model) return toast("Kein Bildmodell ausgewählt");
+    const refs = ref && q(".offer-ref input").checked ? [ref] : [];
+    await drop(); createImage({ model, prompt, refs, aspect: o.aspect });
+  };
+  q(".offer-no").onclick = async () => {
+    if (streaming) return;
+    await drop();
+    const sel = $("#modelSelect").value, sm = modelByKey(sel);
+    runChat(sm && sm.kind === "image" ? (routerReady() ? "auto" : (allowedModels()[0] || {}).key) : sel, false);
+  };
+  return box;
+}
+async function createImage(o) {
+  const sc = $("#scroller"); const m = o.model;
+  const el = document.createElement("div"); el.className = "msg assistant";
+  el.innerHTML = `<div class="body"><div class="img-wait ${o.aspect === "2:3" ? "tall" : o.aspect === "3:2" ? "wide" : ""}"></div></div><div class="status">${esc((o.refs.length ? "Verändert das Bild mit " : "Erstellt das Bild mit ") + (m.label || m.id))} … das dauert meist 10–60 Sekunden.</div>`;
+  sc.append(el); sc.scrollTop = sc.scrollHeight;
+  streaming = new AbortController(); updateSend();
+  const reply = { role: "assistant", text: "", images: [], imgPrompt: o.prompt, imgModel: m.key, imgAspect: o.aspect, note: `[Bild ${o.refs.length ? "verändert" : "erstellt"} mit der Beschreibung: „${o.prompt}“]` };
+  let prompt = o.prompt;
+  if (me.kid) prompt += ". Kinderfreundlich, jugendfrei, ohne Gewalt.";
+  try {
+    const r = await generateImage(m, prompt, o.refs, o.aspect, streaming.signal);
+    reply.images = r.images;
+    reply.usage = { in: 0, out: 0, cost: r.cost, model: m.label || m.id, images: r.images.length };
+    await addUsage(0, 0, r.cost);
+  } catch (e) {
+    if (e && e.name === "AbortError") reply.text = "_(abgebrochen)_";
+    else if (e && ("status" in e || "msg" in e)) reply.error = friendlyError(e);
+    else reply.error = "Keine Verbindung zum Bild-Anbieter. Prüfe deine Internetverbindung. (" + (e && e.message || e) + ")";
+    delete reply.note;
+  }
+  streaming = null; updateSend();
+  cur.messages.push(reply); cur.updated = Date.now(); await saveChats();
+  el.replaceWith(msgEl(reply)); sc.scrollTop = sc.scrollHeight;
+}
+function b64ToBlob(b64, type) {
+  const bin = atob(b64); const a = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return new Blob([a], { type: type || "image/png" });
+}
+async function generateImage(m, prompt, refs, aspect, signal) {
+  const p = provOf(m); const sizes = { "1:1": "1024x1024", "2:3": "1024x1536", "3:2": "1536x1024" };
+  const json = body => ({ method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+  let res;
+  if (p.type === "anthropic") throw { msg: "Claude kann keine Bilder erzeugen. Wähle ein Bildmodell von OpenAI oder OpenRouter." };
+  if (p.preset === "openrouter") {
+    const body = { model: m.id, prompt, n: 1, aspect_ratio: aspect };
+    if (refs.length) body.input_references = refs.map(i => ({ type: "image_url", image_url: { url: imgSrc(i) } }));
+    res = await fetch(baseUrl(p) + "/images", json(body));
+  } else if (refs.length) {
+    const fd = new FormData();
+    fd.append("model", m.id); fd.append("prompt", prompt); fd.append("size", sizes[aspect] || "1024x1024");
+    if (/gpt-image/i.test(m.id)) fd.append("quality", "medium");
+    const blobs = await Promise.all(refs.map(async i => i.data ? b64ToBlob(i.data, i.media_type) : (await fetch(i.url)).blob()));
+    blobs.forEach((b, k) => fd.append(refs.length > 1 ? "image[]" : "image", b, `vorlage${k + 1}.${(b.type.split("/")[1] || "png").replace("jpeg", "jpg")}`));
+    const h = oaHeaders(p); delete h["content-type"];
+    res = await fetch(baseUrl(p) + "/images/edits", { method: "POST", signal, headers: h, body: fd });
+  } else {
+    const body = { model: m.id, prompt, n: 1, size: sizes[aspect] || "1024x1024" };
+    if (/gpt-image/i.test(m.id)) body.quality = "medium"; else if (p.preset !== "openai") body.response_format = "b64_json";
+    res = await fetch(baseUrl(p) + "/images/generations", json(body));
+  }
+  if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+  const j = await res.json();
+  const images = (j.data || []).map(d => d.b64_json ? { media_type: d.media_type || (d.output_format ? "image/" + d.output_format : "image/png"), data: d.b64_json } : d.url ? { url: d.url } : null).filter(Boolean);
+  if (!images.length) throw { msg: "Der Anbieter hat kein Bild zurückgegeben. Vielleicht hat sein Inhaltsfilter die Beschreibung abgelehnt. Formuliere sie etwas anders." };
+  const cost = j.usage && j.usage.cost != null ? +j.usage.cost : (m.imgP || 0) * images.length;
+  return { images, cost };
+}
+function openImage(i, prompt) {
+  const ext = ((i.media_type || "image/png").split("/")[1] || "png").replace("jpeg", "jpg").replace(/\+.*/, "");
+  const f = { name: slug(prompt || "bild").slice(0, 40) + "." + ext, b64: i.data, type: i.media_type, url: i.url, done: true };
+  const sc = openScreen(`<div class="pv">
+    <header class="topbar pv-bar"><button class="iconbtn" data-close aria-label="Zurück"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="title">Bild<span class="pv-type">${esc(prompt || "")}</span></div></header>
+    <div class="pv-content imgview"><img src="${esc(imgSrc(i))}" alt="${esc(prompt || "Erstelltes Bild")}"></div>
+    <div class="pv-foot" id="pvFoot"></div></div>`);
+  sc.classList.add("noscroll");
+  sc.querySelector("#pvFoot").append(fileButtons(f, "pv-btns"));
+  sc.querySelector("[data-close]").onclick = () => { sc.classList.remove("noscroll"); closeScreen(); };
 }
 
 async function addUsage(i, o, c) {
@@ -1432,7 +1664,7 @@ async function showUsage() {
 /* ---------- Settings ---------- */
 const BACK = `<button class="iconbtn" data-close aria-label="Zurück"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>`;
 const provShort = id => { const p = provById(id); return p ? p.name.split(" (")[0] : "?"; };
-function modelOptions(sel, filter = () => true) {
+function modelOptions(sel, filter = m => m.kind !== "image") {
   return S.models.filter(m => m.id && filter(m)).map(m => `<option value="${esc(m.key)}" ${m.key === sel ? "selected" : ""}>${esc(provShort(m.provider))} · ${esc(m.label || m.id)}</option>`).join("");
 }
 function guardSettings() {
@@ -1444,7 +1676,7 @@ function showSettings() {
     <header class="topbar">${BACK}<div class="title">Einstellungen</div></header>
 
     <div class="card"><h2>Profile</h2><p class="hint">Jede Person hat eigene Chats. Eine PIN verhindert, dass andere sie lesen.</p>
-      <div class="plist">${P.map(p => `<button class="pitem" data-pid="${p.id}"><span class="avatar" style="background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${[p.kid ? "Kindermodus" : "", p.pin ? "PIN" : "", p.model ? "festes Modell" : "", p.external === false ? "nur Claude" : ""].filter(Boolean).join(", ") || "Standard"}</span></span></button>`).join("")}</div>
+      <div class="plist">${P.map(p => `<button class="pitem" data-pid="${p.id}"><span class="avatar" style="background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${[p.kid ? "Kindermodus" : "", p.pin ? "PIN" : "", p.model ? "festes Modell" : "", p.external === false ? "nur Claude" : "", p.images === false ? "keine Bilder" : ""].filter(Boolean).join(", ") || "Standard"}</span></span></button>`).join("")}</div>
       <div class="btnrow"><button class="btn ghost" id="addP">Profil hinzufügen</button></div>
     </div>
 
@@ -1453,14 +1685,16 @@ function showSettings() {
       <div class="btnrow"><button class="btn ghost" id="addProv">Anbieter hinzufügen</button></div>
     </div>
 
-    <div class="card"><h2>Modelle und Preise</h2><p class="hint">Preise in US-Dollar pro Million Tokens, nur für die Kostenschätzung. Prüfe sie auf den Preisseiten der Anbieter. Modelle mit „:free“ am Ende sind bei OpenRouter kostenlos.</p>
-      <div class="tablewrap"><table class="models"><thead><tr><th>An</th><th>Anbieter</th><th>Name</th><th>Modell-ID</th><th>Eingabe</th><th>Ausgabe</th><th></th></tr></thead><tbody id="mRows">
+    <div class="card"><h2>Modelle und Preise</h2><p class="hint">Preise in US-Dollar pro Million Tokens (bei Bildmodellen pro Bild), nur für die Kostenschätzung. Prüfe sie auf den Preisseiten der Anbieter. Modelle mit „:free“ am Ende sind bei OpenRouter kostenlos.</p>
+      <div class="tablewrap"><table class="models"><thead><tr><th>An</th><th>Art</th><th>Anbieter</th><th>Name</th><th>Modell-ID</th><th>Eingabe</th><th>Ausgabe</th><th>$/Bild</th><th></th></tr></thead><tbody id="mRows">
       ${S.models.map((m, i) => `<tr><td><input type="checkbox" data-i="${i}" data-k="on" ${m.on ? "checked" : ""} aria-label="Aktiv"></td>
+        <td><select class="inp" data-i="${i}" data-k="kind" style="width:86px"><option value="chat" ${m.kind !== "image" ? "selected" : ""}>Chat</option><option value="image" ${m.kind === "image" ? "selected" : ""}>Bild</option></select></td>
         <td><select class="inp" data-i="${i}" data-k="provider" style="width:120px">${S.providers.map(p => `<option value="${esc(p.id)}" ${p.id === m.provider ? "selected" : ""}>${esc(provShort(p.id))}</option>`).join("")}</select></td>
         <td><input class="inp" data-i="${i}" data-k="label" value="${esc(m.label)}" style="min-width:130px"></td>
         <td><input class="inp" data-i="${i}" data-k="id" value="${esc(m.id)}" style="min-width:170px"></td>
         <td><input class="inp" data-i="${i}" data-k="inP" type="number" step="0.01" min="0" value="${m.inP}" style="width:76px"></td>
         <td><input class="inp" data-i="${i}" data-k="outP" type="number" step="0.01" min="0" value="${m.outP}" style="width:76px"></td>
+        <td><input class="inp" data-i="${i}" data-k="imgP" type="number" step="0.001" min="0" value="${m.imgP || 0}" style="width:76px" ${m.kind === "image" ? "" : "disabled"}></td>
         <td><button class="iconbtn" data-delm="${i}" aria-label="Modell entfernen"><svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></td></tr>`).join("")}
       </tbody></table></div>
       <div class="btnrow"><button class="btn ghost" id="addM">Modell von Hand hinzufügen</button></div>
@@ -1473,10 +1707,18 @@ function showSettings() {
       <input class="inp" id="sHist" type="number" min="2" max="200" value="${S.history}">
     </div>
 
-    <div class="card"><h2>Automatische Modellwahl</h2><p class="hint">Bei „Automatisch“ liest ein günstiges Verteiler-Modell kurz jede Nachricht und schickt sie an das passende Modell. Das kostet pro Nachricht nur einen Bruchteil eines Cents. Für aktuelle Infos sollte ein Claude-Modell gewählt sein, weil nur dort die Websuche eingebaut ist. Kinderprofile ohne Freigabe nutzen immer Claude.</p>
+    <div class="card"><h2>Automatische Modellwahl</h2><p class="hint">Bei „Automatisch“ liest ein günstiges Verteiler-Modell kurz jede Nachricht und schickt sie an das passende Modell. Bildwünsche werden erkannt und an ein Bildmodell weitergereicht. Das kostet pro Nachricht nur einen Bruchteil eines Cents. Für aktuelle Infos sollte ein Claude-Modell gewählt sein, weil nur dort die Websuche eingebaut ist. Kinderprofile ohne Freigabe nutzen immer Claude.</p>
       <label class="f" for="rModel">Verteiler-Modell</label>
       <select class="inp" id="rModel"><option value="">Aus (keine Automatik)</option>${modelOptions(S.router.model)}</select>
       ${ROUTES.map(([k, l]) => `<label class="f" for="r_${k}">${l}</label><select class="inp" id="r_${k}">${modelOptions(S.router[k])}</select>`).join("")}
+    </div>
+
+    <div class="card" id="imgCard"><h2>Bilder erstellen</h2><p class="hint">Wenn jemand nach einem Bild fragt, bietet die Stube ein Bildmodell an, mit Preis und erst nach Bestätigung. Claude selbst kann keine Bilder erzeugen, dafür brauchst du OpenAI oder OpenRouter als Anbieter. Ein Bild kostet je nach Modell etwa 1 bis 5 Cent.</p>
+      <label class="check"><input type="checkbox" id="sImgOffer" ${S.imageOffer !== false ? "checked" : ""}><span>Bilderstellung anbieten, wenn nach einem Bild gefragt wird</span></label>
+      ${S.models.some(m => m.kind === "image") ? `<label class="f" for="sImgModel">Vorausgewähltes Bildmodell</label><select class="inp" id="sImgModel">${modelOptions(S.imageModel, m => m.kind === "image")}</select>` : `<p class="hint" style="margin:8px 0 0">Noch kein Bildmodell eingerichtet.</p>`}
+      <span class="f">Schnell hinzufügen</span>
+      <div class="chips small">${IMG_PRESETS.map((x, i) => { const has = S.models.some(m => m.id === x.id && m.kind === "image"); return `<button class="chip" data-imgp="${i}" ${has ? "disabled" : ""}>${has ? "✓ " : "+ "}${esc(x.label)} · ${esc(PRESETS[x.preset].name.split(" (")[0])}</button>`; }).join("")}</div>
+      <p class="hint" style="margin:8px 0 0">Weitere Bildmodelle findest du bei einem Anbieter unter „Modelle vom Anbieter abrufen“. Für Bildmodelle von OpenAI muss deine Organisation dort einmalig verifiziert sein.</p>
     </div>
 
     <div class="card"><h2>Websuche und Artefakte</h2>
@@ -1510,8 +1752,9 @@ function showSettings() {
   const readForm = () => {
     sc.querySelectorAll("#mRows [data-k]").forEach(inp => {
       const m = S.models[+inp.dataset.i], k = inp.dataset.k;
-      m[k] = k === "on" ? inp.checked : (k === "inP" || k === "outP") ? parseFloat(inp.value) || 0 : inp.value.trim();
+      m[k] = k === "on" ? inp.checked : (k === "inP" || k === "outP" || k === "imgP") ? parseFloat(inp.value) || 0 : inp.value.trim();
     });
+    S.imageOffer = q("#sImgOffer").checked; S.imageModel = q("#sImgModel") ? q("#sImgModel").value : "";
     S.defaultModel = q("#sDef").value; S.maxTokens = +q("#sMax").value || 8192; S.history = +q("#sHist").value || 30;
     S.router.model = q("#rModel").value; ROUTES.forEach(([k]) => { S.router[k] = q("#r_" + k).value; });
     S.webSearch = q("#sWeb").checked; S.webMax = Math.min(10, Math.max(1, +q("#sWebMax").value || 3)); S.searchPrice = Math.max(0, parseFloat(q("#sWebPrice").value) || 0);
@@ -1528,7 +1771,16 @@ function showSettings() {
   };
   q("[data-close]").onclick = async () => { if (await persist()) closeScreen(); };
   q("#saveS").onclick = async () => { if (await persist()) { toast("Gespeichert"); showSettings(); } };
-  q("#addM").onclick = () => { readForm(); S.models.push({ key: uid(), provider: S.providers[0] ? S.providers[0].id : "", id: "", label: "", inP: 0, outP: 0, on: true }); showSettings(); };
+  sc.querySelectorAll("[data-imgp]").forEach(b => b.onclick = () => {
+    const x = IMG_PRESETS[+b.dataset.imgp]; const p = S.providers.find(pp => pp.preset === x.preset);
+    if (!p) return toast(`Füge zuerst ${PRESETS[x.preset].name} als Anbieter hinzu`);
+    readForm();
+    const nm = { key: uid(), provider: p.id, id: x.id, label: x.label, inP: 0, outP: 0, imgP: x.imgP, on: true, kind: "image" };
+    S.models.push(nm); if (!S.imageModel || !modelByKey(S.imageModel)) S.imageModel = nm.key;
+    showSettings(); toast(x.label + " hinzugefügt – Speichern nicht vergessen");
+  });
+  sc.querySelectorAll('#mRows select[data-k="kind"]').forEach(sel => sel.onchange = () => { sel.closest("tr").querySelector('[data-k="imgP"]').disabled = sel.value !== "image"; });
+  q("#addM").onclick = () => { readForm(); S.models.push({ key: uid(), provider: S.providers[0] ? S.providers[0].id : "", id: "", label: "", inP: 0, outP: 0, imgP: 0, on: true, kind: "chat" }); showSettings(); };
   sc.querySelectorAll("[data-delm]").forEach(b => b.onclick = () => { readForm(); S.models.splice(+b.dataset.delm, 1); showSettings(); });
   q("#addProv").onclick = async () => { if (await persist()) editProvider(null); };
   sc.querySelectorAll("[data-prov]").forEach(b => b.onclick = async () => { if (await persist()) editProvider(provById(b.dataset.prov)); });
@@ -1556,15 +1808,19 @@ function editProvider(p) {
       <p class="hint" id="vWhere" style="margin:6px 0 0"></p>
       <label class="f" for="vUrl">Adresse der Schnittstelle</label><input class="inp" id="vUrl" value="${esc(d.baseUrl)}" placeholder="https://…/v1" inputmode="url">
       <p class="hint" style="margin:6px 0 0">Muss mit https:// beginnen. Bei OpenAI-kompatiblen Anbietern endet sie meist auf /v1.</p>
+      <div id="vWsBox">
+        <label class="f" for="vWs">Workspace-ID (nur falls nötig)</label><input class="inp" id="vWs" value="${esc(d.workspace || "")}" placeholder="wrkspc_…" autocomplete="off">
+        <p class="hint" style="margin:6px 0 0">Nur ausfüllen, wenn die Meldung „not scoped to a workspace“ erscheint. Die ID steht in der Claude Console unter Settings → Workspaces.</p>
+      </div>
     </div>
     <div class="card"><h2>Modelle dieses Anbieters</h2>
-      ${models.length ? `<div class="plist">${models.map(m => `<div class="pitem" style="cursor:default"><span style="flex:1"><b>${esc(m.label || m.id)}</b><br><span class="meta">${esc(m.id)}${isFree(m) ? " · gratis" : ""}${m.on ? "" : " · aus"}</span></span></div>`).join("")}</div>` : `<p class="hint">Noch keine Modelle. Rufe die Liste ab und wähle aus, oder trage sie in den Einstellungen von Hand ein.</p>`}
+      ${models.length ? `<div class="plist">${models.map(m => `<div class="pitem" style="cursor:default"><span style="flex:1"><b>${esc(m.label || m.id)}</b><br><span class="meta">${esc(m.id)}${m.kind === "image" ? " · Bildmodell" : ""}${isFree(m) ? " · gratis" : ""}${m.on ? "" : " · aus"}</span></span></div>`).join("")}</div>` : `<p class="hint">Noch keine Modelle. Rufe die Liste ab und wähle aus, oder trage sie in den Einstellungen von Hand ein.</p>`}
       <div class="btnrow"><button class="btn ghost" id="vFetch">Modelle vom Anbieter abrufen</button></div>
     </div>
     <div class="btnrow"><button class="btn" id="vSave">${isNew ? "Anbieter anlegen" : "Speichern"}</button>${!isNew ? `<button class="btn danger" id="vDel">Anbieter löschen</button>` : ""}</div>
   </div>`);
   const q = s => sc.querySelector(s);
-  const where = () => { q("#vWhere").textContent = "Schlüssel bekommst du bei " + PRESETS[d.preset].where + "."; };
+  const where = () => { q("#vWhere").textContent = "Schlüssel bekommst du bei " + PRESETS[d.preset].where + "."; q("#vWsBox").classList.toggle("hidden", d.type !== "anthropic"); };
   where();
   if (isNew) q("#vPreset").onchange = e => {
     const old = PRESETS[d.preset]; d.preset = e.target.value; const pr = PRESETS[d.preset]; d.type = pr.type;
@@ -1574,7 +1830,7 @@ function editProvider(p) {
   };
   q("#vShow").onclick = e => { const k = q("#vKey"); k.type = k.type === "password" ? "text" : "password"; e.target.textContent = k.type === "password" ? "Zeigen" : "Verbergen"; };
   const read = () => {
-    d.name = q("#vName").value.trim(); d.apiKey = q("#vKey").value.trim(); d.baseUrl = q("#vUrl").value.trim().replace(/\/+$/, "");
+    d.name = q("#vName").value.trim(); d.apiKey = q("#vKey").value.trim(); d.workspace = d.type === "anthropic" ? q("#vWs").value.trim() : ""; d.baseUrl = q("#vUrl").value.trim().replace(/\/+$/, "");
     if (!d.name) { toast("Bitte gib einen Namen ein"); return false; }
     if (!/^https?:\/\//i.test(d.baseUrl)) { toast("Die Adresse muss mit https:// beginnen"); return false; }
     return true;
@@ -1595,9 +1851,11 @@ function editProvider(p) {
   };
 }
 
-async function fetchModelList(p) {
+const OA_IMG_PRICES = { "gpt-image-1-mini": 0.011, "gpt-image-1.5": 0.034, "gpt-image-1": 0.042, "dall-e-3": 0.04, "dall-e-2": 0.02 };
+async function fetchModelList(p, images) {
   let res;
   if (p.type === "anthropic") res = await fetch(baseUrl(p) + "/v1/models?limit=100", { headers: anthHeaders(p) });
+  else if (images && p.preset === "openrouter") res = await fetch(baseUrl(p) + "/images/models", { headers: oaHeaders(p) });
   else res = await fetch(baseUrl(p) + "/models", { headers: oaHeaders(p) });
   if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
   const j = await res.json();
@@ -1606,43 +1864,57 @@ async function fetchModelList(p) {
     const pr = x.pricing || {};
     let inP = pr.prompt != null ? Math.round(+pr.prompt * 1e6 * 1000) / 1000 : null, outP = pr.completion != null ? Math.round(+pr.completion * 1e6 * 1000) / 1000 : null;
     if (p.type === "anthropic") { const g = /haiku/i.test(id) ? [1, 5] : /sonnet/i.test(id) ? [3, 15] : /opus/i.test(id) ? [5, 25] : [null, null]; inP = g[0]; outP = g[1]; }
-    return { id, label: (p.type === "anthropic" ? x.display_name : p.preset === "openrouter" ? x.name : x.display_name || x.displayName) || id, inP, outP };
+    const outMods = (x.architecture && x.architecture.output_modalities) || [];
+    const kind = (images && p.preset === "openrouter") || /^(gpt-image|dall-e)/i.test(id) || (outMods.includes("image") && !outMods.includes("text")) ? "image" : "chat";
+    return { id, kind, label: (p.type === "anthropic" ? x.display_name : p.preset === "openrouter" ? x.name : x.display_name || x.displayName) || id, inP, outP, imgP: OA_IMG_PRICES[id] || null };
   }).filter(x => x.id);
-  if (p.preset === "openai") list = list.filter(x => /^(gpt|o\d|chatgpt)/i.test(x.id) && !/embed|tts|whisper|dall|moderation|audio|realtime|transcribe|image|search|instruct/i.test(x.id));
+  if (p.preset === "openai") list = list.filter(x => x.kind === "image" ? /^(gpt-image|dall-e-3)/i.test(x.id) : /^(gpt|o\d|chatgpt)/i.test(x.id) && !/embed|tts|whisper|dall|moderation|audio|realtime|transcribe|image|search|instruct/i.test(x.id));
   if (p.preset === "gemini") list = list.filter(x => /gemini|gemma/i.test(x.id) && !/embed|imagen|veo|tts|aqa|image|live|native-audio/i.test(x.id));
-  return list.sort((a, b) => a.label.localeCompare(b.label, "de"));
+  return list.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "image" ? 1 : -1) || a.label.localeCompare(b.label, "de"));
 }
 async function pickModels(p) {
   const sc = openScreen(`<div class="inner">
     <header class="topbar">${BACK}<div class="title">Modelle von ${esc(p.name)}</div></header>
     <div class="card" style="position:sticky;top:56px;z-index:1">
       <input class="inp" id="mSearch" type="search" placeholder="Suchen, z. B. llama, mistral, gpt" autocomplete="off">
-      ${p.preset === "openrouter" ? `<label class="check" style="margin-bottom:0"><input type="checkbox" id="mFree" checked><span>Nur Gratis-Modelle</span></label>` : ""}
+      ${p.preset === "openrouter" ? `<div class="seg" style="margin-top:10px" role="tablist"><button data-mk="chat" class="on">Chat-Modelle</button><button data-mk="image">Bildmodelle</button></div><label class="check" style="margin-bottom:0" id="mFreeBox"><input type="checkbox" id="mFree" checked><span>Nur Gratis-Modelle</span></label>` : ""}
     </div>
     <div id="mList"><p class="hint" style="padding:12px">Lade die Liste …</p></div>
     <div class="btnrow" style="position:sticky;bottom:12px"><button class="btn" id="mAdd" disabled>Hinzufügen</button></div>
   </div>`);
   const q = s => sc.querySelector(s);
   q("[data-close]").onclick = () => editProvider(p);
-  let list;
-  try { list = await fetchModelList(p); }
-  catch (e) { q("#mList").innerHTML = `<div class="err">${esc(e && ("status" in e) ? friendlyError(e) : "Die Liste konnte nicht geladen werden. Prüfe Adresse und Schlüssel, und ob der Anbieter Anfragen aus dem Browser erlaubt. (" + (e && e.message || e) + ")")}</div>`; return; }
+  let list, imgMode = false;
+  const load = async () => {
+    q("#mList").innerHTML = `<p class="hint" style="padding:12px">Lade die Liste …</p>`;
+    try { list = await fetchModelList(p, imgMode); }
+    catch (e) { list = null; q("#mList").innerHTML = `<div class="err">${esc(e && ("status" in e) ? friendlyError(e) : "Die Liste konnte nicht geladen werden. Prüfe Adresse und Schlüssel, und ob der Anbieter Anfragen aus dem Browser erlaubt. (" + (e && e.message || e) + ")")}</div>`; return false; }
+    return true;
+  };
+  sc.querySelectorAll("[data-mk]").forEach(b => b.onclick = async () => {
+    imgMode = b.dataset.mk === "image"; sc.querySelectorAll("[data-mk]").forEach(x => x.classList.toggle("on", x === b));
+    q("#mFreeBox").classList.toggle("hidden", imgMode);
+    if (await load()) draw();
+  });
   const have = new Set(S.models.filter(m => m.provider === p.id).map(m => m.id));
+  const chosenList = () => list || [];
   const chosen = new Set();
-  const priceTxt = x => /:free$/.test(x.id) ? "gratis" : x.inP != null ? `$${x.inP} / $${x.outP} pro Mio. Tokens` : "Preis bitte selbst eintragen";
+  const priceTxt = x => x.kind === "image" ? (x.imgP ? `Bildmodell · ca. $${x.imgP} pro Bild` : "Bildmodell · Preis laut Abrechnung") : /:free$/.test(x.id) ? "gratis" : x.inP != null ? `$${x.inP} / $${x.outP} pro Mio. Tokens` : "Preis bitte selbst eintragen";
   const draw = () => {
-    const s = q("#mSearch").value.trim().toLowerCase(), free = q("#mFree") && q("#mFree").checked;
+    if (!list) return;
+    const s = q("#mSearch").value.trim().toLowerCase(), free = !imgMode && q("#mFree") && q("#mFree").checked;
     const vis = list.filter(x => (!free || /:free$/.test(x.id)) && (!s || (x.id + " " + x.label).toLowerCase().includes(s)));
     q("#mList").innerHTML = vis.length ? `<div class="card plist">${vis.slice(0, 250).map(x => `<label class="check" style="margin:8px 0"><input type="checkbox" data-id="${esc(x.id)}" ${have.has(x.id) || chosen.has(x.id) ? "checked" : ""} ${have.has(x.id) ? "disabled" : ""}><span><b>${esc(x.label)}</b><br><span class="meta" style="color:var(--ink2);font-size:13px">${esc(x.id)} · ${esc(priceTxt(x))}${have.has(x.id) ? " · bereits vorhanden" : ""}</span></span></label>`).join("")}${vis.length > 250 ? `<p class="hint">… und ${vis.length - 250} weitere. Grenze die Suche ein.</p>` : ""}</div>` : `<p class="hint" style="padding:12px">Nichts gefunden.</p>`;
     q("#mList").querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { c.checked ? chosen.add(c.dataset.id) : chosen.delete(c.dataset.id); upd(); });
   };
   const upd = () => { q("#mAdd").disabled = !chosen.size; q("#mAdd").textContent = chosen.size ? `${chosen.size} hinzufügen` : "Hinzufügen"; };
   q("#mSearch").oninput = draw; if (q("#mFree")) q("#mFree").onchange = draw;
-  draw();
+  if (await load()) draw();
   q("#mAdd").onclick = async () => {
     for (const id of chosen) {
-      const x = list.find(y => y.id === id);
-      S.models.push({ key: uid(), provider: p.id, id, label: x.label.replace(/\s*\(free\)\s*$/i, ""), inP: x.inP || 0, outP: x.outP || 0, on: true });
+      const x = chosenList().find(y => y.id === id) || { id, label: id, kind: imgMode ? "image" : "chat" };
+      S.models.push({ key: uid(), provider: p.id, id, label: x.label.replace(/\s*\(free\)\s*$/i, ""), inP: x.inP || 0, outP: x.outP || 0, imgP: x.imgP || 0, on: true, kind: x.kind || "chat" });
+      if (x.kind === "image" && (!S.imageModel || !modelByKey(S.imageModel))) S.imageModel = S.models[S.models.length - 1].key;
     }
     await saveSettings(); fillModelSelect(); toast(`${chosen.size} ${chosen.size === 1 ? "Modell" : "Modelle"} hinzugefügt`); editProvider(p);
   };
@@ -1650,7 +1922,7 @@ async function pickModels(p) {
 
 function editProfile(p) {
   const isNew = !p;
-  const d = p ? Object.assign({}, p) : { id: uid(), name: "", color: COLORS[P.length % COLORS.length], pin: "", kid: false, prompt: "", model: "", external: true };
+  const d = p ? Object.assign({}, p) : { id: uid(), name: "", color: COLORS[P.length % COLORS.length], pin: "", kid: false, prompt: "", model: "", external: true, images: true };
   const sc = openScreen(`<div class="inner">
     <header class="topbar">${BACK}<div class="title">${isNew ? "Neues Profil" : "Profil bearbeiten"}</div></header>
     <div class="card">
@@ -1659,6 +1931,7 @@ function editProfile(p) {
       <label class="f" for="pPin">PIN (optional)</label><input class="inp" id="pPin" inputmode="numeric" maxlength="6" placeholder="4–6 Ziffern" value="${esc(d.pin)}">
       <label class="check"><input type="checkbox" id="pKid" ${d.kid ? "checked" : ""}><span><b>Kindermodus</b><br><span style="color:var(--ink2);font-size:14px">Altersgerechte, sichere Antworten und Hilfe beim Lernen statt fertiger Lösungen.</span></span></label>
       <label class="check"><input type="checkbox" id="pExt" ${d.external !== false ? "checked" : ""}><span><b>Auch Nicht-Claude-Modelle erlauben</b><br><span style="color:var(--ink2);font-size:14px">Gratis- und Open-Source-Modelle, ChatGPT, Gemini usw. Für Kinder nicht empfohlen, weil deren Schutzmechanismen oft schwächer sind.</span></span></label>
+      <label class="check"><input type="checkbox" id="pImg" ${d.images !== false ? "checked" : ""}><span><b>Bilder erstellen erlauben</b><br><span style="color:var(--ink2);font-size:14px">Über ein Bildmodell von OpenAI oder OpenRouter. Kostet pro Bild etwa 1 bis 5 Cent.</span></span></label>
       <label class="f" for="pModel">Modell</label>
       <select class="inp" id="pModel"><option value="">Frei wählbar</option>${modelOptions(d.model).replace(/<option value="([^"]*)"( selected)?>/g, '<option value="$1"$2>Immer ')}</select>
       <label class="f" for="pPrompt">Persönliche Hinweise für die KI (optional)</label>
@@ -1667,11 +1940,11 @@ function editProfile(p) {
     <div class="btnrow"><button class="btn" id="pSave">${isNew ? "Profil anlegen" : "Speichern"}</button>${!isNew && P.length > 1 ? `<button class="btn danger" id="pDel">Profil löschen</button>` : ""}</div>
   </div>`);
   sc.querySelectorAll(".swatches button").forEach(b => b.onclick = () => { d.color = b.dataset.c; sc.querySelectorAll(".swatches button").forEach(x => x.classList.toggle("on", x === b)); });
-  sc.querySelector("#pKid").onchange = e => { if (e.target.checked) sc.querySelector("#pExt").checked = false; };
+  sc.querySelector("#pKid").onchange = e => { if (e.target.checked) { sc.querySelector("#pExt").checked = false; sc.querySelector("#pImg").checked = false; } };
   sc.querySelector("[data-close]").onclick = showSettings;
   sc.querySelector("#pSave").onclick = async () => {
     d.name = sc.querySelector("#pName").value.trim(); d.pin = sc.querySelector("#pPin").value.trim();
-    d.kid = sc.querySelector("#pKid").checked; d.external = sc.querySelector("#pExt").checked; d.model = sc.querySelector("#pModel").value; d.prompt = sc.querySelector("#pPrompt").value;
+    d.kid = sc.querySelector("#pKid").checked; d.external = sc.querySelector("#pExt").checked; d.images = sc.querySelector("#pImg").checked; d.model = sc.querySelector("#pModel").value; d.prompt = sc.querySelector("#pPrompt").value;
     if (!d.name) return toast("Bitte gib einen Namen ein");
     if (d.pin && !/^\d{4,6}$/.test(d.pin)) return toast("Die PIN braucht 4 bis 6 Ziffern");
     if (d.model && !modelAllowed(modelByKey(d.model), d)) return toast("Dieses Modell ist für das Profil nicht erlaubt");
