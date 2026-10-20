@@ -250,6 +250,15 @@ table.models .inp{padding:8px}
 .pv-content.imgview img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px}
 .chips.small .chip{font-size:14px;padding:6px 12px}
 .chip:disabled{opacity:.45;cursor:default}
+.trunc{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,#E8A33D 16%,transparent);font:14px/1.4 var(--ui)}
+.trunc span{flex:1;min-width:200px}
+.trunc .btn{padding:8px 14px;font-size:14px}
+.code-open{margin:-4px 0 12px;padding:8px 14px;font-size:14px}
+.gen-video{width:100%;max-width:520px;border-radius:16px;background:#000;display:block;margin:0 0 .4em}
+.gen-audio{width:100%;max-width:520px;display:block;margin:0 0 .4em}
+.img-wait.audio{aspect-ratio:auto;height:54px;width:min(100%,420px);border-radius:999px}
+.inline-btns{display:inline-flex;gap:6px}
+.inline-btns .btn{padding:6px 12px;font-size:13px;background:var(--surface2);color:var(--ink)}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;z-index:50}
 </style>
 </head>
@@ -382,7 +391,7 @@ Unterstützte Formate:
 Wähle einen kurzen, sinnvollen Dateinamen ohne Leerzeichen.`;
 
 const ARTIFACT_PROMPT = `Du kannst Artefakte erstellen: eigenständige, sichtbare Inhalte, die in einer eigenen Vorschau geöffnet, ausprobiert, geteilt und später überarbeitet werden können. Nutze ein Artefakt für kleine Apps, Rechner, Spiele, Quiz, Lernkarten, interaktive Erklärungen, Webseiten, Diagramme, Zeichnungen und längere eigenständige Texte, die man behalten möchte (z. B. Geschichten, Pläne, Anleitungen). Nutze KEIN Artefakt für kurze Antworten, Erklärungen im Gespräch oder kurze Codebeispiele.
-Format: eine eigene Zeile ~~~~artefakt:TYP:Titel, danach der vollständige Inhalt, danach eine eigene Zeile ~~~~ . Genau vier Tilden, kein zusätzlicher Codeblock darum.
+Format: eine eigene Zeile ~~~~artefakt:TYP:Titel, danach der vollständige Inhalt, danach eine eigene Zeile ~~~~ . Genau vier Tilden, kein zusätzlicher Markdown-Codeblock darum. Halte den Code kompakt und vollständig; lieber weniger Inhalte (z. B. 10 Fragen statt 50) als eine abgeschnittene App.
 Typen:
 - html: ein vollständiges HTML-Dokument mit eingebettetem CSS und JavaScript. Externe Skripte nur von https://cdnjs.cloudflare.com.
 - react: eine React-Komponente in JSX mit "export default function App()". Hooks über import { useState } from "react". Tailwind-CSS-Klassen sind verfügbar. Importiere keine anderen Bibliotheken.
@@ -396,16 +405,21 @@ Dateien (~~~~datei:) sind dagegen für Downloads in bestimmten Formaten wie Word
 const ROUTER_PROMPT = `Du bist ein Verteiler in einer Chat-App. Ordne die letzte Nachricht der Person genau einer Kategorie zu:
 einfach = kurze Fragen, Smalltalk, einfache Erklärungen, Übersetzungen, kurze Texte, Rechtschreibung
 aktuell = braucht aktuelle Informationen aus dem Internet: Nachrichten, Wetter, Preise, Öffnungszeiten, Sportergebnisse, Termine, aktuelle Produkte oder alles, was sich in letzter Zeit geändert haben könnte
-bild = die Person möchte, dass jetzt ein Bild, Foto, Logo, eine Illustration oder ein Gemälde erzeugt oder ein vorhandenes Bild verändert wird (nicht: Fragen darüber, ob oder wie das geht; nicht: Diagramme oder Tabellen)
+medien = es soll ein Bild, Foto, Logo, eine Illustration, ein Video, Clip, Musikstück oder Lied erzeugt oder verändert werden, auch als Teil einer größeren Aufgabe (nicht: Fragen darüber, ob oder wie das geht; nicht: Diagramme oder Tabellen)
 code = Programmieren, Code, Formeln, Technik-Probleme mit Computern, Handys oder Software
 komplex = Hausaufgaben mit Lösungsweg, längere oder wichtige Texte, Analysen, Planung, Dateien, Dokumente, Apps, Spiele, Diagramme, Bilder auswerten, schwierige Fragen
-Antworte nur mit einem einzigen Wort: einfach, aktuell, bild, code oder komplex.`;
-const ROUTES = [["einfach", "Einfache Fragen"], ["aktuell", "Aktuelle Infos (mit Websuche)"], ["code", "Programmieren und Technik"], ["komplex", "Anspruchsvolle Aufgaben"]];
+Antworte nur mit einem einzigen Wort: einfach, aktuell, medien, code oder komplex.`;
+const ROUTES = [["einfach", "Einfache Fragen"], ["aktuell", "Aktuelle Infos (mit Websuche)"], ["code", "Programmieren und Technik"], ["komplex", "Anspruchsvolle Aufgaben"], ["medien", "Aufgaben mit Bildern, Videos oder Musik (steuert die Spezial-Modelle)"]];
 const IMG_PRESETS = [
-  { preset: "openai", id: "gpt-image-1-mini", label: "GPT Image Mini (günstig)", imgP: 0.011 },
-  { preset: "openai", id: "gpt-image-1.5", label: "GPT Image 1.5 (beste Qualität)", imgP: 0.034 },
-  { preset: "openrouter", id: "google/gemini-2.5-flash-image", label: "Gemini Flash Image („Nano Banana“)", imgP: 0.04 },
-  { preset: "openrouter", id: "black-forest-labs/flux.2-pro", label: "FLUX.2 Pro", imgP: 0.03 },
+  { kind: "image", preset: "openai", id: "gpt-image-1-mini", label: "GPT Image Mini (günstig)", imgP: 0.011 },
+  { kind: "image", preset: "openai", id: "gpt-image-1.5", label: "GPT Image 1.5 (beste Qualität)", imgP: 0.034 },
+  { kind: "image", preset: "openrouter", id: "google/gemini-2.5-flash-image", label: "Gemini Flash Image („Nano Banana“)", imgP: 0.04 },
+  { kind: "image", preset: "openrouter", id: "black-forest-labs/flux.2-pro", label: "FLUX.2 Pro", imgP: 0.03 },
+  { kind: "video", preset: "openrouter", id: "google/veo-3.1-lite", label: "Veo 3.1 Lite (günstig, mit Ton)", imgP: 0.05, durations: [4, 6, 8] },
+  { kind: "video", preset: "openrouter", id: "bytedance/seedance-2.0-fast", label: "Seedance 2.0 Fast", imgP: 0.05, durations: [5, 10] },
+  { kind: "video", preset: "openrouter", id: "google/veo-3.1-fast", label: "Veo 3.1 Fast (bessere Qualität)", imgP: 0.15, durations: [4, 6, 8] },
+  { kind: "music", preset: "openrouter", id: "google/lyria-3-clip-preview", label: "Lyria 3 Clip (30 Sek.)", imgP: 0.04 },
+  { kind: "music", preset: "openrouter", id: "google/lyria-3-pro-preview", label: "Lyria 3 Pro (ganzes Lied)", imgP: 0.08 },
 ];
 const ASPECTS = [["1:1", "Quadrat"], ["2:3", "Hochformat"], ["3:2", "Querformat"]];
 
@@ -426,7 +440,7 @@ function toast(t) { const d = document.createElement("div"); d.className = "toas
 
 /* ---------- Blöcke "~~~~datei:NAME" und "~~~~artefakt:TYP:Titel" erkennen ---------- */
 const ART_TYPES = { html: "HTML", react: "React", svg: "SVG", mermaid: "Diagramm", markdown: "Dokument", md: "Dokument" };
-function splitFiles(text) {
+function splitFiles(text, final = false) {
   // liefert abwechselnd Text-, Datei- und Artefakt-Teile
   const parts = []; let pos = 0;
   const OPEN = /(^|\n)[ \t]*~~~~[ \t]*(datei|artefakt):[ \t]*([^\n]+)\n/g;
@@ -436,10 +450,10 @@ function splitFiles(text) {
     const start = m.index + m[0].length;
     const closeRe = /\n[ \t]*~~~~[ \t]*(?=\n|$)/g; closeRe.lastIndex = start - 1;
     const c = closeRe.exec(text);
-    const done = !!c;
-    let content = done ? text.slice(start, c.index) : text.slice(start);
+    const closed = !!c, done = closed || final, truncated = !closed && final;
+    let content = closed ? text.slice(start, c.index) : text.slice(start);
     if (m[2] === "datei") {
-      parts.push({ file: { name: m[3].trim().replace(/[\\/:*?"<>|]/g, "_"), content, done } });
+      parts.push({ file: { name: m[3].trim().replace(/[\\/:*?"<>|]/g, "_"), content, done, truncated } });
     } else {
       let head = m[3].trim(), type = "html", title = head;
       const i = head.indexOf(":");
@@ -447,21 +461,37 @@ function splitFiles(text) {
       if (type === "md") type = "markdown";
       // falls das Modell doch einen Codeblock darum legt
       content = content.replace(/^\s*```[a-zA-Z]*\s*\n/, "").replace(/\n```\s*$/, "");
-      parts.push({ art: { type, title: title || "Artefakt", content, done } });
+      parts.push({ art: { type, title: title || "Artefakt", content, done, truncated } });
     }
-    pos = done ? c.index + c[0].length : text.length;
+    pos = closed ? c.index + c[0].length : text.length;
     OPEN.lastIndex = pos;
   }
   parts.push({ text: text.slice(pos) });
   return parts;
 }
-function renderBody(el, text) {
+const CODE_ART = { html: "html", htm: "html", xml: null, jsx: "react", tsx: "react", react: "react", svg: "svg", mermaid: "mermaid" };
+function renderBody(el, text, final = false) {
   el.innerHTML = "";
-  for (const p of splitFiles(text)) {
+  for (const p of splitFiles(text, final)) {
     if (p.file) el.append(fileCard(p.file));
     else if (p.art) el.append(artCard(p.art));
-    else if (p.text.trim()) { const d = document.createElement("div"); d.innerHTML = md(p.text); el.append(d); }
+    else if (p.text.trim()) { const d = document.createElement("div"); d.innerHTML = md(p.text); if (final) codeButtons(d); el.append(d); }
   }
+}
+// Falls ein Modell eine App als normalen Codeblock schreibt: trotzdem öffnen können
+function codeButtons(root) {
+  root.querySelectorAll("pre > code").forEach(code => {
+    const lang = ((code.className.match(/language-([\w-]+)/) || [])[1] || "").toLowerCase();
+    const src = code.textContent;
+    let type = CODE_ART[lang];
+    if (!type && /^\s*(<!doctype html|<html)/i.test(src)) type = "html";
+    if (!type && /export\s+default/.test(src) && /return\s*\(?\s*</.test(src)) type = "react";
+    if (!type || src.length < 80) return;
+    if (type === "html" && !/<(html|body|script|style|div|canvas|button)/i.test(src)) return;
+    const b = document.createElement("button"); b.className = "btn ghost code-open"; b.textContent = "▶ Als App öffnen";
+    b.onclick = () => { const t = (src.match(/<title>([^<]{1,60})<\/title>/i) || [])[1] || (cur && cur.title) || "Artefakt"; openArtifact({ type, title: t, content: src, done: true }); };
+    code.parentElement.after(b);
+  });
 }
 
 function md(text) {
@@ -508,12 +538,18 @@ function migrate() {
   if (S.webSearch === undefined) { S.webSearch = true; S.webMax = 3; S.searchPrice = 10; ch = true; }
   if (S.artifacts === undefined) { S.artifacts = true; ch = true; }
   if (!S.router.code) { S.router.code = S.router.komplex; ch = true; }
+  if (!S.mt16) { if ((+S.maxTokens || 0) < 16000) S.maxTokens = 16000; S.mt16 = true; ch = true; }
   if (S.imageOffer === undefined) { S.imageOffer = true; ch = true; }
+  if (S.autoLimit === undefined) { S.autoLimit = 0.1; ch = true; }
+  if (!S.router.medien) { const rm = modelByKey(S.router.model); S.router.medien = rm && provOf(rm) && provOf(rm).type === "anthropic" ? rm.key : S.router.komplex; ch = true; }
+  if (!S.autoDef) { if (S.router.model) S.defaultModel = "auto"; S.autoDef = true; ch = true; }
   S.models.forEach(m => { if (!m.kind) { m.kind = "chat"; ch = true; } });
   for (const p of P) {
     if (p.model && !S.models.find(m => m.key === p.model)) { const m = byIdOrKey(p.model); p.model = m ? m.key : ""; ch = true; }
     if (p.external === undefined) { p.external = !p.kid; ch = true; }
     if (p.images === undefined) { p.images = !p.kid; ch = true; }
+    if (p.videos === undefined) { p.videos = !p.kid; ch = true; }
+    if (p.music === undefined) { p.music = !p.kid; ch = true; }
   }
   return ch;
 }
@@ -545,9 +581,9 @@ function showOnboarding() {
     const err = sc.querySelector("#obErr");
     if (!key.startsWith("sk-")) { err.textContent = "Der API-Schlüssel beginnt mit „sk-“. Bitte prüfe die Eingabe."; err.classList.remove("hidden"); return; }
     if (!name) { err.textContent = "Bitte gib einen Namen ein."; err.classList.remove("hidden"); return; }
-    S = { providers: [{ id: "anthropic", preset: "anthropic", type: "anthropic", name: PRESETS.anthropic.name, baseUrl: PRESETS.anthropic.baseUrl, apiKey: key }], adminPin: "", maxTokens: 8192, history: 30, models: defaultModels(), defaultModel: "" };
-    P = [{ id: uid(), name, color: COLORS[0], pin: "", kid: false, prompt: "", model: "", external: true, images: true }];
-    migrate(); S.defaultModel = S.models[1].key;
+    S = { providers: [{ id: "anthropic", preset: "anthropic", type: "anthropic", name: PRESETS.anthropic.name, baseUrl: PRESETS.anthropic.baseUrl, apiKey: key }], adminPin: "", maxTokens: 16000, history: 30, models: defaultModels(), defaultModel: "" };
+    P = [{ id: uid(), name, color: COLORS[0], pin: "", kid: false, prompt: "", model: "", external: true, images: true, videos: true, music: true }];
+    migrate(); S.defaultModel = "auto";
     const btn = sc.querySelector("#obGo"); btn.disabled = true; btn.textContent = "Speichere …";
     try {
       await saveSettings(); await saveProfiles();
@@ -611,9 +647,10 @@ function modelAllowed(m, prof = me) {
   return !!(m && m.on && m.id.trim() && p && (prof.external !== false || p.type === "anthropic"));
 }
 function allowedModels() { return S.models.filter(m => m.kind !== "image" && modelAllowed(m)); }
-function imageModels(prof = me) { return S.models.filter(m => m.kind === "image" && modelAllowed(m, prof) && provOf(m).type !== "anthropic"); }
-function imageAllowed(prof = me) { return prof.images !== false && imageModels(prof).length > 0; }
-function defaultImageModel() { const ims = imageModels(); return ims.find(m => m.key === S.imageModel) || ims[0] || null; }
+function mediaModels(kind, prof = me) { return S.models.filter(m => m.kind === kind && modelAllowed(m, prof) && provOf(m).type !== "anthropic" && (kind === "image" || provOf(m).preset === "openrouter" || provOf(m).preset === "custom")); }
+function imageModels(prof = me) { return mediaModels("image", prof); }
+function imageAllowed(prof = me) { return kindAllowed("image", prof); }
+function defaultImageModel() { return defaultMediaModel("image"); }
 function routerReady() { const r = S.router && modelByKey(S.router.model); return !!(r && r.on && provOf(r)); }
 function fillModelSelect() {
   const sel = $("#modelSelect"); const ms = allowedModels();
@@ -622,7 +659,8 @@ function fillModelSelect() {
     const list = ms.filter(m => m.provider === p.id);
     if (list.length) html += `<optgroup label="${esc(p.name)}">${list.map(m => `<option value="${esc(m.key)}">${esc(m.label || m.id)}${isFree(m) ? " · gratis" : ""}</option>`).join("")}</optgroup>`;
   }
-  if (imageAllowed()) html += `<optgroup label="Bilder erstellen">${imageModels().map(m => `<option value="${esc(m.key)}">🎨 ${esc(m.label || m.id)}</option>`).join("")}</optgroup>`;
+  for (const [k, l, ic] of [["image", "Bilder erstellen", "🎨"], ["video", "Videos erstellen", "🎬"], ["music", "Musik erstellen", "🎵"]])
+    if (kindAllowed(k)) html += `<optgroup label="${l}">${mediaModels(k).map(m => `<option value="${esc(m.key)}">${ic} ${esc(m.label || m.id)}</option>`).join("")}</optgroup>`;
   sel.innerHTML = html;
   const locked = me.model && ms.find(m => m.key === me.model);
   const pref = locked ? me.model : S.defaultModel;
@@ -633,7 +671,7 @@ function fillModelSelect() {
 }
 function updateWebBtn() {
   const v = $("#modelSelect").value; const m = modelByKey(v);
-  input.placeholder = m && m.kind === "image" ? "Beschreibe das Bild, das du möchtest" : "Schreib eine Nachricht";
+  input.placeholder = m && m.kind === "image" ? "Beschreibe das Bild, das du möchtest" : m && m.kind === "video" ? "Beschreibe das Video, das du möchtest" : m && m.kind === "music" ? "Beschreibe die Musik, die du möchtest" : "Schreib eine Nachricht";
   const ok = S.webSearch !== false && (v === "auto" || (m && provOf(m) && provOf(m).type === "anthropic"));
   const b = $("#webBtn"); b.classList.toggle("hidden", !ok);
   b.classList.toggle("on", ok && webOn); b.setAttribute("aria-pressed", ok && webOn ? "true" : "false");
@@ -705,7 +743,7 @@ function msgEl(m) {
   } else {
     d.innerHTML = `<div class="body"></div>`;
     const body = d.querySelector(".body");
-    if (m.text) renderBody(body, m.text);
+    if (m.text) renderBody(body, m.text, true);
     if ((m.images || []).length) {
       const g = document.createElement("div"); g.className = "gen-imgs";
       m.images.forEach(i => {
@@ -717,13 +755,46 @@ function msgEl(m) {
       });
       body.append(g);
     }
+    for (const x of m.media || []) {
+      const url = URL.createObjectURL(b64ToBlob(x.data, x.media_type));
+      const node = document.createElement(x.kind === "video" ? "video" : "audio");
+      node.controls = true; node.preload = "metadata"; node.src = url; node.className = x.kind === "video" ? "gen-video" : "gen-audio";
+      if (x.kind === "video") { node.playsInline = true; node.setAttribute("playsinline", ""); }
+      node.setAttribute("aria-label", m.imgPrompt || (x.kind === "video" ? "Erstelltes Video" : "Erstellte Musik"));
+      body.append(node);
+    }
+    if (m.job && !m.error && !(m.media || []).length) {
+      const j = document.createElement("div"); j.className = "trunc";
+      if (activeJobs.has(m.job.id)) j.innerHTML = `<span>Video wird erstellt …</span>`;
+      else {
+        j.innerHTML = `<span>Das Video wurde in Auftrag gegeben, aber noch nicht abgeholt.</span>`;
+        const b = document.createElement("button"); b.className = "btn"; b.textContent = "Video abholen";
+        b.onclick = () => resumeVideo(m, d); j.append(b);
+      }
+      body.append(j);
+    }
     if (m.error) { const e = document.createElement("div"); e.className = "err"; e.textContent = m.error; body.append(e); }
+    if (m.truncated && !m.error) {
+      const h = document.createElement("div"); h.className = "trunc";
+      h.innerHTML = `<span>Die Antwort wurde abgeschnitten, weil die maximale Antwortlänge (${(+S.maxTokens || 0).toLocaleString("de-DE")} Tokens) erreicht war.</span>`;
+      if (cur && cur.messages[cur.messages.length - 1] === m) {
+        const b = document.createElement("button"); b.className = "btn"; b.textContent = "Mit mehr Platz neu erzeugen";
+        b.onclick = async () => {
+          if (streaming) return;
+          S.maxTokens = Math.min(64000, Math.max(32000, (+S.maxTokens || 0) * 2)); await saveSettings();
+          cur.messages = cur.messages.filter(x => x !== m); await saveChats(); d.remove();
+          runChat(m.choice || $("#modelSelect").value, false);
+        };
+        h.append(b);
+      }
+      body.append(h);
+    }
     if ((m.sources || []).length) {
       const s = document.createElement("div"); s.className = "sources";
       s.innerHTML = `<span>Quellen</span>` + m.sources.map(x => { let host = x.url; try { host = new URL(x.url).hostname.replace(/^www\./, ""); } catch {} return `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" title="${esc(x.title)}">${esc(host)}</a>`; }).join("");
       d.append(s);
     }
-    if (m.text || m.usage || (m.images || []).length) d.append(actionsEl(m));
+    if (m.text || m.usage || (m.images || []).length || (m.media || []).length) d.append(actionsEl(m));
   }
   return d;
 }
@@ -739,17 +810,26 @@ function actionsEl(m) {
       a.append(v);
     }
   }
-  if ((m.images || []).length && m.imgPrompt) {
+  for (const x of m.media || []) {
+    const ext = (x.media_type.split("/")[1] || "bin").replace("mpeg", "mp3").replace("quicktime", "mov");
+    const fb = fileButtons({ name: slug(m.imgPrompt || (x.kind === "video" ? "video" : "musik")).slice(0, 40) + "." + ext, b64: x.data, type: x.media_type, done: true }, "inline-btns");
+    a.append(fb);
+  }
+  if (((m.images || []).length || (m.media || []).length) && m.imgPrompt) {
+    const kind = m.kind || "image";
     const v = document.createElement("button"); v.textContent = "Neue Variante";
-    v.onclick = () => { if (streaming) return; const im = modelByKey(m.imgModel); const model = im && modelAllowed(im) ? im : defaultImageModel(); if (!model) return toast("Kein Bildmodell verfügbar"); createImage({ model, prompt: m.imgPrompt, refs: [], aspect: m.imgAspect || "1:1" }); };
+    v.onclick = () => { if (streaming) return; const im = modelByKey(m.imgModel); const model = im && modelAllowed(im) ? im : defaultMediaModel(kind); if (!model) return toast("Kein passendes Modell verfügbar"); const o = { kind, model, prompt: m.imgPrompt, refs: [], aspect: m.imgAspect || (kind === "video" ? "16:9" : "1:1"), dur: m.dur || defaultDur(model) }; if (estCost(model, o) > (S.autoLimit != null ? +S.autoLimit : 0.1)) offerMedia(o); else createMedia(o); };
+    a.append(v);
+  }
+  if ((m.images || []).length && m.imgPrompt) {
     const e = document.createElement("button"); e.textContent = "Ändern";
     e.onclick = () => { input.value = ""; input.placeholder = "Was soll ich am Bild ändern?"; input.focus(); };
-    a.append(v, e);
+    a.append(e);
   }
   if (m.usage) {
     const u = m.usage; const s = document.createElement("span"); s.className = "usage";
     const who = u.model ? (u.route ? "Auto → " : "") + u.model + (u.used ? ` (${u.used.split("/").pop()})` : "") : "";
-    s.textContent = [who, u.images ? `${u.images} ${u.images === 1 ? "Bild" : "Bilder"}` : `${u.est ? "≈ " : ""}${(u.in + u.out).toLocaleString("de-DE")} Tokens`, u.searches ? `${u.searches} ${u.searches === 1 ? "Suche" : "Suchen"}` : "", `ca. ${fmtUSD(u.cost)}`].filter(Boolean).join(" · ");
+    s.textContent = [who, u.items ? `1 ${{ image: "Bild", video: "Video", music: "Musikstück" }[u.kind || "image"]}` : u.images ? `${u.images} ${u.images === 1 ? "Bild" : "Bilder"}` : `${u.est ? "≈ " : ""}${(u.in + u.out).toLocaleString("de-DE")} Tokens`, u.searches ? `${u.searches} ${u.searches === 1 ? "Suche" : "Suchen"}` : "", `ca. ${fmtUSD(u.cost)}`].filter(Boolean).join(" · ");
     a.append(s);
   }
   return a;
@@ -1057,7 +1137,7 @@ const ART_EXT = { html: "html", react: "html", mermaid: "html", svg: "svg", mark
 const slug = s => (s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "artefakt").slice(0, 60);
 function chatArtifacts() {
   const list = [];
-  if (cur) cur.messages.forEach(m => { if (m.role === "assistant" && !m.error && m.text) splitFiles(m.text).forEach(p => { if (p.art && p.art.done) list.push(p.art); }); });
+  if (cur) cur.messages.forEach(m => { if (m.role === "assistant" && !m.error && m.text) splitFiles(m.text, true).forEach(p => { if (p.art && p.art.done) list.push(p.art); }); });
   return list;
 }
 function versionsOf(a) {
@@ -1073,7 +1153,7 @@ function artCard(a) {
   if (!a.done) meta = `Wird erstellt … ${a.content.split("\n").length} Zeilen`;
   else {
     const vs = versionsOf(a); const n = vs.findIndex(x => x.content === a.content) + 1;
-    meta = `${ART_TYPES[a.type]}${vs.length > 1 ? ` · Version ${n}` : ""} · Tippen zum Öffnen`;
+    meta = a.truncated ? `${ART_TYPES[a.type]} · unvollständig (Antwort abgeschnitten) · Tippen zum Öffnen` : `${ART_TYPES[a.type]}${vs.length > 1 ? ` · Version ${n}` : ""} · Tippen zum Öffnen`;
   }
   card.innerHTML = `<div class="fc-icon art-icon" aria-hidden="true">${esc(icon)}</div><div class="fc-meta"><b>${esc(a.title)}</b><span>${esc(meta)}</span></div>`;
   if (!a.done) return card;
@@ -1083,14 +1163,20 @@ function artCard(a) {
   return card;
 }
 
-const ERR_SCRIPT = `<script>window.__err=function(e){var p=document.createElement("pre");p.style.cssText="color:#B3261E;background:#FCEEEE;white-space:pre-wrap;padding:16px;margin:12px;border-radius:12px;font:13px/1.5 ui-monospace,Menlo,monospace";p.textContent="Fehler im Artefakt:\\n"+((e&&e.message)||e);document.body.appendChild(p)};window.addEventListener("error",function(e){window.__err(e.error||e.message)});<\/script>`;
+const ERR_SCRIPT = `<script>window.__err=function(e){var p=document.createElement("pre");p.style.cssText="color:#B3261E;background:#FCEEEE;white-space:pre-wrap;padding:16px;margin:12px;border-radius:12px;font:13px/1.5 ui-monospace,Menlo,monospace";p.textContent="Fehler im Artefakt:\\n"+((e&&e.message)||e);(document.body||document.documentElement).appendChild(p)};window.addEventListener("error",function(e){window.__err(e.error||e.message)});<\/script>`;
+const STORAGE_SHIM = `<script>(function(){function M(){var d={};return{getItem:function(k){return Object.prototype.hasOwnProperty.call(d,k)?d[k]:null},setItem:function(k,v){d[k]=String(v)},removeItem:function(k){delete d[k]},clear:function(){d={}},key:function(i){return Object.keys(d)[i]||null},get length(){return Object.keys(d).length}}}["localStorage","sessionStorage"].forEach(function(n){try{window[n].getItem("x")}catch(e){try{Object.defineProperty(window,n,{value:M(),configurable:true})}catch(e2){}}});try{document.cookie}catch(e){try{Object.defineProperty(document,"cookie",{get:function(){return""},set:function(){},configurable:true})}catch(e2){}}})();<\/script>`;
+function injectHead(html, snip) {
+  if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, m => m + snip);
+  if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, m => m + "<head>" + snip + "</head>");
+  return snip + html;
+}
 const jsonForScript = s => JSON.stringify(s).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
 function artifactDoc(a) {
   const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(a.title)}</title>`;
   if (a.type === "html") {
     const c = a.content.trim();
-    if (/^<!doctype|^<html/i.test(c)) return c;
-    return `<!DOCTYPE html><html lang="de"><head>${head}<style>body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:16px}</style></head><body>${c}</body></html>`;
+    if (/^<!doctype|^<html/i.test(c)) return injectHead(c, STORAGE_SHIM + ERR_SCRIPT);
+    return `<!DOCTYPE html><html lang="de"><head>${head}${STORAGE_SHIM}${ERR_SCRIPT}<style>body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:16px}</style></head><body>${c}</body></html>`;
   }
   if (a.type === "svg") return `<!DOCTYPE html><html><head>${head}<style>html,body{margin:0;height:100%;background:#fff}body{display:grid;place-items:center}svg{max-width:100%;max-height:100vh;height:auto}</style></head><body>${a.content}</body></html>`;
   if (a.type === "mermaid") return `<!DOCTYPE html><html><head>${head}<style>body{margin:0;padding:16px;background:#fff;font-family:system-ui,sans-serif}.mermaid{display:flex;justify-content:center}.mermaid svg{max-width:100%;height:auto}</style>${ERR_SCRIPT}
@@ -1100,7 +1186,7 @@ function artifactDoc(a) {
 <script>document.getElementById("m").textContent=${jsonForScript(a.content.trim())};
 if(!window.mermaid){window.__err("Die Diagramm-Bibliothek konnte nicht geladen werden. Besteht eine Internetverbindung?")}
 else{mermaid.initialize({startOnLoad:false,securityLevel:"strict"});mermaid.run({querySelector:"#m"}).catch(function(e){window.__err(e)});}<\/script></body></html>`;
-  if (a.type === "react") return `<!DOCTYPE html><html lang="de"><head>${head}${ERR_SCRIPT}
+  if (a.type === "react") return `<!DOCTYPE html><html lang="de"><head>${head}${STORAGE_SHIM}${ERR_SCRIPT}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"><\/script>
@@ -1242,27 +1328,26 @@ function shrinkImage(file) {
 }
 
 /* ---------- Sending ---------- */
-function systemPrompt(web) {
+function systemPrompt(web, tools = []) {
   const date = new Date().toLocaleDateString("de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   let s = `Du bist ein hilfreicher Assistent in der Familien-App „Stube“. Du sprichst gerade mit ${me.name}. Heute ist ${date}. Antworte auf Deutsch, außer die Person schreibt in einer anderen Sprache.`;
   if (web) s += "\n\nDu kannst im Internet suchen. Nutze die Suche für aktuelle Informationen. Die Quellen werden automatisch unter deiner Antwort angezeigt, liste sie nicht noch einmal auf.";
   s += "\n\n" + FILE_PROMPT;
   if (S.artifacts !== false) s += "\n\n" + ARTIFACT_PROMPT;
-  s += "\n\n" + (imageAllowed()
-    ? "Diese App hat ein eigenes Bildmodell. Wenn jemand ein Bild, Foto, Logo oder eine Illustration möchte, soll er es einfach beschreiben, z. B. „Erstelle ein Bild von …“. Die App bietet dann die Bilderstellung an. Du selbst erzeugst keine Bilddateien. Nachrichten in eckigen Klammern wie „[Bild erstellt …]“ stehen für Bilder, die die App erzeugt hat."
-    : "Fotos oder Bilddateien kannst du nicht erzeugen. Biete stattdessen eine Zeichnung als SVG-Artefakt an.");
+  s += "\n\n" + (tools.length ? toolsPrompt(tools)
+    : "Fotos, Videos oder Musikdateien kannst du in dieser App gerade nicht erzeugen. Biete stattdessen zum Beispiel eine Zeichnung als SVG-Artefakt an. Hinweise in eckigen Klammern wie „[Bild erstellt …]“ stehen für Medien, die die App früher erzeugt hat.");
   if (me.kid) s += "\n\n" + KID_PROMPT;
   if (me.prompt && me.prompt.trim()) s += "\n\nZusätzliche Hinweise:\n" + me.prompt.trim();
   return s;
 }
 // neutraler Verlauf: [{role, text, images}]
 function apiMessages() {
-  let msgs = cur.messages.filter(m => !m.error && !m.offer && (m.text || m.note || (m.images || []).length));
+  let msgs = cur.messages.filter(m => !m.error && !m.offer && !m.job && (m.text || m.note || (m.images || []).length));
   msgs = msgs.slice(-Math.max(2, S.history || 30));
   while (msgs.length && msgs[0].role !== "user") msgs.shift();
   const out = [];
   for (const m of msgs) {
-    const text = m.text || m.note || "";
+    const text = [m.note, m.text].filter(Boolean).join("\n") || "";
     const imgs = m.role === "user" ? (m.images || []) : [];
     if (!text && !imgs.length) continue;
     const last = out[out.length - 1];
@@ -1310,35 +1395,65 @@ async function readSSE(res, onEvent) {
   if (buf.trim()) flush(buf);
 }
 
-async function streamAnthropic(m, p, sys, msgs, web, signal, cb) {
-  const body = {
-    model: m.id, max_tokens: +S.maxTokens || 8192, system: sys, stream: true,
-    messages: msgs.map(x => ({ role: x.role, content: [
-      ...(x.images || []).map(i => ({ type: "image", source: { type: "base64", media_type: i.media_type, data: i.data } })),
-      ...(x.text ? [{ type: "text", text: x.text }] : []),
-    ] })),
-  };
-  if (web) body.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: +S.webMax || 3 }];
+function anthMsgs(msgs) {
+  return msgs.map(x => ({ role: x.role, content: [
+    ...(x.images || []).map(i => ({ type: "image", source: { type: "base64", media_type: i.media_type, data: i.data } })),
+    ...(x.text ? [{ type: "text", text: x.text }] : []),
+  ] }));
+}
+function oaMsgs(msgs) {
+  return msgs.map(x => ({
+    role: x.role,
+    content: x.role === "user" && (x.images || []).length
+      ? [...(x.text ? [{ type: "text", text: x.text }] : []), ...x.images.map(i => ({ type: "image_url", image_url: { url: `data:${i.media_type};base64,${i.data}` } }))]
+      : x.text,
+  }));
+}
+const TOOL_LABEL = { erstelle_bild: "das Bild", erstelle_video: "das Video", erstelle_musik: "die Musik" };
+
+async function streamAnthropic(m, p, sys, native, web, tools, signal, cb) {
+  const body = { model: m.id, max_tokens: +S.maxTokens || 16000, system: sys, stream: true, messages: native };
+  const tl = [];
+  if (web) tl.push({ type: "web_search_20250305", name: "web_search", max_uses: +S.webMax || 3 });
+  tools.forEach(t => tl.push({ name: t.name, description: t.description, input_schema: t.parameters }));
+  if (tl.length) body.tools = tl;
   const res = await fetch(baseUrl(p) + "/v1/messages", { method: "POST", signal, headers: anthHeaders(p), body: JSON.stringify(body) });
   if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
-  const r = { inTok: 0, outTok: 0, searches: 0, sources: [] };
-  const kinds = {}; let toolJson = "";
+  const r = { inTok: 0, outTok: 0, searches: 0, sources: [], text: "", calls: [], blocks: [] };
+  const blocks = [], json = {};
   await readSSE(res, ev => {
     if (ev.type === "message_start") { const u = ev.message.usage || {}; r.inTok = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0); }
     else if (ev.type === "content_block_start") {
-      const b = ev.content_block || {}; kinds[ev.index] = b.type;
-      if (b.type === "server_tool_use") { toolJson = ""; cb.status("Sucht im Internet …"); }
-      if (b.type === "web_search_tool_result" && Array.isArray(b.content)) {
-        for (const x of b.content) if (x.url && !r.sources.some(s => s.url === x.url)) r.sources.push({ url: x.url, title: x.title || x.url });
-        cb.status("Liest die Ergebnisse …");
+      const b = ev.content_block || {}, i = ev.index;
+      if (b.type === "text") blocks[i] = { type: "text", text: b.text || "" };
+      else if (b.type === "tool_use" || b.type === "server_tool_use") {
+        blocks[i] = { type: b.type, id: b.id, name: b.name, input: {} }; json[i] = "";
+        cb.status(b.type === "server_tool_use" ? "Sucht im Internet …" : `Bereitet ${TOOL_LABEL[b.name] || "den nächsten Schritt"} vor …`);
+      } else {
+        blocks[i] = b;
+        if (b.type === "web_search_tool_result" && Array.isArray(b.content)) {
+          for (const x of b.content) if (x.url && !r.sources.some(s => s.url === x.url)) r.sources.push({ url: x.url, title: x.title || x.url });
+          cb.status("Liest die Ergebnisse …");
+        }
       }
     }
     else if (ev.type === "content_block_delta") {
-      const d = ev.delta || {};
-      if (d.type === "text_delta") cb.text(d.text);
-      else if (d.type === "input_json_delta") { toolJson += d.partial_json || ""; const q = toolJson.match(/"query"\s*:\s*"((?:[^"\\]|\\.)*)"/); if (q) cb.status(`Sucht: „${q[1].replace(/\\"/g, '"')}“`); }
+      const d = ev.delta || {}, i = ev.index;
+      if (d.type === "text_delta") { if (blocks[i]) blocks[i].text += d.text; r.text += d.text; cb.text(d.text); }
+      else if (d.type === "input_json_delta") {
+        json[i] = (json[i] || "") + (d.partial_json || "");
+        if (blocks[i] && blocks[i].type === "server_tool_use") { const q = json[i].match(/"query"\s*:\s*"((?:[^"\\]|\\.)*)"/); if (q) cb.status(`Sucht: „${q[1].replace(/\\"/g, '"')}“`); }
+      }
+    }
+    else if (ev.type === "content_block_stop") {
+      const i = ev.index;
+      if (json[i] !== undefined && blocks[i]) {
+        try { blocks[i].input = json[i] ? JSON.parse(json[i]) : {}; } catch { blocks[i].input = {}; }
+        if (blocks[i].type === "tool_use") r.calls.push({ id: blocks[i].id, name: blocks[i].name, input: blocks[i].input });
+      }
     }
     else if (ev.type === "message_delta" && ev.usage) {
+      if (ev.delta && ev.delta.stop_reason === "max_tokens") r.truncated = true;
       const u = ev.usage;
       r.outTok = u.output_tokens || r.outTok;
       const inNow = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0);
@@ -1347,42 +1462,55 @@ async function streamAnthropic(m, p, sys, msgs, web, signal, cb) {
     }
     else if (ev.type === "error") throw { status: 0, body: JSON.stringify(ev), provider: p };
   });
+  r.blocks = blocks.filter(b => b && !(b.type === "text" && !b.text));
   return r;
 }
 
-async function streamOpenAI(m, p, sys, msgs, signal, cb) {
-  const messages = [{ role: "system", content: sys }, ...msgs.map(x => ({
-    role: x.role,
-    content: x.role === "user" && (x.images || []).length
-      ? [...(x.text ? [{ type: "text", text: x.text }] : []), ...x.images.map(i => ({ type: "image_url", image_url: { url: `data:${i.media_type};base64,${i.data}` } }))]
-      : x.text,
-  }))];
-  const body = { model: m.id, messages, stream: true, stream_options: { include_usage: true } };
-  if (p.preset === "openai") body.max_completion_tokens = +S.maxTokens || 8192;
+async function streamOpenAI(m, p, sys, native, tools, signal, cb) {
+  const body = { model: m.id, messages: [{ role: "system", content: sys }, ...native], stream: true, stream_options: { include_usage: true } };
+  if (p.preset === "openai") body.max_completion_tokens = +S.maxTokens || 16000;
+  if (tools.length && !p.noTools) body.tools = tools.map(t => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.parameters } }));
   if (p.preset === "openrouter" && isFree(m)) {
     // Gratis-Modelle sind oft überlastet: OpenRouter darf auf andere Gratis-Modelle ausweichen
-    const alts = S.models.filter(x => x.on && x.provider === p.id && isFree(x) && x.key !== m.key).map(x => x.id).slice(0, 2);
+    const alts = S.models.filter(x => x.on && x.kind !== "image" && x.provider === p.id && isFree(x) && x.key !== m.key).map(x => x.id).slice(0, 2);
     if (alts.length) body.models = [m.id, ...alts];
   }
   const post = () => fetch(baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
   let res = await post();
-  if (!res.ok) {
+  for (let tries = 0; !res.ok && tries < 2; tries++) {
     const t = await res.text();
-    if (res.status === 400 && /stream_options|include_usage|unknown|unrecognized/i.test(t)) { delete body.stream_options; res = await post(); if (!res.ok) throw { status: res.status, body: await res.text(), provider: p }; }
+    if (res.status === 400 && body.stream_options && /stream_options|include_usage/i.test(t)) { delete body.stream_options; res = await post(); }
+    else if (body.tools && [400, 404, 422].includes(res.status) && /tool|function/i.test(t)) { delete body.tools; res = await post(); }
     else throw { status: res.status, body: t, provider: p };
   }
-  const r = { inTok: 0, outTok: 0, searches: 0, sources: [], modelUsed: "" };
-  let text = "";
+  if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+  const r = { inTok: 0, outTok: 0, searches: 0, sources: [], modelUsed: "", text: "", calls: [], rawCalls: [] };
+  const acc = [];
   await readSSE(res, ev => {
     if (ev.error) throw { status: ev.error.code || 0, body: JSON.stringify(ev), provider: p };
     if (ev.model) r.modelUsed = ev.model;
     const ch = ev.choices && ev.choices[0];
-    if (ch && ch.delta && typeof ch.delta.content === "string" && ch.delta.content) { text += ch.delta.content; cb.text(ch.delta.content); }
+    if (ch && ch.delta) {
+      if (typeof ch.delta.content === "string" && ch.delta.content) { r.text += ch.delta.content; cb.text(ch.delta.content); }
+      for (const tc of ch.delta.tool_calls || []) {
+        const k = tc.index != null ? tc.index : acc.length;
+        const a = acc[k] || (acc[k] = { id: "", name: "", args: "" });
+        if (tc.id) a.id = tc.id;
+        if (tc.function) { if (tc.function.name) { a.name += tc.function.name; cb.status(`Bereitet ${TOOL_LABEL[a.name] || "den nächsten Schritt"} vor …`); } if (tc.function.arguments) a.args += tc.function.arguments; }
+      }
+    }
+    if (ch && ch.finish_reason === "length") r.truncated = true;
     if (ev.usage) { r.inTok = ev.usage.prompt_tokens || r.inTok; r.outTok = ev.usage.completion_tokens || r.outTok; }
+  });
+  acc.filter(Boolean).forEach((a, i) => {
+    const id = a.id || "call_" + i + "_" + uid();
+    let input = {}; try { input = a.args ? JSON.parse(a.args) : {}; } catch {}
+    r.calls.push({ id, name: a.name, input });
+    r.rawCalls.push({ id, type: "function", function: { name: a.name, arguments: a.args || "{}" } });
   });
   if (!r.inTok && !r.outTok) {
     // keine Verbrauchsangabe: grob schätzen (ca. 4 Zeichen pro Token)
-    r.inTok = Math.round((sys.length + msgs.reduce((s, x) => s + x.text.length, 0)) / 4); r.outTok = Math.round(text.length / 4); r.est = true;
+    r.inTok = Math.round((sys.length + native.reduce((s, x) => s + (typeof x.content === "string" ? x.content.length : Array.isArray(x.content) ? x.content.reduce((t, c) => t + (c.text || "").length, 0) : 0), 0)) / 4); r.outTok = Math.round(r.text.length / 4); r.est = true;
   }
   return r;
 }
@@ -1412,7 +1540,8 @@ async function routeRequest(signal) {
   const rm = modelByKey(S.router.model);
   const r = await complete(rm, ROUTER_PROMPT, content, signal);
   const t = r.text.toLowerCase();
-  const cat = ["aktuell", "bild", "code", "komplex", "einfach"].find(c => t.includes(c)) || "komplex";
+  let cat = ["aktuell", "medien", "bild", "code", "komplex", "einfach"].find(c => t.includes(c)) || "komplex";
+  if (cat === "bild") cat = "medien";
   return { cat, usage: { in: r.inTok, out: r.outTok, cost: (r.inTok * rm.inP + r.outTok * rm.outP) / 1e6 } };
 }
 
@@ -1429,165 +1558,313 @@ async function send() {
   cur.updated = Date.now(); await saveChats();
   renderChat();
   const chosen = modelByKey(choice);
-  if (chosen && chosen.kind === "image") {
-    const refs = userImgs.length ? userImgs : (intent && intent.edit && lastImageMsg() ? [lastImageMsg().images[0]] : []);
-    return createImage({ model: chosen, prompt: text, refs, aspect: "1:1" });
+  if (chosen && chosen.kind && chosen.kind !== "chat") {
+    const kind = chosen.kind;
+    const refs = kind === "music" ? [] : userImgs.length ? userImgs.slice(0, 1) : (kind === "image" && intent && intent.edit && lastImageMsg() ? [lastImageMsg().images[0]] : []);
+    return createMedia({ kind, model: chosen, prompt: text, refs, aspect: kind === "video" ? "16:9" : "1:1", dur: defaultDur(chosen), lyrics: "" });
   }
-  if (intent && S.imageOffer !== false && imageAllowed()) return offerImage(text, intent);
   return runChat(choice, viaVoice);
 }
 
-async function runChat(choice, viaVoice) {
+/* ---------- Spezial-Modelle als Werkzeuge ---------- */
+const KIND_FLAG = { image: "images", video: "videos", music: "music" };
+const KIND_NAME = { image: "Bild", video: "Video", music: "Musik" };
+function kindAllowed(kind, prof = me) { return S.imageOffer !== false && prof[KIND_FLAG[kind]] !== false && mediaModels(kind, prof).length > 0; }
+function toolsAvailable() { return ["image", "video", "music"].some(k => kindAllowed(k)); }
+function defaultMediaModel(kind) { const ms = mediaModels(kind); return ms.find(m => m.key === S[kind + "Model"]) || ms[0] || null; }
+function defaultDur(m) { const ds = (m && m.durations) || [5, 10]; return ds.reduce((a, b) => Math.abs(b - 6) < Math.abs(a - 6) ? b : a, ds[0]); }
+function clampDur(m, d) { const ds = (m && m.durations) || [5, 10]; d = +d || defaultDur(m); return ds.reduce((a, b) => Math.abs(b - d) < Math.abs(a - d) ? b : a, ds[0]); }
+function estCost(m, o) {
+  if (o.kind === "video") return (m.imgP || 0.1) * (o.dur || defaultDur(m));
+  if (o.kind === "music") return m.imgP || 0.05;
+  return m.imgP || 0.04;
+}
+function mediaTools() {
+  const t = [];
+  const ref = { type: "string", enum: ["keine", "letztes_bild", "hochgeladenes_bild"], description: "Ein vorhandenes Bild als Vorlage verwenden: das zuletzt erstellte Bild oder das Bild, das die Person gerade hochgeladen hat." };
+  if (kindAllowed("image")) t.push({ name: "erstelle_bild", description: "Erzeugt mit einem Spezial-Bildmodell ein Bild (Foto, Illustration, Logo, Gemälde, Comic …) oder verändert ein vorhandenes Bild und zeigt es der Person im Chat.", parameters: { type: "object", properties: {
+    beschreibung: { type: "string", description: "Ausführliche Bildbeschreibung: Motiv, Stil, Farben, Licht, Perspektive, Stimmung. Bei Änderungen: genau, was geändert werden soll." },
+    format: { type: "string", enum: ["quadrat", "hochformat", "querformat"] }, vorlage: ref }, required: ["beschreibung"] } });
+  if (kindAllowed("video")) t.push({ name: "erstelle_video", description: "Erzeugt mit einem Spezial-Videomodell einen kurzen Videoclip (einige Sekunden, je nach Modell mit Ton) und zeigt ihn im Chat. Teuer und langsam, nur wenn ausdrücklich ein Video gewünscht ist.", parameters: { type: "object", properties: {
+    beschreibung: { type: "string", description: "Ausführliche Szenenbeschreibung: Handlung, Kamerabewegung, Stil, Licht, Ton/Geräusche." },
+    dauer_sekunden: { type: "integer", description: "Gewünschte Länge in Sekunden (meist 4 bis 10)." },
+    format: { type: "string", enum: ["quer", "hoch"] },
+    startbild: { type: "string", enum: ["keins", "letztes_bild", "hochgeladenes_bild"], description: "Ein Bild als erstes Bild des Videos verwenden." } }, required: ["beschreibung"] } });
+  if (kindAllowed("music")) t.push({ name: "erstelle_musik", description: "Erzeugt mit einem Spezial-Musikmodell ein Musikstück oder Lied (mit oder ohne Gesang) und spielt es im Chat ab.", parameters: { type: "object", properties: {
+    beschreibung: { type: "string", description: "Stil, Genre, Stimmung, Tempo, Instrumente, Gesang ja/nein, Sprache des Gesangs." },
+    liedtext: { type: "string", description: "Optional: vollständiger Liedtext, wenn gesungen werden soll." } }, required: ["beschreibung"] } });
+  return t;
+}
+function toolsPrompt(tools) {
+  const names = tools.map(t => ({ erstelle_bild: "Bilder", erstelle_video: "Videos", erstelle_musik: "Musik" }[t.name]));
+  return `Du kannst über Werkzeuge Spezial-Modelle für ${names.join(", ")} steuern. Setze sie selbständig ein, wenn eine Aufgabe sie braucht, auch mehrere nacheinander in derselben Antwort (z. B. erst eine Geschichte schreiben, dann ein passendes Bild erstellen, dann ein Lied dazu). Sag vorher in einem kurzen Satz, was du als Nächstes machst. Schreibe den Werkzeugen ausführliche, präzise Beschreibungen. Erzeuge Medien nur, wenn sie gewünscht sind oder klar zur Aufgabe gehören, und frag bei Unklarheit lieber kurz nach. Teurere Schritte muss die Person bestätigen; das Werkzeug sagt dir, wenn das der Fall ist. Hinweise in eckigen Klammern wie „[Bild erstellt …]“ stehen für Medien, die die App bereits erzeugt und angezeigt hat.`;
+}
+function refFor(sel) {
+  if (sel === "hochgeladenes_bild") { for (let i = cur.messages.length - 1; i >= 0; i--) { const m = cur.messages[i]; if (m.role === "user" && (m.images || []).length) return [m.images[0]]; } return []; }
+  if (sel === "letztes_bild") { for (let i = cur.messages.length - 1; i >= 0; i--) { const m = cur.messages[i]; if (m.role === "assistant" && !m.offer && (m.images || []).length) return [m.images[0]]; } return []; }
+  return [];
+}
+async function runTool(c) {
+  const kind = { erstelle_bild: "image", erstelle_video: "video", erstelle_musik: "music" }[c.name];
+  if (!kind || !kindAllowed(kind)) return "Dieses Werkzeug ist hier nicht verfügbar.";
+  const mm = defaultMediaModel(kind);
+  const a = c.input || {};
+  const prompt = String(a.beschreibung || a.prompt || "").trim();
+  if (!prompt) return "Fehler: Die Beschreibung fehlt.";
+  const aspect = kind === "video" ? (a.format === "hoch" ? "9:16" : "16:9") : ({ hochformat: "2:3", querformat: "3:2" }[a.format] || "1:1");
+  const o = { kind, model: mm, prompt, aspect, dur: kind === "video" ? clampDur(mm, a.dauer_sekunden) : 0, lyrics: String(a.liedtext || ""), refs: kind === "music" ? [] : refFor(kind === "video" ? a.startbild : a.vorlage), fromTool: true };
+  const est = estCost(mm, o);
+  const limit = S.autoLimit != null ? +S.autoLimit : 0.1;
+  if (est > limit) {
+    await offerMedia(o);
+    return `Noch nicht erstellt: Die Person muss diesen Schritt erst bestätigen (geschätzte Kosten ${fmtUSD(est)}). Die App zeigt ihr dafür direkt über deiner nächsten Nachricht eine Karte mit Preis an. Sag ihr in einem Satz, dass sie den Schritt in dieser Karte bestätigen kann, und mach mit anderen Teilen der Aufgabe weiter, falls es welche gibt.`;
+  }
+  return await createMedia(o, true);
+}
+
+/* ---------- Chat mit selbständigem Modellwechsel ---------- */
+function newSeg() {
   const sc = $("#scroller");
-  const reply = { role: "assistant", text: "" };
   const el = document.createElement("div"); el.className = "msg assistant";
   el.innerHTML = `<div class="body"><span class="typing"><i></i><i></i><i></i></span></div><div class="status"></div>`;
   sc.append(el); sc.scrollTop = sc.scrollHeight;
-  const body = el.querySelector(".body"), st = el.querySelector(".status");
-
+  return { reply: { role: "assistant", text: "" }, el, body: el.querySelector(".body"), st: el.querySelector(".status"), raf: 0 };
+}
+async function finishSeg(seg, keepEmpty) {
+  if (seg.raf) cancelAnimationFrame(seg.raf);
+  const r = seg.reply;
+  if (!keepEmpty && !r.text && !r.error && !r.usage) { seg.el.remove(); return null; }
+  cur.messages.push(r); cur.updated = Date.now(); await saveChats();
+  const done = msgEl(r); seg.el.replaceWith(done);
+  const sc = $("#scroller"); sc.scrollTop = sc.scrollHeight;
+  return done;
+}
+async function runChat(choice, viaVoice) {
+  const sc = $("#scroller");
   streaming = new AbortController(); updateSend();
-  let raf = 0, r = null, m = null, cat = null, route = { in: 0, out: 0, cost: 0 };
-  const paint = () => { raf = 0; const nearBottom = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 120; renderBody(body, reply.text); if (nearBottom) sc.scrollTop = sc.scrollHeight; };
-  const cb = {
-    text: d => { reply.text += d; st.textContent = ""; if (!raf) raf = requestAnimationFrame(paint); },
-    status: t => { st.textContent = t; },
-  };
+  let seg = newSeg(), m = null, cat = null, route = { in: 0, out: 0, cost: 0 };
+  const tot = { in: 0, out: 0, searches: 0, est: false, used: "", sources: [], truncated: false, steps: 0 };
+  const mkCb = () => ({
+    text: d => { seg.reply.text += d; seg.st.textContent = ""; if (!seg.raf) seg.raf = requestAnimationFrame(() => { seg.raf = 0; const near = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 120; renderBody(seg.body, seg.reply.text); if (near) sc.scrollTop = sc.scrollHeight; }); },
+    status: t => { seg.st.textContent = t; },
+  });
   try {
     let web = webOn;
+    const last = cur.messages[cur.messages.length - 1];
     if (choice === "auto") {
-      cb.status("Wählt das passende Modell …");
-      try { const rr = await routeRequest(streaming.signal); cat = rr.cat; route = rr.usage; }
-      catch (e) { if (e && e.name === "AbortError") throw e; cat = "komplex"; console.warn("Automatik fehlgeschlagen:", e); }
-      if (cat === "bild") {
-        if (imageAllowed() && S.imageOffer !== false) {
-          streaming = null; updateSend(); el.remove();
-          if (route.cost) await addUsage(route.in, route.out, route.cost);
-          const last = cur.messages[cur.messages.length - 1];
-          return offerImage(last.text, { edit: !!((last.images || []).length || lastImageMsg()), fromUpload: !!(last.images || []).length });
-        }
-        cat = "komplex";
+      if (toolsAvailable() && mediaIntent(last.text, last.images || [])) cat = "medien";
+      else {
+        seg.st.textContent = "Wählt das passende Modell …";
+        try { const rr = await routeRequest(streaming.signal); cat = rr.cat; route = rr.usage; }
+        catch (e) { if (e && e.name === "AbortError") throw e; cat = "komplex"; console.warn("Automatik fehlgeschlagen:", e); }
       }
+      if (cat === "bild") cat = "medien";
+      if (cat === "medien" && !toolsAvailable()) cat = "komplex";
       m = resolveRoute(cat);
       if (cat === "aktuell") web = true;
     } else m = modelByKey(choice);
-    if (!m || !provOf(m) || m.kind === "image") m = resolveRoute("komplex");
+    if (!m || !provOf(m) || (m.kind && m.kind !== "chat")) m = resolveRoute("komplex");
     if (!m) throw { msg: "Kein Modell verfügbar. Prüfe die Modelle und Anbieter in den Einstellungen." };
     const p = provOf(m);
     web = web && p.type === "anthropic" && S.webSearch !== false;
-    cb.status((cat ? "Automatisch → " : "") + (m.label || m.id) + (web ? " · mit Websuche" : ""));
-    const sys = systemPrompt(web), msgs = apiMessages();
-    r = p.type === "anthropic" ? await streamAnthropic(m, p, sys, msgs, web, streaming.signal, cb) : await streamOpenAI(m, p, sys, msgs, streaming.signal, cb);
+    const tools = toolsAvailable() ? mediaTools() : [];
+    const sys = systemPrompt(web, tools);
+    const native = p.type === "anthropic" ? anthMsgs(apiMessages()) : oaMsgs(apiMessages());
+    seg.st.textContent = (cat ? "Automatisch → " : "") + (m.label || m.id) + (web ? " · mit Websuche" : "");
+    for (let step = 0; step < 6; step++) {
+      const r = p.type === "anthropic" ? await streamAnthropic(m, p, sys, native, web, tools, streaming.signal, mkCb()) : await streamOpenAI(m, p, sys, native, tools, streaming.signal, mkCb());
+      tot.in += r.inTok; tot.out += r.outTok; tot.searches += r.searches; tot.est = tot.est || !!r.est; if (r.truncated) tot.truncated = true;
+      if (r.modelUsed) tot.used = r.modelUsed;
+      r.sources.forEach(s => { if (!tot.sources.some(x => x.url === s.url)) tot.sources.push(s); });
+      if (!r.calls.length || step === 5) break;
+      tot.steps++;
+      if (tot.sources.length) { seg.reply.sources = tot.sources.slice(0, 8); tot.sources = []; }
+      await finishSeg(seg, false);
+      const results = [];
+      for (const c of r.calls) results.push({ id: c.id, text: await runTool(c) });
+      if (streaming.signal.aborted) throw new DOMException("abgebrochen", "AbortError");
+      if (p.type === "anthropic") {
+        native.push({ role: "assistant", content: r.blocks });
+        native.push({ role: "user", content: results.map(x => ({ type: "tool_result", tool_use_id: x.id, content: x.text })) });
+      } else {
+        native.push({ role: "assistant", content: r.text || null, tool_calls: r.rawCalls });
+        results.forEach(x => native.push({ role: "tool", tool_call_id: x.id, content: x.text }));
+      }
+      seg = newSeg(); seg.st.textContent = `Zurück bei ${m.label || m.id} …`;
+    }
   } catch (e) {
-    if (e && e.name === "AbortError") { if (!reply.text) reply.text = "_(abgebrochen)_"; }
-    else if (e && ("status" in e || "msg" in e)) reply.error = friendlyError(e);
-    else reply.error = "Keine Verbindung zum Anbieter. Prüfe deine Internetverbindung" + (m && provOf(m) && provOf(m).type !== "anthropic" ? " und ob der Anbieter Anfragen direkt aus dem Browser erlaubt" : "") + ". (" + (e && e.message || e) + ")";
+    if (e && e.name === "AbortError") { if (!seg.reply.text) seg.reply.text = "_(abgebrochen)_"; }
+    else if (e && ("status" in e || "msg" in e)) seg.reply.error = friendlyError(e);
+    else seg.reply.error = "Keine Verbindung zum Anbieter. Prüfe deine Internetverbindung" + (m && provOf(m) && provOf(m).type !== "anthropic" ? " und ob der Anbieter Anfragen direkt aus dem Browser erlaubt" : "") + ". (" + (e && e.message || e) + ")";
   }
-  if (raf) cancelAnimationFrame(raf);
   streaming = null; updateSend();
-  const inT = (r ? r.inTok : 0) + route.in, outT = (r ? r.outTok : 0) + route.out;
+  const inT = tot.in + route.in, outT = tot.out + route.out;
   if (inT || outT) {
-    const searchCost = r ? r.searches * (S.searchPrice != null ? +S.searchPrice : 10) / 1000 : 0;
-    const cost = (r ? (r.inTok * m.inP + r.outTok * m.outP) / 1e6 : 0) + searchCost + route.cost;
-    reply.usage = { in: inT, out: outT, cost, model: m ? (m.label || m.id) : "", route: cat, searches: r ? r.searches : 0, est: !!(r && r.est) };
-    if (r && r.modelUsed && m && r.modelUsed !== m.id && !r.modelUsed.startsWith(m.id)) reply.usage.used = r.modelUsed;
+    const searchCost = tot.searches * (S.searchPrice != null ? +S.searchPrice : 10) / 1000;
+    const cost = (m ? (tot.in * (m.inP || 0) + tot.out * (m.outP || 0)) / 1e6 : 0) + searchCost + route.cost;
+    seg.reply.usage = { in: inT, out: outT, cost, model: m ? (m.label || m.id) : "", route: cat, searches: tot.searches, est: tot.est };
+    if (tot.used && m && tot.used !== m.id && !tot.used.startsWith(m.id)) seg.reply.usage.used = tot.used;
     await addUsage(inT, outT, cost);
   }
-  if (r && r.sources.length) reply.sources = r.sources.slice(0, 8);
-  cur.messages.push(reply); cur.updated = Date.now(); await saveChats();
-  const done = msgEl(reply); el.replaceWith(done); sc.scrollTop = sc.scrollHeight;
-  if (viaVoice && S.voiceAutoSpeak !== false && !reply.error && reply.text) TTS.speak(reply.text, done.querySelector("[data-speak]"));
+  if (tot.sources.length) seg.reply.sources = tot.sources.slice(0, 8);
+  if (tot.truncated) { seg.reply.truncated = true; seg.reply.choice = choice; }
+  const done = await finishSeg(seg, !tot.steps);
+  if (done && viaVoice && S.voiceAutoSpeak !== false && !seg.reply.error && seg.reply.text) TTS.speak(seg.reply.text, done.querySelector("[data-speak]"));
 }
 
-/* ---------- Bilder erstellen ---------- */
+/* ---------- Bilder, Videos, Musik ---------- */
 const IMG_NOUN = /(bild|bilder|foto|fotos|grafik|illustration|logo|poster|plakat|wallpaper|zeichnung|gemälde|avatar|sticker|comic|porträt|portrait|image|picture|photo)/i;
 const IMG_VERB = /\b(erstell|generier|mach|mal|male|zeichne|entwirf|entwerf|design|kreier|gestalte|zauber|create|draw|generate|make|paint|render)/i;
 const EDIT_VERB = /\b(änder|bearbeit|entfern|ersetz|tausch|füg|heller|dunkler|bunter|realistischer|größer|kleiner|hintergrund|verwandl|im stil|als (comic|gemälde|zeichnung|aquarell|foto)|statt|andere farbe|noch ?mal|variante|mach (es|ihn|sie|das|den|die|ihm|ihr))/i;
 const IMG_STRONG = /\b(male|mal mir|mal uns|zeichne|draw|paint)\b/i;
 const NOT_IMG = /(diagramm|tabelle|mindmap|flussdiagramm|zeitstrahl|chart|liste|formel)/i;
+const VID_NOUN = /\b(video|videos|clip|filmchen|kurzfilm|animation)\b/i;
+const MUS_NOUN = /\b(lied|lieder|song|songs|musik|melodie|beat|jingle|hymne|ständchen|rap|ohrwurm)\b/i;
+const MEDIA_VERB = /\b(erstell|generier|mach|dreh|produzier|komponier|schreib.*und (sing|vertont)|vertone|sing|create|make|generate|compose)/i;
 const imgSrc = i => i.url || `data:${i.media_type || "image/png"};base64,${i.data}`;
 function lastImageMsg() {
   if (!cur) return null;
   for (let i = cur.messages.length - 1; i >= 0; i--) {
     const m = cur.messages[i];
     if (m.role !== "assistant" || m.offer) continue;
-    return (m.images || []).length ? m : null;
+    if ((m.images || []).length) return m;
+    if (m.text || (m.media || []).length) return null;
   }
   return null;
 }
+function isQuestion(t) { return /\?\s*$/.test(t) && /^(kannst|kann|könntest|wie|was|warum|wieso|gibt|geht|bist|hast|welche|wo)\b/i.test(t); }
 function imageIntent(text, userImgs) {
-  const t = (text || "").trim(); if (!t) return null;
-  const question = /\?\s*$/.test(t) && /^(kannst|kann|könntest|wie|was|warum|wieso|gibt|geht|bist|hast|welche|wo)\b/i.test(t);
-  if (question) return null;
+  const t = (text || "").trim(); if (!t || isQuestion(t)) return null;
   if (userImgs.length) return (EDIT_VERB.test(t) || (IMG_VERB.test(t) && IMG_NOUN.test(t))) ? { edit: true, fromUpload: true } : null;
   if (lastImageMsg() && EDIT_VERB.test(t)) return { edit: true };
   if ((IMG_NOUN.test(t) && IMG_VERB.test(t)) || (IMG_STRONG.test(t) && !NOT_IMG.test(t))) return { edit: false };
   return null;
 }
-const centsTxt = p => !p ? "" : p < 0.015 ? "ca. 1 Cent" : `ca. ${Math.round(p * 100)} Cent`;
-async function offerImage(text, intent) {
-  const im = defaultImageModel();
-  const m = { role: "assistant", text: "", offer: { prompt: text, model: im ? im.key : "", aspect: "1:1", useRef: !!intent.edit, fromUpload: !!intent.fromUpload } };
+function mediaIntent(text, userImgs) {
+  const t = (text || "").trim(); if (!t || isQuestion(t)) return null;
+  if ((VID_NOUN.test(t) || MUS_NOUN.test(t)) && MEDIA_VERB.test(t)) return true;
+  return !!imageIntent(t, userImgs);
+}
+const centsTxt = p => !p ? "" : p < 0.015 ? "ca. 1 Cent" : p < 1 ? `ca. ${Math.round(p * 100)} Cent` : `ca. ${p.toFixed(2).replace(".", ",")} $`;
+async function offerMedia(o) {
+  const m = { role: "assistant", text: "", offer: { kind: o.kind, prompt: o.prompt, model: o.model ? o.model.key : "", aspect: o.aspect, dur: o.dur, lyrics: o.lyrics || "", refs: o.refs || [], useRef: !!(o.refs || []).length, fromTool: !!o.fromTool } };
   cur.messages.push(m); cur.updated = Date.now(); await saveChats();
   const sc = $("#scroller"); sc.append(msgEl(m)); sc.scrollTop = sc.scrollHeight;
 }
 function offerEl(m) {
-  const o = m.offer; const ims = imageModels();
-  const userMsg = cur.messages[cur.messages.indexOf(m) - 1];
-  const ref = o.fromUpload ? userMsg && (userMsg.images || [])[0] : (lastImageMsg() || {}).images && lastImageMsg().images[0];
+  const o = m.offer; const kind = o.kind || "image"; const ms = mediaModels(kind);
+  let ref = null;
+  if (o.refs) ref = o.refs[0] || null;
+  else { const userMsg = cur.messages[cur.messages.indexOf(m) - 1]; ref = o.fromUpload ? userMsg && (userMsg.images || [])[0] : (lastImageMsg() || {}).images && lastImageMsg().images[0]; }
+  const aspects = kind === "video" ? [["16:9", "Quer"], ["9:16", "Hoch"]] : kind === "image" ? ASPECTS : [];
+  const title = kind === "video" ? "Video erstellen?" : kind === "music" ? "Musik erstellen?" : o.useRef ? "Bild verändern?" : "Bild erstellen?";
   const box = document.createElement("div"); box.className = "offer";
-  box.innerHTML = `<div class="offer-head"><span class="offer-ic" aria-hidden="true">🎨</span><div><b>${o.useRef ? "Bild verändern?" : "Bild erstellen?"}</b><span>Dafür nutze ich ein Spezial-Modell für Bilder. Du kannst die Beschreibung noch anpassen.</span></div></div>
-    <textarea class="inp offer-prompt" rows="2" aria-label="Bildbeschreibung">${esc(o.prompt)}</textarea>
+  box.innerHTML = `<div class="offer-head"><span class="offer-ic" aria-hidden="true">${{ image: "🎨", video: "🎬", music: "🎵" }[kind]}</span><div><b>${title}</b><span>${o.fromTool ? "Dieser Schritt kostet etwas mehr, deshalb frage ich vorher." : "Dafür nutze ich ein Spezial-Modell."} Du kannst die Beschreibung noch anpassen.</span></div></div>
+    <textarea class="inp offer-prompt" rows="2" aria-label="Beschreibung">${esc(o.prompt)}</textarea>
+    ${kind === "music" ? `<textarea class="inp offer-lyrics" rows="2" placeholder="Liedtext (optional)" aria-label="Liedtext">${esc(o.lyrics || "")}</textarea>` : ""}
     <div class="offer-row">
-      <select class="inp offer-model" aria-label="Bildmodell">${ims.map(x => `<option value="${esc(x.key)}" ${x.key === o.model ? "selected" : ""}>${esc(x.label || x.id)}${x.imgP ? " · " + centsTxt(x.imgP) : ""}</option>`).join("")}</select>
-      <div class="seg offer-aspect" role="radiogroup" aria-label="Format">${ASPECTS.map(([v, l]) => `<button data-a="${v}" class="${v === o.aspect ? "on" : ""}" role="radio" aria-checked="${v === o.aspect}">${l}</button>`).join("")}</div>
+      <select class="inp offer-model" aria-label="Modell">${ms.map(x => `<option value="${esc(x.key)}" ${x.key === o.model ? "selected" : ""}>${esc(x.label || x.id)}</option>`).join("")}</select>
+      ${kind === "video" ? `<select class="inp offer-dur" aria-label="Länge" style="flex:0 0 auto;min-width:0;width:auto"></select>` : ""}
+      ${aspects.length ? `<div class="seg offer-aspect" role="radiogroup" aria-label="Format">${aspects.map(([v, l]) => `<button data-a="${v}" class="${v === o.aspect ? "on" : ""}" role="radio" aria-checked="${v === o.aspect}">${l}</button>`).join("")}</div>` : ""}
     </div>
-    ${ref ? `<label class="check offer-ref"><input type="checkbox" ${o.useRef ? "checked" : ""}><img src="${esc(imgSrc(ref))}" alt=""><span>${o.fromUpload ? "Dein Foto als Vorlage verwenden" : "Letztes Bild als Vorlage verwenden"}</span></label>` : ""}
-    <div class="btnrow"><button class="btn offer-go"></button><button class="btn ghost offer-no">Lieber als Text antworten</button></div>`;
+    ${ref && kind !== "music" ? `<label class="check offer-ref"><input type="checkbox" ${o.useRef ? "checked" : ""}><img src="${esc(imgSrc(ref))}" alt=""><span>${kind === "video" ? "Als erstes Bild des Videos verwenden" : o.fromUpload ? "Dein Foto als Vorlage verwenden" : "Bild als Vorlage verwenden"}</span></label>` : ""}
+    <div class="btnrow"><button class="btn offer-go"></button><button class="btn ghost offer-no">${o.fromTool ? "Nicht erstellen" : "Lieber als Text antworten"}</button></div>`;
   const q = s => box.querySelector(s);
-  const label = () => { const x = modelByKey(q(".offer-model").value); const useRef = ref && q(".offer-ref input").checked; q(".offer-go").textContent = (useRef ? "Bild verändern" : "Bild erstellen") + (x && x.imgP ? " · " + centsTxt(x.imgP) : ""); };
-  label();
-  q(".offer-model").onchange = () => { o.model = q(".offer-model").value; label(); };
-  if (ref) q(".offer-ref input").onchange = label;
+  if (!o.aspect) o.aspect = aspects.length ? aspects[0][0] : "1:1";
+  const fillDur = () => { if (kind !== "video") return; const x = modelByKey(q(".offer-model").value); const ds = (x && x.durations) || [5, 10]; const cur0 = clampDur(x, o.dur); q(".offer-dur").innerHTML = ds.map(d => `<option value="${d}" ${d === cur0 ? "selected" : ""}>${d} Sek.</option>`).join(""); o.dur = cur0; };
+  const label = () => {
+    const x = modelByKey(q(".offer-model").value); const useRef = ref && q(".offer-ref input") && q(".offer-ref input").checked;
+    const est = x ? estCost(x, { kind, dur: o.dur }) : 0;
+    q(".offer-go").textContent = (kind === "video" ? "Video erstellen" : kind === "music" ? "Musik erstellen" : useRef ? "Bild verändern" : "Bild erstellen") + (est ? " · " + centsTxt(est) : "");
+  };
+  fillDur(); label();
+  q(".offer-model").onchange = () => { o.model = q(".offer-model").value; fillDur(); label(); };
+  if (q(".offer-dur")) q(".offer-dur").onchange = () => { o.dur = +q(".offer-dur").value; label(); };
+  if (q(".offer-ref input")) q(".offer-ref input").onchange = label;
   box.querySelectorAll(".offer-aspect button").forEach(b => b.onclick = () => { o.aspect = b.dataset.a; box.querySelectorAll(".offer-aspect button").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-checked", x === b); }); });
   const drop = async () => { cur.messages = cur.messages.filter(x => x !== m); await saveChats(); box.closest(".msg").remove(); };
   q(".offer-go").onclick = async () => {
-    if (streaming) return;
-    const prompt = q(".offer-prompt").value.trim(); if (!prompt) return toast("Bitte beschreibe das Bild");
-    const model = modelByKey(q(".offer-model").value); if (!model) return toast("Kein Bildmodell ausgewählt");
-    const refs = ref && q(".offer-ref input").checked ? [ref] : [];
-    await drop(); createImage({ model, prompt, refs, aspect: o.aspect });
+    if (streaming) return toast("Warte, bis die aktuelle Antwort fertig ist");
+    const prompt = q(".offer-prompt").value.trim(); if (!prompt) return toast("Bitte gib eine Beschreibung ein");
+    const model = modelByKey(q(".offer-model").value); if (!model) return toast("Kein Modell ausgewählt");
+    const refs = ref && q(".offer-ref input") && q(".offer-ref input").checked ? [ref] : [];
+    const lyrics = q(".offer-lyrics") ? q(".offer-lyrics").value.trim() : "";
+    await drop(); createMedia({ kind, model, prompt, refs, aspect: o.aspect, dur: o.dur, lyrics });
   };
   q(".offer-no").onclick = async () => {
     if (streaming) return;
     await drop();
+    if (o.fromTool) return;
     const sel = $("#modelSelect").value, sm = modelByKey(sel);
-    runChat(sm && sm.kind === "image" ? (routerReady() ? "auto" : (allowedModels()[0] || {}).key) : sel, false);
+    runChat(sm && sm.kind && sm.kind !== "chat" ? (routerReady() ? "auto" : (allowedModels()[0] || {}).key) : sel, false);
   };
   return box;
 }
-async function createImage(o) {
-  const sc = $("#scroller"); const m = o.model;
+const activeJobs = new Set();
+async function createMedia(o, inLoop = false) {
+  const sc = $("#scroller"); const m = o.model; const kind = o.kind || "image";
   const el = document.createElement("div"); el.className = "msg assistant";
-  el.innerHTML = `<div class="body"><div class="img-wait ${o.aspect === "2:3" ? "tall" : o.aspect === "3:2" ? "wide" : ""}"></div></div><div class="status">${esc((o.refs.length ? "Verändert das Bild mit " : "Erstellt das Bild mit ") + (m.label || m.id))} … das dauert meist 10–60 Sekunden.</div>`;
+  const wait = kind === "music" ? `<div class="img-wait audio"></div>` : `<div class="img-wait ${o.aspect === "2:3" || o.aspect === "9:16" ? "tall" : o.aspect === "1:1" ? "" : "wide"}"></div>`;
+  const what = kind === "video" ? "Erstellt das Video" : kind === "music" ? "Komponiert die Musik" : o.refs && o.refs.length ? "Verändert das Bild" : "Erstellt das Bild";
+  const hint = kind === "video" ? " … das dauert meist 1–5 Minuten. Lass die App dabei offen." : kind === "music" ? " … das dauert meist bis zu einer Minute." : " … das dauert meist 10–60 Sekunden.";
+  el.innerHTML = `<div class="body">${wait}</div><div class="status">${esc(what + " mit " + (m.label || m.id) + hint)}</div>`;
   sc.append(el); sc.scrollTop = sc.scrollHeight;
-  streaming = new AbortController(); updateSend();
-  const reply = { role: "assistant", text: "", images: [], imgPrompt: o.prompt, imgModel: m.key, imgAspect: o.aspect, note: `[Bild ${o.refs.length ? "verändert" : "erstellt"} mit der Beschreibung: „${o.prompt}“]` };
+  const st = el.querySelector(".status");
+  if (!inLoop) { streaming = new AbortController(); updateSend(); }
+  const signal = streaming.signal;
+  const reply = { role: "assistant", text: "", kind, imgPrompt: o.prompt, imgModel: m.key, imgAspect: o.aspect, dur: o.dur, note: `[${KIND_NAME[kind]} ${o.refs && o.refs.length && kind === "image" ? "verändert" : "erstellt"} mit ${m.label || m.id}, Beschreibung: „${o.prompt}“${o.lyrics ? ", mit Liedtext" : ""}]` };
   let prompt = o.prompt;
   if (me.kid) prompt += ". Kinderfreundlich, jugendfrei, ohne Gewalt.";
+  let result;
   try {
-    const r = await generateImage(m, prompt, o.refs, o.aspect, streaming.signal);
-    reply.images = r.images;
-    reply.usage = { in: 0, out: 0, cost: r.cost, model: m.label || m.id, images: r.images.length };
+    let r;
+    if (kind === "video") {
+      r = await generateVideo(m, prompt, o.refs || [], o.aspect, o.dur, signal, t => { st.textContent = t; }, async job => {
+        reply.job = job; activeJobs.add(job.id);
+        if (!cur.messages.includes(reply)) { cur.messages.push(reply); await saveChats(); }
+      });
+      reply.media = r.media;
+    } else if (kind === "music") {
+      r = await generateMusic(m, prompt, o.lyrics || "", signal);
+      reply.media = r.media; if (r.text) reply.text = "**Liedtext**\n\n" + r.text.trim();
+    } else {
+      r = await generateImage(m, prompt, o.refs || [], o.aspect, signal);
+      reply.images = r.images;
+    }
+    reply.usage = { in: 0, out: 0, cost: r.cost, model: m.label || m.id, items: 1, kind };
     await addUsage(0, 0, r.cost);
+    result = `${KIND_NAME[kind] === "Musik" ? "Die Musik wurde" : "Das " + KIND_NAME[kind] + " wurde"} erstellt und der Person angezeigt.`;
   } catch (e) {
-    if (e && e.name === "AbortError") reply.text = "_(abgebrochen)_";
+    if (e && e.name === "AbortError") { reply.text = "_(abgebrochen)_"; result = "Abgebrochen."; }
     else if (e && ("status" in e || "msg" in e)) reply.error = friendlyError(e);
-    else reply.error = "Keine Verbindung zum Bild-Anbieter. Prüfe deine Internetverbindung. (" + (e && e.message || e) + ")";
+    else reply.error = "Keine Verbindung zum Anbieter. Prüfe deine Internetverbindung. (" + (e && e.message || e) + ")";
+    if (reply.error) result = "Fehler: " + reply.error;
     delete reply.note;
   }
-  streaming = null; updateSend();
-  cur.messages.push(reply); cur.updated = Date.now(); await saveChats();
+  if (reply.job) { activeJobs.delete(reply.job.id); if (reply.media || reply.error) delete reply.job; }
+  if (!inLoop) { streaming = null; updateSend(); }
+  if (!cur.messages.includes(reply)) cur.messages.push(reply);
+  cur.updated = Date.now(); await saveChats();
   el.replaceWith(msgEl(reply)); sc.scrollTop = sc.scrollHeight;
+  return result;
+}
+async function resumeVideo(msg, node) {
+  if (streaming) return toast("Warte, bis die aktuelle Antwort fertig ist");
+  const m = modelByKey(msg.job.model); const p = m && provOf(m);
+  if (!p) return toast("Das Videomodell ist nicht mehr eingerichtet");
+  const st = node.querySelector(".status") || node; st.textContent = "Prüft den Stand des Videos …";
+  const jid = msg.job.id;
+  streaming = new AbortController(); updateSend(); activeJobs.add(jid);
+  try {
+    const r = await pollVideo(m, p, msg.job, streaming.signal, t => { st.textContent = t; });
+    msg.media = r.media; msg.usage = { in: 0, out: 0, cost: r.cost, model: m.label || m.id, items: 1, kind: "video" }; delete msg.job;
+    await addUsage(0, 0, r.cost);
+  } catch (e) {
+    if (!(e && e.name === "AbortError")) { msg.error = e && ("status" in e || "msg" in e) ? friendlyError(e) : String(e && e.message || e); delete msg.job; delete msg.note; }
+  }
+  activeJobs.delete(jid);
+  streaming = null; updateSend(); await saveChats();
+  node.replaceWith(msgEl(msg));
 }
 function b64ToBlob(b64, type) {
   const bin = atob(b64); const a = new Uint8Array(bin.length);
@@ -1636,6 +1913,93 @@ function openImage(i, prompt) {
   sc.querySelector("[data-close]").onclick = () => { sc.classList.remove("noscroll"); closeScreen(); };
 }
 
+function blobToB64(blob) {
+  return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1] || ""); fr.onerror = () => rej(fr.error); fr.readAsDataURL(blob); });
+}
+function sniffAudio(bytes) {
+  const s = String.fromCharCode(...bytes.slice(0, 4));
+  if (s === "RIFF") return "audio/wav";
+  if (s === "OggS") return "audio/ogg";
+  if (s === "fLaC") return "audio/flac";
+  if (s.slice(0, 3) === "ID3" || (bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0)) return "audio/mpeg";
+  if (String.fromCharCode(...bytes.slice(4, 8)) === "ftyp") return "audio/mp4";
+  return "audio/mpeg";
+}
+const sleepAbortable = (ms, signal) => new Promise((res, rej) => {
+  const t = setTimeout(res, ms);
+  if (signal) signal.addEventListener("abort", () => { clearTimeout(t); rej(new DOMException("abgebrochen", "AbortError")); }, { once: true });
+});
+async function generateVideo(m, prompt, refs, aspect, dur, signal, onStatus, onJob) {
+  const p = provOf(m);
+  if (p.preset !== "openrouter" && p.preset !== "custom") throw { msg: "Videos lassen sich derzeit nur über OpenRouter erstellen." };
+  const body = { model: m.id, prompt, aspect_ratio: aspect || "16:9" };
+  if (dur) body.duration = dur;
+  if (refs.length) body.frame_images = [{ type: "image_url", image_url: { url: imgSrc(refs[0]) }, frame_type: "first_frame" }];
+  const res = await fetch(baseUrl(p) + "/videos", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+  if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+  const j = await res.json();
+  if (!j.id) throw { msg: "Der Anbieter hat keinen Auftrag für das Video angelegt." };
+  const job = { id: j.id, model: m.key, url: j.polling_url || baseUrl(p) + "/videos/" + j.id, started: Date.now(), dur };
+  if (onJob) await onJob(job);
+  return pollVideo(m, p, job, signal, onStatus);
+}
+async function pollVideo(m, p, job, signal, onStatus) {
+  const t0 = job.started || Date.now();
+  for (let i = 0; i < 240; i++) {
+    const res = await fetch(job.url, { signal, headers: oaHeaders(p) });
+    if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+    const j = await res.json();
+    const sec = Math.round((Date.now() - t0) / 1000);
+    if (j.status === "completed") {
+      if (onStatus) onStatus("Lädt das fertige Video …");
+      const url = (j.unsigned_urls || [])[0] || (j.urls || [])[0] || baseUrl(p) + "/videos/" + job.id + "/content?index=0";
+      const signed = (j.urls || []).includes(url);
+      const vr = await fetch(url, { signal, headers: signed ? {} : oaHeaders(p) });
+      if (!vr.ok) throw { status: vr.status, body: await vr.text(), provider: p };
+      const blob = await vr.blob();
+      const type = blob.type && blob.type.startsWith("video/") ? blob.type : "video/mp4";
+      return { media: [{ kind: "video", media_type: type, data: await blobToB64(blob) }], cost: j.usage && j.usage.cost != null ? +j.usage.cost : (m.imgP || 0) * (job.dur || defaultDur(m)) };
+    }
+    if (["failed", "cancelled", "expired"].includes(j.status)) {
+      const er = j.error && (j.error.message || j.error);
+      throw { msg: `Das Video konnte nicht erstellt werden (${j.status === "failed" ? "fehlgeschlagen" : j.status === "cancelled" ? "abgebrochen" : "abgelaufen"})${er ? ": " + er : ""}. Fehlgeschlagene Videos werden nicht berechnet.` };
+    }
+    if (onStatus) onStatus(`${j.status === "pending" ? "Wartet auf einen freien Platz" : "Erstellt das Video"} mit ${m.label || m.id} … ${sec >= 60 ? Math.floor(sec / 60) + " Min. " : ""}${sec % 60} Sek.`);
+    await sleepAbortable(i < 6 ? 5000 : 10000, signal);
+  }
+  throw { msg: "Das Video braucht ungewöhnlich lange. Tippe später unter der Nachricht auf „Video abholen“." };
+}
+async function generateMusic(m, prompt, lyrics, signal) {
+  const p = provOf(m);
+  if (p.type === "anthropic") throw { msg: "Claude kann keine Musik erzeugen. Wähle ein Musikmodell über OpenRouter." };
+  const content = prompt + (lyrics ? "\n\nLiedtext:\n" + lyrics : "");
+  const body = { model: m.id, messages: [{ role: "user", content }], modalities: ["text", "audio"], stream: true, usage: { include: true } };
+  const post = () => fetch(baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+  let res = await post();
+  if (!res.ok) {
+    const t = await res.text();
+    if (res.status === 400 && /audio/i.test(t) && !body.audio) { body.audio = { format: "mp3" }; res = await post(); if (!res.ok) throw { status: res.status, body: await res.text(), provider: p }; }
+    else throw { status: res.status, body: t, provider: p };
+  }
+  const chunks = []; let text = "", cost = null;
+  await readSSE(res, ev => {
+    if (ev.error) throw { status: ev.error.code || 0, body: JSON.stringify(ev), provider: p };
+    const d = ev.choices && ev.choices[0] && ev.choices[0].delta;
+    if (d) {
+      if (typeof d.content === "string") text += d.content;
+      if (d.audio && d.audio.data) chunks.push(d.audio.data);
+      if (d.audio && d.audio.transcript && !text) text += d.audio.transcript;
+    }
+    if (ev.usage && ev.usage.cost != null) cost = +ev.usage.cost;
+  });
+  if (!chunks.length) throw { msg: "Der Anbieter hat keine Musik zurückgegeben. Vielleicht hat sein Inhaltsfilter die Beschreibung abgelehnt. Formuliere sie etwas anders." };
+  const midPadding = chunks.slice(0, -1).some(c => c.endsWith("="));
+  const parts = midPadding ? chunks : [chunks.join("")];
+  const bytes = []; for (const b of parts) { const bin = atob(b); for (let i = 0; i < bin.length; i++) bytes.push(bin.charCodeAt(i)); }
+  const u8 = new Uint8Array(bytes); const type = sniffAudio(u8);
+  return { media: [{ kind: "audio", media_type: type, data: await blobToB64(new Blob([u8], { type })) }], text, cost: cost != null ? cost : (m.imgP || 0) };
+}
+
 async function addUsage(i, o, c) {
   const u = (await DB.get("usage")) || {}; const k = month();
   u[me.id] = u[me.id] || {}; u[me.id][k] = u[me.id][k] || { in: 0, out: 0, cost: 0, n: 0 };
@@ -1676,7 +2040,7 @@ function showSettings() {
     <header class="topbar">${BACK}<div class="title">Einstellungen</div></header>
 
     <div class="card"><h2>Profile</h2><p class="hint">Jede Person hat eigene Chats. Eine PIN verhindert, dass andere sie lesen.</p>
-      <div class="plist">${P.map(p => `<button class="pitem" data-pid="${p.id}"><span class="avatar" style="background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${[p.kid ? "Kindermodus" : "", p.pin ? "PIN" : "", p.model ? "festes Modell" : "", p.external === false ? "nur Claude" : "", p.images === false ? "keine Bilder" : ""].filter(Boolean).join(", ") || "Standard"}</span></span></button>`).join("")}</div>
+      <div class="plist">${P.map(p => `<button class="pitem" data-pid="${p.id}"><span class="avatar" style="background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${[p.kid ? "Kindermodus" : "", p.pin ? "PIN" : "", p.model ? "festes Modell" : "", p.external === false ? "nur Claude" : "", p.images === false && p.videos === false && p.music === false ? "keine Spezial-Modelle" : ""].filter(Boolean).join(", ") || "Standard"}</span></span></button>`).join("")}</div>
       <div class="btnrow"><button class="btn ghost" id="addP">Profil hinzufügen</button></div>
     </div>
 
@@ -1685,16 +2049,16 @@ function showSettings() {
       <div class="btnrow"><button class="btn ghost" id="addProv">Anbieter hinzufügen</button></div>
     </div>
 
-    <div class="card"><h2>Modelle und Preise</h2><p class="hint">Preise in US-Dollar pro Million Tokens (bei Bildmodellen pro Bild), nur für die Kostenschätzung. Prüfe sie auf den Preisseiten der Anbieter. Modelle mit „:free“ am Ende sind bei OpenRouter kostenlos.</p>
-      <div class="tablewrap"><table class="models"><thead><tr><th>An</th><th>Art</th><th>Anbieter</th><th>Name</th><th>Modell-ID</th><th>Eingabe</th><th>Ausgabe</th><th>$/Bild</th><th></th></tr></thead><tbody id="mRows">
+    <div class="card"><h2>Modelle und Preise</h2><p class="hint">Preise in US-Dollar pro Million Tokens ; „$ Spezial“ gilt für Spezial-Modelle: pro Bild, pro Musikstück oder pro Sekunde Video. Nur für die Kostenschätzung. Prüfe sie auf den Preisseiten der Anbieter. Modelle mit „:free“ am Ende sind bei OpenRouter kostenlos.</p>
+      <div class="tablewrap"><table class="models"><thead><tr><th>An</th><th>Art</th><th>Anbieter</th><th>Name</th><th>Modell-ID</th><th>Eingabe</th><th>Ausgabe</th><th>$ Spezial</th><th></th></tr></thead><tbody id="mRows">
       ${S.models.map((m, i) => `<tr><td><input type="checkbox" data-i="${i}" data-k="on" ${m.on ? "checked" : ""} aria-label="Aktiv"></td>
-        <td><select class="inp" data-i="${i}" data-k="kind" style="width:86px"><option value="chat" ${m.kind !== "image" ? "selected" : ""}>Chat</option><option value="image" ${m.kind === "image" ? "selected" : ""}>Bild</option></select></td>
+        <td><select class="inp" data-i="${i}" data-k="kind" style="width:86px">${[["chat", "Chat"], ["image", "Bild"], ["video", "Video"], ["music", "Musik"]].map(([v, l]) => `<option value="${v}" ${(m.kind || "chat") === v ? "selected" : ""}>${l}</option>`).join("")}</select></td>
         <td><select class="inp" data-i="${i}" data-k="provider" style="width:120px">${S.providers.map(p => `<option value="${esc(p.id)}" ${p.id === m.provider ? "selected" : ""}>${esc(provShort(p.id))}</option>`).join("")}</select></td>
         <td><input class="inp" data-i="${i}" data-k="label" value="${esc(m.label)}" style="min-width:130px"></td>
         <td><input class="inp" data-i="${i}" data-k="id" value="${esc(m.id)}" style="min-width:170px"></td>
         <td><input class="inp" data-i="${i}" data-k="inP" type="number" step="0.01" min="0" value="${m.inP}" style="width:76px"></td>
         <td><input class="inp" data-i="${i}" data-k="outP" type="number" step="0.01" min="0" value="${m.outP}" style="width:76px"></td>
-        <td><input class="inp" data-i="${i}" data-k="imgP" type="number" step="0.001" min="0" value="${m.imgP || 0}" style="width:76px" ${m.kind === "image" ? "" : "disabled"}></td>
+        <td><input class="inp" data-i="${i}" data-k="imgP" type="number" step="0.001" min="0" value="${m.imgP || 0}" style="width:76px" ${m.kind && m.kind !== "chat" ? "" : "disabled"}></td>
         <td><button class="iconbtn" data-delm="${i}" aria-label="Modell entfernen"><svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></td></tr>`).join("")}
       </tbody></table></div>
       <div class="btnrow"><button class="btn ghost" id="addM">Modell von Hand hinzufügen</button></div>
@@ -1707,18 +2071,21 @@ function showSettings() {
       <input class="inp" id="sHist" type="number" min="2" max="200" value="${S.history}">
     </div>
 
-    <div class="card"><h2>Automatische Modellwahl</h2><p class="hint">Bei „Automatisch“ liest ein günstiges Verteiler-Modell kurz jede Nachricht und schickt sie an das passende Modell. Bildwünsche werden erkannt und an ein Bildmodell weitergereicht. Das kostet pro Nachricht nur einen Bruchteil eines Cents. Für aktuelle Infos sollte ein Claude-Modell gewählt sein, weil nur dort die Websuche eingebaut ist. Kinderprofile ohne Freigabe nutzen immer Claude.</p>
+    <div class="card"><h2>Automatische Modellwahl</h2><p class="hint">Bei „Automatisch“ liest ein günstiges Verteiler-Modell kurz jede Nachricht und schickt sie an das passende Modell. Aufgaben mit Bildern, Videos oder Musik gehen an ein Modell, das die Spezial-Modelle steuert. Das kostet pro Nachricht nur einen Bruchteil eines Cents. Für aktuelle Infos sollte ein Claude-Modell gewählt sein, weil nur dort die Websuche eingebaut ist. Kinderprofile ohne Freigabe nutzen immer Claude.</p>
       <label class="f" for="rModel">Verteiler-Modell</label>
       <select class="inp" id="rModel"><option value="">Aus (keine Automatik)</option>${modelOptions(S.router.model)}</select>
       ${ROUTES.map(([k, l]) => `<label class="f" for="r_${k}">${l}</label><select class="inp" id="r_${k}">${modelOptions(S.router[k])}</select>`).join("")}
     </div>
 
-    <div class="card" id="imgCard"><h2>Bilder erstellen</h2><p class="hint">Wenn jemand nach einem Bild fragt, bietet die Stube ein Bildmodell an, mit Preis und erst nach Bestätigung. Claude selbst kann keine Bilder erzeugen, dafür brauchst du OpenAI oder OpenRouter als Anbieter. Ein Bild kostet je nach Modell etwa 1 bis 5 Cent.</p>
-      <label class="check"><input type="checkbox" id="sImgOffer" ${S.imageOffer !== false ? "checked" : ""}><span>Bilderstellung anbieten, wenn nach einem Bild gefragt wird</span></label>
-      ${S.models.some(m => m.kind === "image") ? `<label class="f" for="sImgModel">Vorausgewähltes Bildmodell</label><select class="inp" id="sImgModel">${modelOptions(S.imageModel, m => m.kind === "image")}</select>` : `<p class="hint" style="margin:8px 0 0">Noch kein Bildmodell eingerichtet.</p>`}
-      <span class="f">Schnell hinzufügen</span>
-      <div class="chips small">${IMG_PRESETS.map((x, i) => { const has = S.models.some(m => m.id === x.id && m.kind === "image"); return `<button class="chip" data-imgp="${i}" ${has ? "disabled" : ""}>${has ? "✓ " : "+ "}${esc(x.label)} · ${esc(PRESETS[x.preset].name.split(" (")[0])}</button>`; }).join("")}</div>
-      <p class="hint" style="margin:8px 0 0">Weitere Bildmodelle findest du bei einem Anbieter unter „Modelle vom Anbieter abrufen“. Für Bildmodelle von OpenAI muss deine Organisation dort einmalig verifiziert sein.</p>
+    <div class="card" id="imgCard"><h2>Spezial-Modelle: Bilder, Videos, Musik</h2><p class="hint">Claude selbst kann keine Bilder, Videos oder Musik erzeugen. Die Stube setzt dafür selbständig Spezial-Modelle ein, wenn eine Aufgabe sie braucht, und wechselt danach wieder zurück. Bilder gehen über OpenAI oder OpenRouter, Videos und Musik über OpenRouter.</p>
+      <label class="check"><input type="checkbox" id="sImgOffer" ${S.imageOffer !== false ? "checked" : ""}><span>Spezial-Modelle einsetzen, wenn eine Aufgabe sie braucht</span></label>
+      <label class="f" for="sAutoLimit">Ohne Nachfrage starten bis</label>
+      <select class="inp" id="sAutoLimit">${[[0, "Immer vorher fragen"], [0.02, "2 Cent pro Schritt"], [0.05, "5 Cent pro Schritt"], [0.1, "10 Cent pro Schritt (empfohlen)"], [0.5, "50 Cent pro Schritt"], [2, "2 $ pro Schritt"]].map(([v, l]) => `<option value="${v}" ${(S.autoLimit != null ? +S.autoLimit : 0.1) == v ? "selected" : ""}>${l}</option>`).join("")}</select>
+      <p class="hint" style="margin:6px 0 0">Teurere Schritte, zum Beispiel Videos, zeigt die Stube erst mit Preis zur Bestätigung an.</p>
+      ${[["image", "Bildmodell"], ["video", "Videomodell"], ["music", "Musikmodell"]].map(([k, l]) => S.models.some(m => m.kind === k) ? `<label class="f" for="sM_${k}">Vorausgewähltes ${l}</label><select class="inp" id="sM_${k}">${modelOptions(S[k + "Model"], m => m.kind === k)}</select>` : "").join("")}
+      ${[["image", "Bilder", "ca. 1–5 Cent pro Bild"], ["video", "Videos", "ca. 3–15 Cent pro Sekunde"], ["music", "Musik", "ca. 4–8 Cent pro Stück"]].map(([k, l, pr]) => `<span class="f">${l} schnell hinzufügen <span style="font-weight:400;color:var(--ink2)">· ${pr}</span></span>
+      <div class="chips small">${IMG_PRESETS.map((x, i) => x.kind !== k ? "" : (() => { const has = S.models.some(m => m.id === x.id && m.kind === x.kind); return `<button class="chip" data-imgp="${i}" ${has ? "disabled" : ""}>${has ? "✓ " : "+ "}${esc(x.label)} · ${esc(PRESETS[x.preset].name.split(" (")[0])}</button>`; })()).join("")}</div>`).join("")}
+      <p class="hint" style="margin:8px 0 0">Weitere Modelle findest du bei einem Anbieter unter „Modelle vom Anbieter abrufen“. Für Bildmodelle von OpenAI muss deine Organisation dort einmalig verifiziert sein.</p>
     </div>
 
     <div class="card"><h2>Websuche und Artefakte</h2>
@@ -1754,8 +2121,9 @@ function showSettings() {
       const m = S.models[+inp.dataset.i], k = inp.dataset.k;
       m[k] = k === "on" ? inp.checked : (k === "inP" || k === "outP" || k === "imgP") ? parseFloat(inp.value) || 0 : inp.value.trim();
     });
-    S.imageOffer = q("#sImgOffer").checked; S.imageModel = q("#sImgModel") ? q("#sImgModel").value : "";
-    S.defaultModel = q("#sDef").value; S.maxTokens = +q("#sMax").value || 8192; S.history = +q("#sHist").value || 30;
+    S.imageOffer = q("#sImgOffer").checked; S.autoLimit = +q("#sAutoLimit").value;
+    ["image", "video", "music"].forEach(k => { if (q("#sM_" + k)) S[k + "Model"] = q("#sM_" + k).value; });
+    S.defaultModel = q("#sDef").value; S.maxTokens = +q("#sMax").value || 16000; S.history = +q("#sHist").value || 30;
     S.router.model = q("#rModel").value; ROUTES.forEach(([k]) => { S.router[k] = q("#r_" + k).value; });
     S.webSearch = q("#sWeb").checked; S.webMax = Math.min(10, Math.max(1, +q("#sWebMax").value || 3)); S.searchPrice = Math.max(0, parseFloat(q("#sWebPrice").value) || 0);
     S.artifacts = q("#sArt").checked;
@@ -1775,11 +2143,12 @@ function showSettings() {
     const x = IMG_PRESETS[+b.dataset.imgp]; const p = S.providers.find(pp => pp.preset === x.preset);
     if (!p) return toast(`Füge zuerst ${PRESETS[x.preset].name} als Anbieter hinzu`);
     readForm();
-    const nm = { key: uid(), provider: p.id, id: x.id, label: x.label, inP: 0, outP: 0, imgP: x.imgP, on: true, kind: "image" };
-    S.models.push(nm); if (!S.imageModel || !modelByKey(S.imageModel)) S.imageModel = nm.key;
+    const nm = { key: uid(), provider: p.id, id: x.id, label: x.label, inP: 0, outP: 0, imgP: x.imgP, on: true, kind: x.kind };
+    if (x.durations) nm.durations = x.durations.slice();
+    S.models.push(nm); const sk = x.kind + "Model"; if (!S[sk] || !modelByKey(S[sk])) S[sk] = nm.key;
     showSettings(); toast(x.label + " hinzugefügt – Speichern nicht vergessen");
   });
-  sc.querySelectorAll('#mRows select[data-k="kind"]').forEach(sel => sel.onchange = () => { sel.closest("tr").querySelector('[data-k="imgP"]').disabled = sel.value !== "image"; });
+  sc.querySelectorAll('#mRows select[data-k="kind"]').forEach(sel => sel.onchange = () => { sel.closest("tr").querySelector('[data-k="imgP"]').disabled = sel.value === "chat"; });
   q("#addM").onclick = () => { readForm(); S.models.push({ key: uid(), provider: S.providers[0] ? S.providers[0].id : "", id: "", label: "", inP: 0, outP: 0, imgP: 0, on: true, kind: "chat" }); showSettings(); };
   sc.querySelectorAll("[data-delm]").forEach(b => b.onclick = () => { readForm(); S.models.splice(+b.dataset.delm, 1); showSettings(); });
   q("#addProv").onclick = async () => { if (await persist()) editProvider(null); };
@@ -1814,7 +2183,7 @@ function editProvider(p) {
       </div>
     </div>
     <div class="card"><h2>Modelle dieses Anbieters</h2>
-      ${models.length ? `<div class="plist">${models.map(m => `<div class="pitem" style="cursor:default"><span style="flex:1"><b>${esc(m.label || m.id)}</b><br><span class="meta">${esc(m.id)}${m.kind === "image" ? " · Bildmodell" : ""}${isFree(m) ? " · gratis" : ""}${m.on ? "" : " · aus"}</span></span></div>`).join("")}</div>` : `<p class="hint">Noch keine Modelle. Rufe die Liste ab und wähle aus, oder trage sie in den Einstellungen von Hand ein.</p>`}
+      ${models.length ? `<div class="plist">${models.map(m => `<div class="pitem" style="cursor:default"><span style="flex:1"><b>${esc(m.label || m.id)}</b><br><span class="meta">${esc(m.id)}${m.kind && m.kind !== "chat" ? " · " + KIND_NAME[m.kind] + "-Modell" : ""}${isFree(m) ? " · gratis" : ""}${m.on ? "" : " · aus"}</span></span></div>`).join("")}</div>` : `<p class="hint">Noch keine Modelle. Rufe die Liste ab und wähle aus, oder trage sie in den Einstellungen von Hand ein.</p>`}
       <div class="btnrow"><button class="btn ghost" id="vFetch">Modelle vom Anbieter abrufen</button></div>
     </div>
     <div class="btnrow"><button class="btn" id="vSave">${isNew ? "Anbieter anlegen" : "Speichern"}</button>${!isNew ? `<button class="btn danger" id="vDel">Anbieter löschen</button>` : ""}</div>
@@ -1852,10 +2221,13 @@ function editProvider(p) {
 }
 
 const OA_IMG_PRICES = { "gpt-image-1-mini": 0.011, "gpt-image-1.5": 0.034, "gpt-image-1": 0.042, "dall-e-3": 0.04, "dall-e-2": 0.02 };
-async function fetchModelList(p, images) {
+async function fetchModelList(p, mode) {
   let res;
+  const images = mode === "image";
   if (p.type === "anthropic") res = await fetch(baseUrl(p) + "/v1/models?limit=100", { headers: anthHeaders(p) });
   else if (images && p.preset === "openrouter") res = await fetch(baseUrl(p) + "/images/models", { headers: oaHeaders(p) });
+  else if (mode === "video" && p.preset === "openrouter") res = await fetch(baseUrl(p) + "/videos/models", { headers: oaHeaders(p) });
+  else if (mode === "music" && p.preset === "openrouter") res = await fetch(baseUrl(p) + "/models?output_modalities=audio", { headers: oaHeaders(p) });
   else res = await fetch(baseUrl(p) + "/models", { headers: oaHeaders(p) });
   if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
   const j = await res.json();
@@ -1865,56 +2237,72 @@ async function fetchModelList(p, images) {
     let inP = pr.prompt != null ? Math.round(+pr.prompt * 1e6 * 1000) / 1000 : null, outP = pr.completion != null ? Math.round(+pr.completion * 1e6 * 1000) / 1000 : null;
     if (p.type === "anthropic") { const g = /haiku/i.test(id) ? [1, 5] : /sonnet/i.test(id) ? [3, 15] : /opus/i.test(id) ? [5, 25] : [null, null]; inP = g[0]; outP = g[1]; }
     const outMods = (x.architecture && x.architecture.output_modalities) || [];
-    const kind = (images && p.preset === "openrouter") || /^(gpt-image|dall-e)/i.test(id) || (outMods.includes("image") && !outMods.includes("text")) ? "image" : "chat";
-    return { id, kind, label: (p.type === "anthropic" ? x.display_name : p.preset === "openrouter" ? x.name : x.display_name || x.displayName) || id, inP, outP, imgP: OA_IMG_PRICES[id] || null };
+    let kind = (images && p.preset === "openrouter") || /^(gpt-image|dall-e)/i.test(id) || (outMods.includes("image") && !outMods.includes("text")) ? "image" : "chat";
+    if (mode === "video") kind = "video";
+    if (mode === "music") kind = "music";
+    let imgP = OA_IMG_PRICES[id] || null, durations;
+    if (kind === "video") {
+      const skus = x.pricing_skus || {}; const v = Object.keys(skus).filter(k => /second/i.test(k)).map(k => +skus[k]).filter(n => n > 0);
+      if (v.length) imgP = Math.min(...v);
+      const dp = x.supported_parameters && x.supported_parameters.duration;
+      if (dp && Array.isArray(dp.values)) durations = dp.values.map(Number).filter(n => n > 0);
+      else if (dp && dp.min != null && dp.max != null) durations = [...new Set([+dp.min, Math.round((+dp.min + +dp.max) / 2), +dp.max])];
+    }
+    if (kind === "music") { const g = /pro/i.test(id) ? 0.08 : 0.04; imgP = pr.request != null && +pr.request > 0 ? +pr.request : g; }
+    const o = { id, kind, label: (p.type === "anthropic" ? x.display_name : p.preset === "openrouter" ? x.name : x.display_name || x.displayName) || id, inP, outP, imgP };
+    if (durations && durations.length) o.durations = durations;
+    return o;
   }).filter(x => x.id);
   if (p.preset === "openai") list = list.filter(x => x.kind === "image" ? /^(gpt-image|dall-e-3)/i.test(x.id) : /^(gpt|o\d|chatgpt)/i.test(x.id) && !/embed|tts|whisper|dall|moderation|audio|realtime|transcribe|image|search|instruct/i.test(x.id));
   if (p.preset === "gemini") list = list.filter(x => /gemini|gemma/i.test(x.id) && !/embed|imagen|veo|tts|aqa|image|live|native-audio/i.test(x.id));
-  return list.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "image" ? 1 : -1) || a.label.localeCompare(b.label, "de"));
+  if (mode === "music") list = list.filter(x => /lyria|music|song|suno|udio|audio/i.test(x.id + " " + x.label) && !/gpt-4o|voxtral|whisper|transcri/i.test(x.id));
+  return list.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "chat" ? -1 : 1) || a.label.localeCompare(b.label, "de"));
 }
 async function pickModels(p) {
   const sc = openScreen(`<div class="inner">
     <header class="topbar">${BACK}<div class="title">Modelle von ${esc(p.name)}</div></header>
     <div class="card" style="position:sticky;top:56px;z-index:1">
       <input class="inp" id="mSearch" type="search" placeholder="Suchen, z. B. llama, mistral, gpt" autocomplete="off">
-      ${p.preset === "openrouter" ? `<div class="seg" style="margin-top:10px" role="tablist"><button data-mk="chat" class="on">Chat-Modelle</button><button data-mk="image">Bildmodelle</button></div><label class="check" style="margin-bottom:0" id="mFreeBox"><input type="checkbox" id="mFree" checked><span>Nur Gratis-Modelle</span></label>` : ""}
+      ${p.preset === "openrouter" ? `<div class="seg" style="margin-top:10px;flex-wrap:wrap" role="tablist"><button data-mk="chat" class="on">Chat</button><button data-mk="image">Bilder</button><button data-mk="video">Videos</button><button data-mk="music">Musik</button></div><label class="check" style="margin-bottom:0" id="mFreeBox"><input type="checkbox" id="mFree" checked><span>Nur Gratis-Modelle</span></label>` : ""}
     </div>
     <div id="mList"><p class="hint" style="padding:12px">Lade die Liste …</p></div>
     <div class="btnrow" style="position:sticky;bottom:12px"><button class="btn" id="mAdd" disabled>Hinzufügen</button></div>
   </div>`);
   const q = s => sc.querySelector(s);
   q("[data-close]").onclick = () => editProvider(p);
-  let list, imgMode = false;
+  let list, mode = "chat";
   const load = async () => {
     q("#mList").innerHTML = `<p class="hint" style="padding:12px">Lade die Liste …</p>`;
-    try { list = await fetchModelList(p, imgMode); }
+    try { list = await fetchModelList(p, mode); }
     catch (e) { list = null; q("#mList").innerHTML = `<div class="err">${esc(e && ("status" in e) ? friendlyError(e) : "Die Liste konnte nicht geladen werden. Prüfe Adresse und Schlüssel, und ob der Anbieter Anfragen aus dem Browser erlaubt. (" + (e && e.message || e) + ")")}</div>`; return false; }
     return true;
   };
   sc.querySelectorAll("[data-mk]").forEach(b => b.onclick = async () => {
-    imgMode = b.dataset.mk === "image"; sc.querySelectorAll("[data-mk]").forEach(x => x.classList.toggle("on", x === b));
-    q("#mFreeBox").classList.toggle("hidden", imgMode);
+    mode = b.dataset.mk; sc.querySelectorAll("[data-mk]").forEach(x => x.classList.toggle("on", x === b));
+    q("#mFreeBox").classList.toggle("hidden", mode !== "chat");
     if (await load()) draw();
   });
   const have = new Set(S.models.filter(m => m.provider === p.id).map(m => m.id));
   const chosenList = () => list || [];
-  const chosen = new Set();
-  const priceTxt = x => x.kind === "image" ? (x.imgP ? `Bildmodell · ca. $${x.imgP} pro Bild` : "Bildmodell · Preis laut Abrechnung") : /:free$/.test(x.id) ? "gratis" : x.inP != null ? `$${x.inP} / $${x.outP} pro Mio. Tokens` : "Preis bitte selbst eintragen";
+  const chosen = new Map();
+  const priceTxt = x => x.kind === "image" ? (x.imgP ? `Bildmodell · ca. $${x.imgP} pro Bild` : "Bildmodell · Preis laut Abrechnung") : x.kind === "video" ? (x.imgP ? `Videomodell · ab $${x.imgP} pro Sekunde` : "Videomodell · Preis laut Abrechnung") + (x.durations ? ` · ${x.durations.join("/")} Sek.` : "") : x.kind === "music" ? `Musikmodell · ca. $${x.imgP} pro Stück` : /:free$/.test(x.id) ? "gratis" : x.inP != null ? `$${x.inP} / $${x.outP} pro Mio. Tokens` : "Preis bitte selbst eintragen";
   const draw = () => {
     if (!list) return;
-    const s = q("#mSearch").value.trim().toLowerCase(), free = !imgMode && q("#mFree") && q("#mFree").checked;
+    const s = q("#mSearch").value.trim().toLowerCase(), free = mode === "chat" && q("#mFree") && q("#mFree").checked;
     const vis = list.filter(x => (!free || /:free$/.test(x.id)) && (!s || (x.id + " " + x.label).toLowerCase().includes(s)));
     q("#mList").innerHTML = vis.length ? `<div class="card plist">${vis.slice(0, 250).map(x => `<label class="check" style="margin:8px 0"><input type="checkbox" data-id="${esc(x.id)}" ${have.has(x.id) || chosen.has(x.id) ? "checked" : ""} ${have.has(x.id) ? "disabled" : ""}><span><b>${esc(x.label)}</b><br><span class="meta" style="color:var(--ink2);font-size:13px">${esc(x.id)} · ${esc(priceTxt(x))}${have.has(x.id) ? " · bereits vorhanden" : ""}</span></span></label>`).join("")}${vis.length > 250 ? `<p class="hint">… und ${vis.length - 250} weitere. Grenze die Suche ein.</p>` : ""}</div>` : `<p class="hint" style="padding:12px">Nichts gefunden.</p>`;
-    q("#mList").querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { c.checked ? chosen.add(c.dataset.id) : chosen.delete(c.dataset.id); upd(); });
+    q("#mList").querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { c.checked ? chosen.set(c.dataset.id, list.find(y => y.id === c.dataset.id)) : chosen.delete(c.dataset.id); upd(); });
   };
   const upd = () => { q("#mAdd").disabled = !chosen.size; q("#mAdd").textContent = chosen.size ? `${chosen.size} hinzufügen` : "Hinzufügen"; };
   q("#mSearch").oninput = draw; if (q("#mFree")) q("#mFree").onchange = draw;
   if (await load()) draw();
   q("#mAdd").onclick = async () => {
-    for (const id of chosen) {
-      const x = chosenList().find(y => y.id === id) || { id, label: id, kind: imgMode ? "image" : "chat" };
-      S.models.push({ key: uid(), provider: p.id, id, label: x.label.replace(/\s*\(free\)\s*$/i, ""), inP: x.inP || 0, outP: x.outP || 0, imgP: x.imgP || 0, on: true, kind: x.kind || "chat" });
-      if (x.kind === "image" && (!S.imageModel || !modelByKey(S.imageModel))) S.imageModel = S.models[S.models.length - 1].key;
+    for (const [id, x0] of chosen) {
+      const x = x0 || { id, label: id, kind: "chat" };
+      const nm = { key: uid(), provider: p.id, id, label: x.label.replace(/\s*\(free\)\s*$/i, ""), inP: x.inP || 0, outP: x.outP || 0, imgP: x.imgP || 0, on: true, kind: x.kind || "chat" };
+      if (x.durations) nm.durations = x.durations;
+      S.models.push(nm);
+      const sk = nm.kind + "Model"; if (nm.kind !== "chat" && (!S[sk] || !modelByKey(S[sk]))) S[sk] = nm.key;
     }
     await saveSettings(); fillModelSelect(); toast(`${chosen.size} ${chosen.size === 1 ? "Modell" : "Modelle"} hinzugefügt`); editProvider(p);
   };
@@ -1922,7 +2310,7 @@ async function pickModels(p) {
 
 function editProfile(p) {
   const isNew = !p;
-  const d = p ? Object.assign({}, p) : { id: uid(), name: "", color: COLORS[P.length % COLORS.length], pin: "", kid: false, prompt: "", model: "", external: true, images: true };
+  const d = p ? Object.assign({}, p) : { id: uid(), name: "", color: COLORS[P.length % COLORS.length], pin: "", kid: false, prompt: "", model: "", external: true, images: true, videos: true, music: true };
   const sc = openScreen(`<div class="inner">
     <header class="topbar">${BACK}<div class="title">${isNew ? "Neues Profil" : "Profil bearbeiten"}</div></header>
     <div class="card">
@@ -1931,7 +2319,10 @@ function editProfile(p) {
       <label class="f" for="pPin">PIN (optional)</label><input class="inp" id="pPin" inputmode="numeric" maxlength="6" placeholder="4–6 Ziffern" value="${esc(d.pin)}">
       <label class="check"><input type="checkbox" id="pKid" ${d.kid ? "checked" : ""}><span><b>Kindermodus</b><br><span style="color:var(--ink2);font-size:14px">Altersgerechte, sichere Antworten und Hilfe beim Lernen statt fertiger Lösungen.</span></span></label>
       <label class="check"><input type="checkbox" id="pExt" ${d.external !== false ? "checked" : ""}><span><b>Auch Nicht-Claude-Modelle erlauben</b><br><span style="color:var(--ink2);font-size:14px">Gratis- und Open-Source-Modelle, ChatGPT, Gemini usw. Für Kinder nicht empfohlen, weil deren Schutzmechanismen oft schwächer sind.</span></span></label>
-      <label class="check"><input type="checkbox" id="pImg" ${d.images !== false ? "checked" : ""}><span><b>Bilder erstellen erlauben</b><br><span style="color:var(--ink2);font-size:14px">Über ein Bildmodell von OpenAI oder OpenRouter. Kostet pro Bild etwa 1 bis 5 Cent.</span></span></label>
+      <span class="f">Spezial-Modelle erlauben</span>
+      <label class="check" style="margin:6px 0"><input type="checkbox" id="pImg" ${d.images !== false ? "checked" : ""}><span>Bilder erstellen <span style="color:var(--ink2);font-size:14px">· ca. 1–5 Cent pro Bild</span></span></label>
+      <label class="check" style="margin:6px 0"><input type="checkbox" id="pVid" ${d.videos !== false ? "checked" : ""}><span>Videos erstellen <span style="color:var(--ink2);font-size:14px">· oft 20 Cent bis 1 $ pro Video</span></span></label>
+      <label class="check" style="margin:6px 0 12px"><input type="checkbox" id="pMus" ${d.music !== false ? "checked" : ""}><span>Musik erstellen <span style="color:var(--ink2);font-size:14px">· ca. 4–8 Cent pro Stück</span></span></label>
       <label class="f" for="pModel">Modell</label>
       <select class="inp" id="pModel"><option value="">Frei wählbar</option>${modelOptions(d.model).replace(/<option value="([^"]*)"( selected)?>/g, '<option value="$1"$2>Immer ')}</select>
       <label class="f" for="pPrompt">Persönliche Hinweise für die KI (optional)</label>
@@ -1940,11 +2331,11 @@ function editProfile(p) {
     <div class="btnrow"><button class="btn" id="pSave">${isNew ? "Profil anlegen" : "Speichern"}</button>${!isNew && P.length > 1 ? `<button class="btn danger" id="pDel">Profil löschen</button>` : ""}</div>
   </div>`);
   sc.querySelectorAll(".swatches button").forEach(b => b.onclick = () => { d.color = b.dataset.c; sc.querySelectorAll(".swatches button").forEach(x => x.classList.toggle("on", x === b)); });
-  sc.querySelector("#pKid").onchange = e => { if (e.target.checked) { sc.querySelector("#pExt").checked = false; sc.querySelector("#pImg").checked = false; } };
+  sc.querySelector("#pKid").onchange = e => { if (e.target.checked) { ["#pExt", "#pImg", "#pVid", "#pMus"].forEach(x => { sc.querySelector(x).checked = false; }); } };
   sc.querySelector("[data-close]").onclick = showSettings;
   sc.querySelector("#pSave").onclick = async () => {
     d.name = sc.querySelector("#pName").value.trim(); d.pin = sc.querySelector("#pPin").value.trim();
-    d.kid = sc.querySelector("#pKid").checked; d.external = sc.querySelector("#pExt").checked; d.images = sc.querySelector("#pImg").checked; d.model = sc.querySelector("#pModel").value; d.prompt = sc.querySelector("#pPrompt").value;
+    d.kid = sc.querySelector("#pKid").checked; d.external = sc.querySelector("#pExt").checked; d.images = sc.querySelector("#pImg").checked; d.videos = sc.querySelector("#pVid").checked; d.music = sc.querySelector("#pMus").checked; d.model = sc.querySelector("#pModel").value; d.prompt = sc.querySelector("#pPrompt").value;
     if (!d.name) return toast("Bitte gib einen Namen ein");
     if (d.pin && !/^\d{4,6}$/.test(d.pin)) return toast("Die PIN braucht 4 bis 6 Ziffern");
     if (d.model && !modelAllowed(modelByKey(d.model), d)) return toast("Dieses Modell ist für das Profil nicht erlaubt");
