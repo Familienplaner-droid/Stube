@@ -330,20 +330,38 @@ const DB = (() => {
   const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
   // IndexedDB backend
   let dbp;
+  // iOS/Safari schließt Datenbank-Verbindungen gelegentlich von sich aus (z. B. nach dem Wechsel in den Hintergrund).
+  // Dann wird die Verbindung verworfen und beim nächsten Zugriff neu geöffnet.
   const idbOpen = () => dbp || (dbp = withTimeout(new Promise((res, rej) => {
     if (!window.indexedDB) return rej(new Error("no idb"));
     const r = indexedDB.open("stube", 1);
     r.onupgradeneeded = () => r.result.createObjectStore("kv");
-    r.onsuccess = () => res(r.result);
+    r.onsuccess = () => {
+      const db = r.result;
+      db.onclose = () => { dbp = null; };
+      db.onversionchange = () => { try { db.close(); } catch {} dbp = null; };
+      res(db);
+    };
     r.onerror = () => rej(r.error);
     r.onblocked = () => rej(new Error("blocked"));
-  }), 15000));
-  const idbTx = async (mode, fn) => {
-    const db = await idbOpen();
-    return withTimeout(new Promise((res, rej) => {
-      const t = db.transaction("kv", mode); const req = fn(t.objectStore("kv"));
-      t.oncomplete = () => res(req && req.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
-    }), 60000);
+  }), 15000).catch(e => { dbp = null; throw e; }));
+  const isClosed = e => e && (e.name === "InvalidStateError" || e.name === "UnknownError" || /clos/i.test(e.message || ""));
+  const idbTx = async (mode, fn, tries = 0) => {
+    let db;
+    try {
+      db = await idbOpen();
+      return await withTimeout(new Promise((res, rej) => {
+        const t = db.transaction("kv", mode); const req = fn(t.objectStore("kv"));
+        t.oncomplete = () => res(req && req.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error || new Error("Transaktion abgebrochen"));
+      }), 60000);
+    } catch (e) {
+      if (tries < 2 && isClosed(e)) {
+        dbp = null; try { db && db.close(); } catch {}
+        await new Promise(r => setTimeout(r, 150 * (tries + 1)));
+        return idbTx(mode, fn, tries + 1);
+      }
+      throw e;
+    }
   };
   const idb = {
     get: k => idbTx("readonly", s => s.get(k)),
