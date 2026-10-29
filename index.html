@@ -274,6 +274,9 @@ table.models .inp{padding:8px}
 .errlog pre{white-space:pre-wrap;word-break:break-all;background:var(--surface2);padding:8px;border-radius:8px;font:12px/1.45 ui-monospace,Menlo,monospace;max-height:240px;overflow:auto}
 .toast.err-toast{background:var(--danger);color:#fff;max-width:calc(100% - 32px);cursor:pointer}
 @media (prefers-color-scheme:dark){.toast.err-toast{color:#1a1a1a}}
+.code-out{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;resize:vertical}
+.steps{margin:14px 0 0;padding-left:1.3em;font-size:15px;line-height:1.5}
+.steps li{margin:6px 0}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;z-index:50}
 </style>
 </head>
@@ -659,7 +662,10 @@ function showOnboarding() {
       <input class="inp" id="obName" placeholder="z. B. Papa">
     </div>
     <div class="btnrow"><button class="btn" id="obGo">Los geht's</button></div>
+    <div class="card" style="margin-top:20px"><h2>Schon auf einem anderen Gerät eingerichtet?</h2><p class="hint">Übernimm Anbieter, Schlüssel und Profile mit einem verschlüsselten Übertragungs-Code, statt alles abzutippen.</p>
+      <button class="btn ghost" id="obImport">Einstellungen übernehmen</button></div>
     <p class="err hidden" id="obErr" style="margin-top:12px"></p></div>`);
+  sc.querySelector("#obImport").onclick = () => showImport(true);
   sc.querySelector("#obGo").onclick = async () => {
     const key = sc.querySelector("#obKey").value.trim(), name = sc.querySelector("#obName").value.trim();
     const err = sc.querySelector("#obErr");
@@ -2255,6 +2261,9 @@ function showSettings() {
       <label class="check"><input type="checkbox" id="sArt" ${S.artifacts !== false ? "checked" : ""}><span><b>Artefakte</b><br><span style="color:var(--ink2);font-size:14px">Die KI kann kleine Apps, Spiele, Diagramme und Dokumente mit Live-Vorschau erstellen.</span></span></label>
     </div>
 
+    <div class="card"><h2>Auf anderes Gerät übertragen</h2><p class="hint">Richte zum Beispiel ein zweites Handy mit einem verschlüsselten Code ein, statt alles abzutippen. Chats werden nicht übertragen.</p>
+      <div class="btnrow" style="margin-top:0"><button class="btn ghost" id="xOpen">Code erstellen</button><button class="btn ghost" id="iOpen">Code einfügen</button></div></div>
+
     <div class="card"><h2>Einstellungen schützen</h2><p class="hint">Mit einer Admin-PIN können nur Eltern Schlüssel, Modelle und Profile ändern. Leer lassen für keinen Schutz.</p>
       <input class="inp" id="sPin" inputmode="numeric" maxlength="6" placeholder="4–6 Ziffern" value="${esc(S.adminPin)}">
     </div>
@@ -2316,6 +2325,8 @@ function showSettings() {
     await DB.clear(); localStorageSafe("set", "stube-last", ""); location.reload();
   };
   q("#addP").onclick = async () => { if (await persist()) editProfile(null); };
+  q("#xOpen").onclick = async () => { if (await persist()) showExport(); };
+  q("#iOpen").onclick = async () => { if (await persist()) showImport(false); };
   q("#tTest").onclick = () => { if (!TTS.ok) return toast("Vorlesen wird nicht unterstützt"); const r = S.ttsRate; S.ttsRate = +q("#sRate").value || 1; TTS.speak(`Hallo ${me ? me.name : ""}, so klinge ich beim Vorlesen.`); S.ttsRate = r; };
   sc.querySelectorAll("[data-pid]").forEach(b => b.onclick = async () => { if (await persist()) editProfile(P.find(p => p.id === b.dataset.pid)); });
 }
@@ -2463,6 +2474,134 @@ async function pickModels(p) {
       const sk = nm.kind + "Model"; if (nm.kind !== "chat" && (!S[sk] || !modelByKey(S[sk]))) S[sk] = nm.key;
     }
     await saveSettings(); fillModelSelect(); toast(`${chosen.size} ${chosen.size === 1 ? "Modell" : "Modelle"} hinzugefügt`); editProvider(p);
+  };
+}
+
+/* ---------- Einstellungen auf ein anderes Gerät übertragen (verschlüsselt) ---------- */
+const TRANSFER_PREFIX = "STUBE1:";
+const TRANSFER_ITER = 600000;
+function u8ToB64u(u8) { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+function b64uToU8(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; const bin = atob(s); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
+const normPw = pw => String(pw || "").normalize("NFC").replace(/[\s-]+/g, "").toUpperCase();
+function suggestPw() {
+  const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; const r = crypto.getRandomValues(new Uint8Array(12));
+  const c = [...r].map(x => A[x % A.length]).join("");
+  return c.slice(0, 4) + "-" + c.slice(4, 8) + "-" + c.slice(8, 12);
+}
+async function transferKey(pw, salt) {
+  if (!window.crypto || !crypto.subtle) throw new Error("Verschlüsselung ist hier nicht verfügbar. Öffne die App über ihre https-Adresse.");
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(normPw(pw)), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: TRANSFER_ITER, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+}
+async function makeTransferCode(pw, withKeys) {
+  const settings = JSON.parse(JSON.stringify(S));
+  if (!withKeys) settings.providers.forEach(p => { p.apiKey = ""; });
+  const data = { v: 1, t: Date.now(), from: me ? me.name : "", settings, profiles: JSON.parse(JSON.stringify(P)) };
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await transferKey(pw, salt);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(data))));
+  const all = new Uint8Array(28 + ct.length); all.set(salt, 0); all.set(iv, 16); all.set(ct, 28);
+  return TRANSFER_PREFIX + u8ToB64u(all);
+}
+async function readTransferCode(code, pw) {
+  const m = String(code || "").replace(/\s+/g, "").match(/STUBE1:([A-Za-z0-9_-]+)/);
+  if (!m) throw new Error("Das ist kein gültiger Übertragungs-Code. Er beginnt mit „STUBE1:“.");
+  let all; try { all = b64uToU8(m[1]); } catch { throw new Error("Der Code ist unvollständig. Kopiere ihn bitte noch einmal ganz."); }
+  if (all.length < 40) throw new Error("Der Code ist unvollständig. Kopiere ihn bitte noch einmal ganz.");
+  const key = await transferKey(pw, all.slice(0, 16));
+  let plain;
+  try { plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: all.slice(16, 28) }, key, all.slice(28)); }
+  catch { throw new Error("Das Passwort stimmt nicht, oder der Code wurde beim Kopieren verändert."); }
+  const data = JSON.parse(new TextDecoder().decode(plain));
+  if (!data || !data.settings || !Array.isArray(data.profiles)) throw new Error("Der Code enthält keine gültigen Einstellungen.");
+  return data;
+}
+async function applyTransfer(data) {
+  const fresh = !S || !P.length;
+  const keepKeys = {};
+  if (S && S.providers) S.providers.forEach(p => { if (p.apiKey) keepKeys[p.id] = p.apiKey; });
+  S = data.settings;
+  // Fehlen im Code die Schlüssel, bleiben vorhandene Schlüssel dieses Geräts erhalten
+  S.providers.forEach(p => { if (!p.apiKey && keepKeys[p.id]) p.apiKey = keepKeys[p.id]; });
+  for (const ip of data.profiles) {
+    const ex = P.find(x => x.id === ip.id);
+    if (ex) Object.assign(ex, ip); else P.push(ip);
+  }
+  migrate();
+  await saveSettings(); await saveProfiles();
+  return fresh;
+}
+function showExport() {
+  const sc = openScreen(`<div class="inner">
+    <header class="topbar">${BACK}<div class="title">Auf anderes Gerät übertragen</div></header>
+    <div class="card"><p class="hint" style="margin:0">Übertragen werden Anbieter, Modelle, Einstellungen und Profile (mit PINs und Budgets). Chats und Verbrauch bleiben auf diesem Gerät. Der Code ist mit dem Passwort verschlüsselt und ohne es nicht lesbar.</p>
+      <label class="check"><input type="checkbox" id="xKeys" checked><span><b>API-Schlüssel mitnehmen</b><br><span style="color:var(--ink2);font-size:14px">Sonst musst du sie auf dem anderen Gerät von Hand eintragen.</span></span></label>
+      <label class="f" for="xPw">Passwort für die Übertragung</label>
+      <div class="row"><input class="inp" id="xPw" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${suggestPw()}"><button class="btn ghost" id="xNew" style="margin-left:8px">Neu</button></div>
+      <p class="hint" style="margin:6px 0 0">Mindestens 10 Zeichen. Groß- und Kleinschreibung, Leerzeichen und Bindestriche spielen keine Rolle.</p>
+      <div class="btnrow"><button class="btn" id="xGo">Code erstellen</button></div>
+    </div>
+    <div class="card hidden" id="xOut"><h2>Dein Übertragungs-Code</h2>
+      <textarea class="inp code-out" id="xCode" readonly rows="5" aria-label="Übertragungs-Code"></textarea>
+      <div class="btnrow"><button class="btn" id="xCopy">Code kopieren</button>${navigator.share ? `<button class="btn ghost" id="xShare">Teilen</button>` : ""}</div>
+      <ol class="steps">
+        <li>Schick den Code an das andere Gerät, zum Beispiel per WhatsApp, Nachricht oder AirDrop.</li>
+        <li>Sag das Passwort <b id="xPwShow"></b> getrennt davon, am besten mündlich. Schick es nie zusammen mit dem Code.</li>
+        <li>Auf dem anderen Gerät die Stube öffnen und „Einstellungen übernehmen“ wählen (auf der Willkommensseite oder unter Einstellungen).</li>
+        <li>Lösch danach die Nachricht mit dem Code.</li>
+      </ol>
+    </div>
+  </div>`);
+  const q = s => sc.querySelector(s);
+  q("[data-close]").onclick = showSettings;
+  q("#xNew").onclick = () => { q("#xPw").value = suggestPw(); q("#xOut").classList.add("hidden"); };
+  q("#xPw").oninput = () => q("#xOut").classList.add("hidden");
+  q("#xKeys").onchange = () => q("#xOut").classList.add("hidden");
+  q("#xGo").onclick = async () => {
+    const pw = q("#xPw").value;
+    if (normPw(pw).length < 10) return toast("Das Passwort braucht mindestens 10 Zeichen");
+    const b = q("#xGo"); b.disabled = true; b.textContent = "Verschlüssele …";
+    try {
+      q("#xCode").value = await makeTransferCode(pw, q("#xKeys").checked);
+      q("#xPwShow").textContent = pw.trim();
+      q("#xOut").classList.remove("hidden"); q("#xOut").scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) { toast(errText(e), { err: true }); logError("Übertragungs-Code konnte nicht erstellt werden", e && e.stack); }
+    b.disabled = false; b.textContent = "Code erstellen";
+  };
+  q("#xCopy").onclick = async () => { try { await navigator.clipboard.writeText(q("#xCode").value); toast("Code kopiert"); } catch { q("#xCode").select(); toast("Markiere den Code und kopiere ihn von Hand"); } };
+  if (q("#xShare")) q("#xShare").onclick = async () => { try { await navigator.share({ text: q("#xCode").value }); } catch (e) { if (e.name !== "AbortError") toast("Teilen nicht möglich"); } };
+}
+function showImport(fromOnboarding) {
+  const sc = openScreen(`<div class="inner">
+    <header class="topbar">${BACK}<div class="title">Einstellungen übernehmen</div></header>
+    <div class="card"><p class="hint" style="margin:0">Erstelle auf dem Gerät, das schon eingerichtet ist, unter Einstellungen → „Auf anderes Gerät übertragen“ einen Code und füge ihn hier ein.${fromOnboarding ? "" : " Anbieter und Einstellungen dieses Geräts werden dabei ersetzt; vorhandene Chats bleiben erhalten."}</p>
+      <label class="f" for="iCode">Übertragungs-Code</label>
+      <textarea class="inp code-out" id="iCode" rows="5" placeholder="STUBE1:…" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+      ${navigator.clipboard && navigator.clipboard.readText ? `<div class="btnrow" style="margin-top:8px"><button class="btn ghost" id="iPaste">Einfügen</button></div>` : ""}
+      <label class="f" for="iPw">Passwort</label>
+      <input class="inp" id="iPw" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="z. B. K7QM-2XPA-9HTR">
+      <div class="btnrow"><button class="btn" id="iGo">Übernehmen</button></div>
+      <p class="err hidden" id="iErr" style="margin-top:12px"></p>
+    </div>
+  </div>`);
+  const q = s => sc.querySelector(s);
+  q("[data-close]").onclick = fromOnboarding ? showOnboarding : showSettings;
+  if (q("#iPaste")) q("#iPaste").onclick = async () => { try { q("#iCode").value = await navigator.clipboard.readText(); } catch { toast("Halte im Feld gedrückt und wähle „Einsetzen“"); } };
+  q("#iGo").onclick = async () => {
+    const err = q("#iErr"); err.classList.add("hidden");
+    const b = q("#iGo"); b.disabled = true; b.textContent = "Entschlüssele …";
+    try {
+      const data = await readTransferCode(q("#iCode").value, q("#iPw").value);
+      if (!fromOnboarding && !confirm("Anbieter, Modelle und Einstellungen dieses Geräts werden durch die übertragenen ersetzt. Fortfahren?")) { b.disabled = false; b.textContent = "Übernehmen"; return; }
+      await applyTransfer(data);
+      const keys = S.providers.filter(p => p.apiKey).length;
+      toast(`Übernommen: ${S.providers.length} Anbieter${keys < S.providers.length ? ` (${S.providers.length - keys} ohne Schlüssel)` : ""}, ${P.length} ${P.length === 1 ? "Profil" : "Profile"}`);
+      if (me && P.find(x => x.id === me.id)) { await enterProfile(P.find(x => x.id === me.id)); }
+      else if (P.length === 1 && !P[0].pin) await enterProfile(P[0]); else showPicker();
+    } catch (e) {
+      err.textContent = errText(e); err.classList.remove("hidden");
+      b.disabled = false; b.textContent = "Übernehmen";
+    }
   };
 }
 
