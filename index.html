@@ -1504,6 +1504,7 @@ async function streamAnthropic(m, p, sys, native, web, tools, signal, cb) {
     else if (ev.type === "content_block_start") {
       const b = ev.content_block || {}, i = ev.index;
       if (b.type === "text") blocks[i] = { type: "text", text: b.text || "" };
+      else if (b.type === "thinking") { blocks[i] = { type: "thinking", thinking: b.thinking || "", signature: b.signature || "" }; cb.status("Denkt nach …"); }
       else if (b.type === "tool_use" || b.type === "server_tool_use") {
         blocks[i] = { type: b.type, id: b.id, name: b.name, input: {} }; json[i] = "";
         cb.status(b.type === "server_tool_use" ? "Sucht im Internet …" : `Bereitet ${TOOL_LABEL[b.name] || "den nächsten Schritt"} vor …`);
@@ -1518,6 +1519,8 @@ async function streamAnthropic(m, p, sys, native, web, tools, signal, cb) {
     else if (ev.type === "content_block_delta") {
       const d = ev.delta || {}, i = ev.index;
       if (d.type === "text_delta") { if (blocks[i]) blocks[i].text += d.text; r.text += d.text; cb.text(d.text); }
+      else if (d.type === "thinking_delta") { if (blocks[i]) blocks[i].thinking += d.thinking || ""; }
+      else if (d.type === "signature_delta") { if (blocks[i]) blocks[i].signature = (blocks[i].signature || "") + (d.signature || ""); }
       else if (d.type === "input_json_delta") {
         json[i] = (json[i] || "") + (d.partial_json || "");
         if (blocks[i] && blocks[i].type === "server_tool_use") { const q = json[i].match(/"query"\s*:\s*"((?:[^"\\]|\\.)*)"/); if (q) cb.status(`Sucht: „${q[1].replace(/\\"/g, '"')}“`); }
@@ -1540,7 +1543,8 @@ async function streamAnthropic(m, p, sys, native, web, tools, signal, cb) {
     }
     else if (ev.type === "error") throw { status: 0, body: JSON.stringify(ev), provider: p };
   });
-  r.blocks = blocks.filter(b => b && !(b.type === "text" && !b.text));
+  // Denk-Blöcke müssen beim Weiterschreiben vollständig (Text + Signatur) zurückgeschickt werden; leere Blöcke lehnt die API ab
+  r.blocks = blocks.filter(b => b && !(b.type === "text" && !b.text) && !(b.type === "thinking" && !b.thinking));
   return r;
 }
 
