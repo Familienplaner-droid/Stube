@@ -259,6 +259,21 @@ table.models .inp{padding:8px}
 .img-wait.audio{aspect-ratio:auto;height:54px;width:min(100%,420px);border-radius:999px}
 .inline-btns{display:inline-flex;gap:6px}
 .inline-btns .btn{padding:6px 12px;font-size:13px;background:var(--surface2);color:var(--ink)}
+.budget{display:flex;flex-direction:column;gap:3px;margin:12px 12px 0;padding:10px 14px;border-radius:14px;background:var(--bg);text-align:left;font-size:14px}
+.budget .b-sub{color:var(--ink2);font-size:13px}
+.b-meter{display:block;height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;margin-top:4px}
+.b-meter i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.b-meter i.warn{background:#E8A33D}.b-meter i.over{background:var(--danger)}
+.budget-bar{display:block;width:100%;margin:0 0 8px;padding:8px 14px;border-radius:12px;font-size:14px;text-align:left;background:color-mix(in srgb,#E8A33D 18%,transparent)}
+.budget-bar.over{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
+.usage-row.u2{flex-direction:column;align-items:stretch;gap:4px}
+.u2 .u-head{display:flex;justify-content:space-between;gap:8px}
+.errlog .meta{color:var(--ink2);font-size:13px;margin-bottom:4px}
+.errlog b{display:block;font-weight:600;font-size:15px;line-height:1.4;word-wrap:break-word}
+.errlog details{margin-top:8px;font-size:13px}
+.errlog pre{white-space:pre-wrap;word-break:break-all;background:var(--surface2);padding:8px;border-radius:8px;font:12px/1.45 ui-monospace,Menlo,monospace;max-height:240px;overflow:auto}
+.toast.err-toast{background:var(--danger);color:#fff;max-width:calc(100% - 32px);cursor:pointer}
+@media (prefers-color-scheme:dark){.toast.err-toast{color:#1a1a1a}}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;z-index:50}
 </style>
 </head>
@@ -271,6 +286,7 @@ table.models .inp{padding:8px}
   </header>
   <main id="scroller" aria-live="polite"></main>
   <div class="composer">
+    <button class="budget-bar hidden" id="budgetBar"></button>
     <div class="box">
       <div class="previews" id="previews"></div>
       <textarea id="input" rows="1" placeholder="Schreib eine Nachricht" aria-label="Nachricht"></textarea>
@@ -293,10 +309,12 @@ table.models .inp{padding:8px}
     <div class="avatar" id="dAvatar"></div>
     <div class="who"><b id="dName"></b><button id="switchBtn">Profil wechseln</button></div>
   </div>
+  <button class="budget" id="dBudget" aria-label="Verbrauch anzeigen"></button>
   <button class="newchat" id="newBtn2"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Neuer Chat</button>
   <div class="chatlist" id="chatList"></div>
   <div class="drawer-foot">
     <button id="usageBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Verbrauch</button>
+    <button id="errBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>Fehlerprotokoll</button>
     <button id="settingsBtn"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>Einstellungen</button>
   </div>
 </nav>
@@ -319,13 +337,13 @@ const DB = (() => {
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
     r.onblocked = () => rej(new Error("blocked"));
-  }), 2500));
+  }), 15000));
   const idbTx = async (mode, fn) => {
     const db = await idbOpen();
     return withTimeout(new Promise((res, rej) => {
       const t = db.transaction("kv", mode); const req = fn(t.objectStore("kv"));
       t.oncomplete = () => res(req && req.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
-    }), 4000);
+    }), 60000);
   };
   const idb = {
     get: k => idbTx("readonly", s => s.get(k)),
@@ -348,7 +366,16 @@ const DB = (() => {
   let backend = null;
   const pick = async () => {
     if (backend) return backend;
-    try { await idb.set("__test", 1); await idb.get("__test"); backend = idb; STORAGE_MODE = "idb"; return backend; } catch (e) { console.warn("IndexedDB nicht nutzbar:", e); }
+    try {
+      await idb.set("__test", 1); await idb.get("__test"); backend = idb; STORAGE_MODE = "idb";
+      // Daten, die früher (z. B. nach einem langsamen Start) im Ersatzspeicher gelandet sind, zurückholen
+      try {
+        if ((await idb.get("settings")) === undefined && localStorage.getItem(LS + "settings") != null) {
+          for (const k of Object.keys(localStorage).filter(x => x.startsWith(LS))) { const v = JSON.parse(localStorage.getItem(k)); await idb.set(k.slice(LS.length), v); }
+        }
+      } catch (e) { console.warn("Übernahme aus localStorage fehlgeschlagen:", e); }
+      return backend;
+    } catch (e) { console.warn("IndexedDB nicht nutzbar:", e); logError("Speicher (IndexedDB) nicht nutzbar", e && (e.message || e.name || e)); }
     try { localStorage.setItem(LS + "__test", "1"); localStorage.removeItem(LS + "__test"); backend = ls; STORAGE_MODE = "ls"; return backend; } catch (e) { console.warn("localStorage nicht nutzbar:", e); }
     backend = memB; STORAGE_MODE = "mem"; return backend;
   };
@@ -430,13 +457,52 @@ let chats = [];      // chats of active profile
 let cur = null;      // active chat
 let pending = [];    // pending images
 let streaming = null;// AbortController
+let USAGE = {};      // Verbrauch: { profilId: { "2026-10": { in, out, cost, n } } }
 
 const $ = s => document.querySelector(s);
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const month = (d = new Date()) => d.toISOString().slice(0, 7);
-const fmtUSD = n => "$" + (n < 0.01 && n > 0 ? n.toFixed(4) : n.toFixed(2));
-function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), t.length > 40 ? 5000 : 2200); }
+const month = (d = new Date()) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+const fmtUSD = n => { n = +n || 0; const f = n > 0 && n < 0.01 ? 4 : 2; return n.toLocaleString("de-DE", { minimumFractionDigits: f, maximumFractionDigits: f }) + " $"; };
+const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+function toast(t, opt = {}) {
+  const d = document.createElement("div"); d.className = "toast" + (opt.err ? " err-toast" : ""); d.textContent = t;
+  if (opt.onClick) { d.setAttribute("role", "button"); d.tabIndex = 0; d.onclick = () => { d.remove(); opt.onClick(); }; }
+  document.body.append(d);
+  setTimeout(() => d.remove(), opt.err ? 12000 : t.length > 40 ? 5000 : 2200);
+}
+
+/* ---------- Fehlerprotokoll ---------- */
+let ERRLOG = [];
+try { ERRLOG = JSON.parse(localStorage.getItem("stube-errors") || "[]"); } catch { ERRLOG = []; }
+function logError(msg, detail) {
+  const e = { t: Date.now(), msg: String(msg || "Unbekannter Fehler").slice(0, 600), detail: String(detail == null ? "" : detail).slice(0, 2000), who: (typeof me !== "undefined" && me) ? me.name : "" };
+  ERRLOG.unshift(e); ERRLOG = ERRLOG.slice(0, 40);
+  try { localStorage.setItem("stube-errors", JSON.stringify(ERRLOG)); } catch {}
+}
+function errText(x) {
+  if (x == null) return "Unbekannter Fehler";
+  if (typeof x === "string") return x;
+  if (x.message) return x.message;
+  if ("msg" in x || "status" in x) { try { return friendlyError(x); } catch {} }
+  try { return JSON.stringify(x).slice(0, 300); } catch { return String(x); }
+}
+function showErrors() {
+  closeDrawer();
+  const fmtT = t => new Date(t).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const sc = openScreen(`<div class="inner">
+    <header class="topbar"><button class="iconbtn" data-close aria-label="Zurück"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><div class="title">Fehlerprotokoll</div></header>
+    <div class="card"><p class="hint" style="margin:0">Hier stehen die letzten Fehlermeldungen dieses Geräts mit Uhrzeit. API-Schlüssel werden nie gespeichert. Mit „Kopieren“ kannst du sie zum Beispiel an Claude schicken.</p>
+      <div class="btnrow"><button class="btn" id="eCopy" ${ERRLOG.length ? "" : "disabled"}>Kopieren</button><button class="btn ghost" id="eClear" ${ERRLOG.length ? "" : "disabled"}>Leeren</button></div></div>
+    ${ERRLOG.length ? ERRLOG.map(e => `<div class="card errlog"><div class="meta">${esc(fmtT(e.t))}${e.who ? " · " + esc(e.who) : ""}</div><b>${esc(e.msg)}</b>${e.detail && e.detail !== e.msg ? `<details><summary>Technische Details</summary><pre>${esc(e.detail)}</pre></details>` : ""}</div>`).join("") : `<p class="hint" style="padding:12px">Keine Fehler gespeichert.</p>`}
+  </div>`);
+  sc.querySelector("[data-close]").onclick = closeScreen;
+  sc.querySelector("#eCopy").onclick = async () => {
+    const txt = "Stube Fehlerprotokoll (" + navigator.userAgent + ")\n\n" + ERRLOG.map(e => `${fmtT(e.t)}${e.who ? " [" + e.who + "]" : ""}: ${e.msg}${e.detail && e.detail !== e.msg ? "\n  " + e.detail.replace(/\n/g, "\n  ") : ""}`).join("\n\n");
+    try { await navigator.clipboard.writeText(txt); toast("Kopiert"); } catch { toast("Kopieren nicht möglich"); }
+  };
+  sc.querySelector("#eClear").onclick = () => { ERRLOG = []; try { localStorage.removeItem("stube-errors"); } catch {} showErrors(); };
+}
 
 /* ---------- Blöcke "~~~~datei:NAME" und "~~~~artefakt:TYP:Titel" erkennen ---------- */
 const ART_TYPES = { html: "HTML", react: "React", svg: "SVG", mermaid: "Diagramm", markdown: "Dokument", md: "Dokument" };
@@ -632,6 +698,8 @@ async function enterProfile(p) {
   chats = (await DB.get("chats:" + p.id)) || [];
   closeScreen(); closeDrawer();
   $("#dAvatar").textContent = (p.name[0] || "?").toUpperCase(); $("#dName").textContent = p.name;
+  USAGE = (await DB.get("usage")) || {};
+  updateBudgetUI();
   fillModelSelect();
   newChat();
 }
@@ -719,6 +787,9 @@ function suggestions() {
 }
 
 function renderChat() {
+  try { renderChat0(); } catch (e) { logError("Chat konnte nicht angezeigt werden", e && e.stack); $("#scroller").innerHTML = `<div class="err" style="margin:16px">Dieser Chat konnte nicht vollständig angezeigt werden. Details stehen im Fehlerprotokoll (Menü → Fehlerprotokoll).</div>`; }
+}
+function renderChat0() {
   const sc = $("#scroller");
   $("#chatTitle").textContent = cur ? cur.title : "Stube";
   if (!cur || !cur.messages.length) {
@@ -756,7 +827,9 @@ function msgEl(m) {
       body.append(g);
     }
     for (const x of m.media || []) {
-      const url = URL.createObjectURL(b64ToBlob(x.data, x.media_type));
+      let url;
+      try { url = URL.createObjectURL(b64ToBlob(x.data, x.media_type)); }
+      catch (e) { logError("Gespeicherte Mediendatei ist beschädigt", e && e.message); const er = document.createElement("div"); er.className = "err"; er.textContent = "Diese Datei konnte nicht geladen werden."; body.append(er); continue; }
       const node = document.createElement(x.kind === "video" ? "video" : "audio");
       node.controls = true; node.preload = "metadata"; node.src = url; node.className = x.kind === "video" ? "gen-video" : "gen-audio";
       if (x.kind === "video") { node.playsInline = true; node.setAttribute("playsinline", ""); }
@@ -1358,6 +1431,11 @@ function apiMessages() {
   return out;
 }
 function friendlyError(e) {
+  const t = friendlyError0(e);
+  if (!e.__logged) { try { Object.defineProperty(e, "__logged", { value: true }); } catch {} logError(t, e.body ? `HTTP ${e.status || "?"}${e.provider ? " · " + e.provider.name : ""}: ${e.body}` : ""); }
+  return t;
+}
+function friendlyError0(e) {
   const status = e.status, body = e.body || "", pn = e.provider ? e.provider.name : "dem Anbieter";
   if (e.msg) return e.msg;
   let msg = "";
@@ -1547,6 +1625,7 @@ async function routeRequest(signal) {
 
 async function send() {
   const text = input.value.trim(); if (!text && !pending.length) return;
+  if (budgetBlocked()) return;
   if (STT.active) STT.stop();
   const viaVoice = STT.used; STT.used = false;
   if (!cur) { cur = { id: uid(), title: (text || "Bild").slice(0, 48), updated: Date.now(), messages: [] }; chats.push(cur); }
@@ -1614,6 +1693,8 @@ async function runTool(c) {
   const aspect = kind === "video" ? (a.format === "hoch" ? "9:16" : "16:9") : ({ hochformat: "2:3", querformat: "3:2" }[a.format] || "1:1");
   const o = { kind, model: mm, prompt, aspect, dur: kind === "video" ? clampDur(mm, a.dauer_sekunden) : 0, lyrics: String(a.liedtext || ""), refs: kind === "music" ? [] : refFor(kind === "video" ? a.startbild : a.vorlage), fromTool: true };
   const est = estCost(mm, o);
+  const left = budgetLeft();
+  if (est > left) return `Nicht erstellt: Das restliche Monatsbudget der Person reicht dafür nicht (noch ${fmtUSD(Math.max(0, left))}, geschätzt ${fmtUSD(est)}). Sag ihr das kurz.`;
   const limit = S.autoLimit != null ? +S.autoLimit : 0.1;
   if (est > limit) {
     await offerMedia(o);
@@ -1641,6 +1722,7 @@ async function finishSeg(seg, keepEmpty) {
 }
 async function runChat(choice, viaVoice) {
   const sc = $("#scroller");
+  if (budgetBlocked()) return;
   streaming = new AbortController(); updateSend();
   let seg = newSeg(), m = null, cat = null, route = { in: 0, out: 0, cost: 0 };
   const tot = { in: 0, out: 0, searches: 0, est: false, used: "", sources: [], truncated: false, steps: 0 };
@@ -1695,7 +1777,10 @@ async function runChat(choice, viaVoice) {
   } catch (e) {
     if (e && e.name === "AbortError") { if (!seg.reply.text) seg.reply.text = "_(abgebrochen)_"; }
     else if (e && ("status" in e || "msg" in e)) seg.reply.error = friendlyError(e);
-    else seg.reply.error = "Keine Verbindung zum Anbieter. Prüfe deine Internetverbindung" + (m && provOf(m) && provOf(m).type !== "anthropic" ? " und ob der Anbieter Anfragen direkt aus dem Browser erlaubt" : "") + ". (" + (e && e.message || e) + ")";
+    else {
+      seg.reply.error = "Keine Verbindung zum Anbieter. Prüfe deine Internetverbindung" + (m && provOf(m) && provOf(m).type !== "anthropic" ? " und ob der Anbieter Anfragen direkt aus dem Browser erlaubt" : "") + ". (" + (e && e.message || e) + ")";
+      logError(seg.reply.error, e && e.stack);
+    }
   }
   streaming = null; updateSend();
   const inT = tot.in + route.in, outT = tot.out + route.out;
@@ -1803,6 +1888,11 @@ function offerEl(m) {
 const activeJobs = new Set();
 async function createMedia(o, inLoop = false) {
   const sc = $("#scroller"); const m = o.model; const kind = o.kind || "image";
+  if (!inLoop) {
+    if (budgetBlocked()) return "Budget aufgebraucht.";
+    const est = estCost(m, o), left = budgetLeft();
+    if (est > left) { notice(`Dafür reicht das restliche Monatsbudget nicht (noch ${fmtUSD(left)}, dieser Schritt kostet ca. ${fmtUSD(est)}).`); return "Budget reicht nicht."; }
+  }
   const el = document.createElement("div"); el.className = "msg assistant";
   const wait = kind === "music" ? `<div class="img-wait audio"></div>` : `<div class="img-wait ${o.aspect === "2:3" || o.aspect === "9:16" ? "tall" : o.aspect === "1:1" ? "" : "wide"}"></div>`;
   const what = kind === "video" ? "Erstellt das Video" : kind === "music" ? "Komponiert die Musik" : o.refs && o.refs.length ? "Verändert das Bild" : "Erstellt das Bild";
@@ -1837,7 +1927,7 @@ async function createMedia(o, inLoop = false) {
   } catch (e) {
     if (e && e.name === "AbortError") { reply.text = "_(abgebrochen)_"; result = "Abgebrochen."; }
     else if (e && ("status" in e || "msg" in e)) reply.error = friendlyError(e);
-    else reply.error = "Keine Verbindung zum Anbieter. Prüfe deine Internetverbindung. (" + (e && e.message || e) + ")";
+    else { reply.error = "Keine Verbindung zum Anbieter. Prüfe deine Internetverbindung. (" + (e && e.message || e) + ")"; logError(reply.error, e && e.stack); }
     if (reply.error) result = "Fehler: " + reply.error;
     delete reply.note;
   }
@@ -2000,28 +2090,74 @@ async function generateMusic(m, prompt, lyrics, signal) {
   return { media: [{ kind: "audio", media_type: type, data: await blobToB64(new Blob([u8], { type })) }], text, cost: cost != null ? cost : (m.imgP || 0) };
 }
 
+/* ---------- Kosten: Zähler, Prognose, Budget ---------- */
+function spent(pid, k = month()) { const r = (USAGE[pid] || {})[k]; return r ? r.cost : 0; }
+function monthInfo(d = new Date()) {
+  const start = new Date(d.getFullYear(), d.getMonth(), 1), days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  return { days, elapsed: Math.min(days, Math.max(1, (d - start) / 864e5)), name: MONTHS[d.getMonth()], next: MONTHS[(d.getMonth() + 1) % 12] };
+}
+function projected(c) { const mi = monthInfo(); return c / mi.elapsed * mi.days; }
+function budgetLeft(prof = me) { return prof && +prof.limit > 0 ? +prof.limit - spent(prof.id) : Infinity; }
+function notice(text) {
+  const sc = $("#scroller"); if (sc.querySelector(".empty")) sc.innerHTML = "";
+  const d = document.createElement("div"); d.className = "msg assistant";
+  d.innerHTML = `<div class="body"><div class="err budget-err"></div></div>`; d.querySelector(".err").textContent = text;
+  sc.append(d); sc.scrollTop = sc.scrollHeight;
+}
+function budgetBlocked() {
+  if (budgetLeft() > 0) return false;
+  const mi = monthInfo();
+  notice(`Dein Monatsbudget von ${fmtUSD(+me.limit)} ist für ${mi.name} aufgebraucht. Ab dem 1. ${mi.next} geht es wieder. Ein Elternteil kann das Budget in den Einstellungen bei deinem Profil erhöhen.`);
+  return true;
+}
+function updateBudgetUI() {
+  if (!me) return;
+  const mi = monthInfo(), c = spent(me.id), lim = +me.limit || 0;
+  const pr = projected(c);
+  const pct = lim ? Math.min(100, c / lim * 100) : 0;
+  $("#dBudget").innerHTML = `<span class="b-top"><b>${esc(mi.name)}: ${esc(fmtUSD(c))}</b>${lim ? ` von ${esc(fmtUSD(lim))}` : ""}</span><span class="b-sub">Voraussichtlich ca. ${esc(fmtUSD(pr))} bis Monatsende</span>${lim ? `<span class="b-meter"><i style="width:${pct.toFixed(1)}%" class="${pct >= 100 ? "over" : pct >= 80 ? "warn" : ""}"></i></span>` : ""}`;
+  const bar = $("#budgetBar");
+  if (lim && c >= lim * 0.8) {
+    bar.classList.remove("hidden"); bar.classList.toggle("over", c >= lim);
+    bar.textContent = c >= lim ? `Monatsbudget aufgebraucht (${fmtUSD(c)} von ${fmtUSD(lim)})` : `Noch ${fmtUSD(lim - c)} von ${fmtUSD(lim)} in diesem Monat`;
+  } else bar.classList.add("hidden");
+}
 async function addUsage(i, o, c) {
-  const u = (await DB.get("usage")) || {}; const k = month();
-  u[me.id] = u[me.id] || {}; u[me.id][k] = u[me.id][k] || { in: 0, out: 0, cost: 0, n: 0 };
-  const r = u[me.id][k]; r.in += i; r.out += o; r.cost += c; r.n += 1;
-  await DB.set("usage", u);
+  const k = month(), before = spent(me.id);
+  try { const fresh = await DB.get("usage"); if (fresh) USAGE = fresh; } catch {}
+  USAGE[me.id] = USAGE[me.id] || {}; USAGE[me.id][k] = USAGE[me.id][k] || { in: 0, out: 0, cost: 0, n: 0 };
+  const r = USAGE[me.id][k]; r.in += i; r.out += o; r.cost += c; r.n += 1;
+  await DB.set("usage", USAGE);
+  const lim = +me.limit || 0, after = r.cost;
+  if (lim && before < lim * 0.8 && after >= lim * 0.8 && after < lim) toast(`Hinweis: 80 % des Monatsbudgets sind verbraucht (${fmtUSD(after)} von ${fmtUSD(lim)})`);
+  if (lim && before < lim && after >= lim) toast(`Das Monatsbudget von ${fmtUSD(lim)} ist jetzt aufgebraucht`);
+  updateBudgetUI();
 }
 
 /* ---------- Usage screen ---------- */
 async function showUsage() {
   closeDrawer();
-  const u = (await DB.get("usage")) || {}; const k = month(); const d = new Date(); d.setMonth(d.getMonth() - 1); const k2 = month(d);
-  const row = (p, key) => { const r = (u[p.id] || {})[key] || { in: 0, out: 0, cost: 0, n: 0 }; return r; };
+  USAGE = (await DB.get("usage")) || USAGE || {};
+  const k = month(); const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); const k2 = month(d);
+  const mi = monthInfo();
+  const row = (p, key) => (USAGE[p.id] || {})[key] || { in: 0, out: 0, cost: 0, n: 0 };
   const total = key => P.reduce((s, p) => s + row(p, key).cost, 0);
+  const t = total(k);
+  const av = p => `<span class="avatar" style="display:inline-grid;width:24px;height:24px;font-size:12px;vertical-align:middle;margin-right:8px;background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span>`;
   const sc = openScreen(`<div class="inner">
     <header class="topbar"><button class="iconbtn" data-close aria-label="Zurück"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button><div class="title">Verbrauch</div></header>
-    <div class="card"><h2>Dieser Monat</h2><p class="hint">Geschätzt anhand der eingetragenen Preise, auf diesem Gerät gezählt. Die genaue Abrechnung siehst du bei den jeweiligen Anbietern.</p>
-      <div class="big">${fmtUSD(total(k))}</div>
-      ${P.map(p => { const r = row(p, k); return `<div class="usage-row"><span><span class="avatar" style="display:inline-grid;width:24px;height:24px;font-size:12px;vertical-align:middle;margin-right:8px;background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span>${esc(p.name)}</span><span style="text-align:right">${fmtUSD(r.cost)}<br><span class="n">${r.n} Antworten · ${(r.in + r.out).toLocaleString("de-DE")} Tokens</span></span></div>`; }).join("")}
+    <div class="card"><h2>${esc(mi.name)} bisher</h2>
+      <div class="big">${fmtUSD(t)}</div>
+      <p class="hint" style="margin:4px 0 0">Voraussichtlich ca. <b>${fmtUSD(projected(t))}</b> bis Monatsende, hochgerechnet aus ${Math.floor(mi.elapsed)} von ${mi.days} Tagen.</p>
+      ${P.map(p => { const r = row(p, k), lim = +p.limit || 0, pct = lim ? Math.min(100, r.cost / lim * 100) : 0; return `<div class="usage-row u2"><div class="u-head"><span>${av(p)}${esc(p.name)}</span><span style="text-align:right">${fmtUSD(r.cost)}${lim ? ` <span class="n">von ${fmtUSD(lim)}</span>` : ""}</span></div>
+        ${lim ? `<span class="b-meter"><i style="width:${pct.toFixed(1)}%" class="${pct >= 100 ? "over" : pct >= 80 ? "warn" : ""}"></i></span>` : ""}
+        <span class="n">Prognose ca. ${fmtUSD(projected(r.cost))} · ${r.n} ${r.n === 1 ? "Antwort" : "Antworten"} · ${(r.in + r.out).toLocaleString("de-DE")} Tokens${lim ? "" : " · kein Budget"}</span></div>`; }).join("")}
     </div>
     <div class="card"><h2>Letzter Monat</h2><div class="big">${fmtUSD(total(k2))}</div>
       ${P.map(p => `<div class="usage-row"><span>${esc(p.name)}</span><span>${fmtUSD(row(p, k2).cost)}</span></div>`).join("")}
-    </div></div>`);
+    </div>
+    <p class="hint" style="padding:0 4px">Alle Beträge in US-Dollar, geschätzt anhand der eingetragenen Preise. Gezählt wird nur auf diesem Gerät: Was zum Beispiel auf einem anderen Handy verbraucht wird, steht dort. Die genaue Gesamtabrechnung siehst du bei den Anbietern, etwa in der Claude Console. Budgets stellst du in den Einstellungen bei jedem Profil ein.</p>
+  </div>`);
   sc.querySelector("[data-close]").onclick = closeScreen;
 }
 
@@ -2040,7 +2176,7 @@ function showSettings() {
     <header class="topbar">${BACK}<div class="title">Einstellungen</div></header>
 
     <div class="card"><h2>Profile</h2><p class="hint">Jede Person hat eigene Chats. Eine PIN verhindert, dass andere sie lesen.</p>
-      <div class="plist">${P.map(p => `<button class="pitem" data-pid="${p.id}"><span class="avatar" style="background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${[p.kid ? "Kindermodus" : "", p.pin ? "PIN" : "", p.model ? "festes Modell" : "", p.external === false ? "nur Claude" : "", p.images === false && p.videos === false && p.music === false ? "keine Spezial-Modelle" : ""].filter(Boolean).join(", ") || "Standard"}</span></span></button>`).join("")}</div>
+      <div class="plist">${P.map(p => `<button class="pitem" data-pid="${p.id}"><span class="avatar" style="background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${[p.kid ? "Kindermodus" : "", p.pin ? "PIN" : "", p.model ? "festes Modell" : "", p.external === false ? "nur Claude" : "", p.images === false && p.videos === false && p.music === false ? "keine Spezial-Modelle" : "", +p.limit > 0 ? "Budget " + fmtUSD(+p.limit) : ""].filter(Boolean).join(", ") || "Standard"}</span></span></button>`).join("")}</div>
       <div class="btnrow"><button class="btn ghost" id="addP">Profil hinzufügen</button></div>
     </div>
 
@@ -2325,6 +2461,9 @@ function editProfile(p) {
       <label class="check" style="margin:6px 0 12px"><input type="checkbox" id="pMus" ${d.music !== false ? "checked" : ""}><span>Musik erstellen <span style="color:var(--ink2);font-size:14px">· ca. 4–8 Cent pro Stück</span></span></label>
       <label class="f" for="pModel">Modell</label>
       <select class="inp" id="pModel"><option value="">Frei wählbar</option>${modelOptions(d.model).replace(/<option value="([^"]*)"( selected)?>/g, '<option value="$1"$2>Immer ')}</select>
+      <label class="f" for="pLimit">Monatsbudget in US-Dollar</label>
+      <input class="inp" id="pLimit" type="text" inputmode="decimal" autocomplete="off" placeholder="leer = unbegrenzt" value="${+d.limit > 0 ? String(+d.limit).replace(".", ",") : ""}">
+      <p class="hint" style="margin:6px 0 0">Ist das Budget erreicht, kann dieses Profil bis zum Monatsende nichts mehr senden.${!isNew ? ` In ${esc(monthInfo().name)} bisher verbraucht: ${esc(fmtUSD(spent(d.id)))}.` : ""}</p>
       <label class="f" for="pPrompt">Persönliche Hinweise für die KI (optional)</label>
       <textarea class="inp" id="pPrompt" placeholder="z. B. Ich bin 12 und gehe in die 6. Klasse.">${esc(d.prompt)}</textarea>
     </div>
@@ -2336,12 +2475,13 @@ function editProfile(p) {
   sc.querySelector("#pSave").onclick = async () => {
     d.name = sc.querySelector("#pName").value.trim(); d.pin = sc.querySelector("#pPin").value.trim();
     d.kid = sc.querySelector("#pKid").checked; d.external = sc.querySelector("#pExt").checked; d.images = sc.querySelector("#pImg").checked; d.videos = sc.querySelector("#pVid").checked; d.music = sc.querySelector("#pMus").checked; d.model = sc.querySelector("#pModel").value; d.prompt = sc.querySelector("#pPrompt").value;
+    d.limit = Math.max(0, parseFloat(String(sc.querySelector("#pLimit").value).replace(",", ".")) || 0);
     if (!d.name) return toast("Bitte gib einen Namen ein");
     if (d.pin && !/^\d{4,6}$/.test(d.pin)) return toast("Die PIN braucht 4 bis 6 Ziffern");
     if (d.model && !modelAllowed(modelByKey(d.model), d)) return toast("Dieses Modell ist für das Profil nicht erlaubt");
     if (isNew) P.push(d); else Object.assign(P.find(x => x.id === d.id), d);
     await saveProfiles();
-    if (me && me.id === d.id) { me = P.find(x => x.id === d.id); applyAccent(me.color); $("#dAvatar").textContent = me.name[0].toUpperCase(); $("#dName").textContent = me.name; fillModelSelect(); }
+    if (me && me.id === d.id) { me = P.find(x => x.id === d.id); applyAccent(me.color); $("#dAvatar").textContent = me.name[0].toUpperCase(); $("#dName").textContent = me.name; fillModelSelect(); updateBudgetUI(); }
     showSettings();
   };
   const del = sc.querySelector("#pDel");
@@ -2354,8 +2494,19 @@ function editProfile(p) {
 }
 
 /* ---------- Fehler sichtbar machen ---------- */
-window.addEventListener("error", e => toast("Fehler: " + (e.message || "unbekannt")));
-window.addEventListener("unhandledrejection", e => toast("Fehler: " + ((e.reason && e.reason.message) || e.reason || "unbekannt")));
+function reportGlobal(msg, detail) {
+  if (!(ERRLOG[0] && ERRLOG[0].msg === String(msg).slice(0, 600) && Date.now() - ERRLOG[0].t < 3000)) logError(msg, detail);
+  toast("Fehler: " + msg + " – Tippen für Details", { err: true, onClick: showErrors });
+}
+window.addEventListener("error", e => {
+  if (!e.message && !e.error) return; // Lade-Fehler einzelner Dateien
+  reportGlobal(e.message || errText(e.error), [e.error && e.error.stack, e.filename ? e.filename + ":" + e.lineno + ":" + e.colno : ""].filter(Boolean).join("\n"));
+});
+window.addEventListener("unhandledrejection", e => {
+  const r = e.reason;
+  if (r && r.name === "AbortError") return;
+  reportGlobal(errText(r), r && (r.stack || (r.body ? "HTTP " + r.status + ": " + r.body : "")));
+});
 
 /* ---------- Wiring ---------- */
 $("#menuBtn").onclick = openDrawer;
@@ -2364,6 +2515,9 @@ $("#newBtn").onclick = newChat;
 $("#newBtn2").onclick = () => { newChat(); closeDrawer(); };
 $("#switchBtn").onclick = () => { if (streaming) streaming.abort(); closeDrawer(); showPicker(); };
 $("#usageBtn").onclick = showUsage;
+$("#errBtn").onclick = showErrors;
+$("#dBudget").onclick = showUsage;
+$("#budgetBar").onclick = showUsage;
 $("#settingsBtn").onclick = guardSettings;
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
 boot();
