@@ -454,8 +454,9 @@ const ROUTER_PROMPT = `Du bist ein Verteiler in einer Chat-App. Ordne die letzte
 einfach = kurze Fragen, Smalltalk, einfache Erklärungen, Übersetzungen, kurze Texte, Rechtschreibung
 aktuell = braucht aktuelle Informationen aus dem Internet: Nachrichten, Wetter, Preise, Öffnungszeiten, Sportergebnisse, Termine, aktuelle Produkte oder alles, was sich in letzter Zeit geändert haben könnte
 medien = es soll ein Bild, Foto, Logo, eine Illustration, ein Video, Clip, Musikstück oder Lied erzeugt oder verändert werden, auch als Teil einer größeren Aufgabe (nicht: Fragen darüber, ob oder wie das geht; nicht: Diagramme oder Tabellen)
-code = Programmieren, Code, Formeln, Technik-Probleme mit Computern, Handys oder Software
+code = Programmieren, Code, Apps, Webseiten, Skripte, Formeln, Technik-Probleme mit Computern, Handys oder Software
 komplex = Hausaufgaben mit Lösungsweg, längere oder wichtige Texte, Analysen, Planung, Dateien, Dokumente, Apps, Spiele, Diagramme, Bilder auswerten, schwierige Fragen
+Achte auf Preis-Leistung: Wenn eine Nachricht mit „einfach“ gut zu beantworten ist, wähle „einfach“ und nicht „komplex“.
 Antworte nur mit einem einzigen Wort: einfach, aktuell, medien, code oder komplex.`;
 const ROUTES = [["einfach", "Einfache Fragen"], ["aktuell", "Aktuelle Infos (mit Websuche)"], ["code", "Programmieren und Technik"], ["komplex", "Anspruchsvolle Aufgaben"], ["medien", "Aufgaben mit Bildern, Videos oder Musik (steuert die Spezial-Modelle)"]];
 const IMG_PRESETS = [
@@ -468,6 +469,9 @@ const IMG_PRESETS = [
   { kind: "video", preset: "openrouter", id: "google/veo-3.1-fast", label: "Veo 3.1 Fast (bessere Qualität)", imgP: 0.15, durations: [4, 6, 8] },
   { kind: "music", preset: "openrouter", id: "google/lyria-3-clip-preview", label: "Lyria 3 Clip (30 Sek.)", imgP: 0.04 },
   { kind: "music", preset: "openrouter", id: "google/lyria-3-pro-preview", label: "Lyria 3 Pro (ganzes Lied)", imgP: 0.08 },
+  { kind: "code", preset: "openrouter", id: "openai/gpt-oss-120b:free", label: "GPT-OSS 120B (gratis)", inP: 0, outP: 0 },
+  { kind: "code", preset: "openrouter", id: "deepseek/deepseek-v4-pro-0813", label: "DeepSeek V4 Pro (günstig)", inP: 1.32, outP: 3.96 },
+  { kind: "code", preset: "anthropic", id: "claude-sonnet-5-5", label: "Claude Sonnet 5.5 (stark)", inP: 3, outP: 15 },
 ];
 const ASPECTS = [["1:1", "Quadrat"], ["2:3", "Hochformat"], ["3:2", "Querformat"]];
 
@@ -738,7 +742,9 @@ function modelAllowed(m, prof = me) {
   const p = provOf(m);
   return !!(m && m.on && m.id.trim() && p && (prof.external !== false || p.type === "anthropic"));
 }
-function allowedModels() { return S.models.filter(m => m.kind !== "image" && modelAllowed(m)); }
+const isChatKind = m => !m.kind || m.kind === "chat" || m.kind === "code";
+function allowedModels() { return S.models.filter(m => isChatKind(m) && modelAllowed(m)); }
+function codeModels(prof = me) { return S.models.filter(m => m.kind === "code" && modelAllowed(m, prof)); }
 function mediaModels(kind, prof = me) { return S.models.filter(m => m.kind === kind && modelAllowed(m, prof) && provOf(m).type !== "anthropic" && (kind === "image" || provOf(m).preset === "openrouter" || provOf(m).preset === "custom")); }
 function imageModels(prof = me) { return mediaModels("image", prof); }
 function imageAllowed(prof = me) { return kindAllowed("image", prof); }
@@ -748,11 +754,13 @@ function fillModelSelect() {
   const sel = $("#modelSelect"); const ms = allowedModels();
   let html = routerReady() && ms.length ? `<option value="auto">Automatisch</option>` : "";
   for (const p of S.providers) {
-    const list = ms.filter(m => m.provider === p.id);
-    if (list.length) html += `<optgroup label="${esc(p.name)}">${list.map(m => `<option value="${esc(m.key)}">${esc(m.label || m.id)}${isFree(m) ? " · gratis" : ""}</option>`).join("")}</optgroup>`;
+    const list = ms.filter(m => m.provider === p.id && m.kind !== "code");
+    if (list.length) html += `<optgroup label="${esc(p.name)}">${list.map(m => `<option value="${esc(m.key)}">${esc(m.label || m.id)}${isFree(m) ? " · gratis" : me.kid ? " · " + priceLevel(answerCost(m)) : ""}</option>`).join("")}</optgroup>`;
   }
+  const cms = codeModels();
+  if (cms.length) html += `<optgroup label="Programmierung">${cms.map(m => `<option value="${esc(m.key)}">💻 ${esc(m.label || m.id)}${isFree(m) ? " · gratis" : me.kid ? " · " + priceLevel(taskCost(m)) : ""}</option>`).join("")}</optgroup>`;
   for (const [k, l, ic] of [["image", "Bilder erstellen", "🎨"], ["video", "Videos erstellen", "🎬"], ["music", "Musik erstellen", "🎵"]])
-    if (kindAllowed(k)) html += `<optgroup label="${l}">${mediaModels(k).map(m => `<option value="${esc(m.key)}">${ic} ${esc(m.label || m.id)}</option>`).join("")}</optgroup>`;
+    if (kindAllowed(k)) html += `<optgroup label="${l}">${mediaModels(k).map(m => `<option value="${esc(m.key)}">${ic} ${esc(m.label || m.id)}${me.kid ? " · " + priceLevel(estCost(m, { kind: k })) : ""}</option>`).join("")}</optgroup>`;
   sel.innerHTML = html;
   const locked = me.model && ms.find(m => m.key === me.model);
   const pref = locked ? me.model : S.defaultModel;
@@ -926,7 +934,7 @@ function actionsEl(m) {
   if (m.usage) {
     const u = m.usage; const s = document.createElement("span"); s.className = "usage";
     const who = u.model ? (u.route ? "Auto → " : "") + u.model + (u.used ? ` (${u.used.split("/").pop()})` : "") : "";
-    s.textContent = [who, u.items ? `1 ${{ image: "Bild", video: "Video", music: "Musikstück" }[u.kind || "image"]}` : u.images ? `${u.images} ${u.images === 1 ? "Bild" : "Bilder"}` : `${u.est ? "≈ " : ""}${(u.in + u.out).toLocaleString("de-DE")} Tokens`, u.searches ? `${u.searches} ${u.searches === 1 ? "Suche" : "Suchen"}` : "", `ca. ${fmtUSD(u.cost)}`].filter(Boolean).join(" · ");
+    s.textContent = [who, u.items ? `1 ${{ image: "Bild", video: "Video", music: "Musikstück" }[u.kind || "image"]}` : u.images ? `${u.images} ${u.images === 1 ? "Bild" : "Bilder"}` : `${u.est ? "≈ " : ""}${(u.in + u.out).toLocaleString("de-DE")} Tokens`, u.searches ? `${u.searches} ${u.searches === 1 ? "Suche" : "Suchen"}` : "", `ca. ${fmtUSD(u.cost)}${me && me.kid ? " (" + priceLevel(u.cost) + ")" : ""}`].filter(Boolean).join(" · ");
     a.append(s);
   }
   return a;
@@ -1425,13 +1433,13 @@ function shrinkImage(file) {
 }
 
 /* ---------- Sending ---------- */
-function systemPrompt(web, tools = []) {
+function systemPrompt(web, tools = [], cur0 = null) {
   const date = new Date().toLocaleDateString("de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   let s = `Du bist ein hilfreicher Assistent in der Familien-App „Stube“. Du sprichst gerade mit ${me.name}. Heute ist ${date}. Antworte auf Deutsch, außer die Person schreibt in einer anderen Sprache.`;
   if (web) s += "\n\nDu kannst im Internet suchen. Nutze die Suche für aktuelle Informationen. Die Quellen werden automatisch unter deiner Antwort angezeigt, liste sie nicht noch einmal auf.";
   s += "\n\n" + FILE_PROMPT;
   if (S.artifacts !== false) s += "\n\n" + ARTIFACT_PROMPT;
-  s += "\n\n" + (tools.length ? toolsPrompt(tools)
+  s += "\n\n" + (tools.length ? toolsPrompt(tools, cur0)
     : "Fotos, Videos oder Musikdateien kannst du in dieser App gerade nicht erzeugen. Biete stattdessen zum Beispiel eine Zeichnung als SVG-Artefakt an. Hinweise in eckigen Klammern wie „[Bild erstellt …]“ stehen für Medien, die die App früher erzeugt hat.");
   if (me.kid) s += "\n\n" + KID_PROMPT;
   if (me.prompt && me.prompt.trim()) s += "\n\nZusätzliche Hinweise:\n" + me.prompt.trim();
@@ -1578,7 +1586,7 @@ async function streamOpenAI(m, p, sys, native, tools, signal, cb) {
   if (tools.length && !p.noTools) body.tools = tools.map(t => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.parameters } }));
   if (p.preset === "openrouter" && isFree(m)) {
     // Gratis-Modelle sind oft überlastet: OpenRouter darf auf andere Gratis-Modelle ausweichen
-    const alts = S.models.filter(x => x.on && x.kind !== "image" && x.provider === p.id && isFree(x) && x.key !== m.key).map(x => x.id).slice(0, 2);
+    const alts = S.models.filter(x => x.on && isChatKind(x) && x.provider === p.id && isFree(x) && x.key !== m.key).map(x => x.id).slice(0, 2);
     if (alts.length) body.models = [m.id, ...alts];
   }
   const post = () => fetch(baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
@@ -1665,7 +1673,7 @@ async function send() {
   cur.updated = Date.now(); await saveChats();
   renderChat();
   const chosen = modelByKey(choice);
-  if (chosen && chosen.kind && chosen.kind !== "chat") {
+  if (chosen && !isChatKind(chosen)) {
     const kind = chosen.kind;
     const refs = kind === "music" ? [] : userImgs.length ? userImgs.slice(0, 1) : (kind === "image" && intent && intent.edit && lastImageMsg() ? [lastImageMsg().images[0]] : []);
     return createMedia({ kind, model: chosen, prompt: text, refs, aspect: kind === "video" ? "16:9" : "1:1", dur: defaultDur(chosen), lyrics: "" });
@@ -1681,30 +1689,78 @@ function toolsAvailable() { return ["image", "video", "music"].some(k => kindAll
 function defaultMediaModel(kind) { const ms = mediaModels(kind); return ms.find(m => m.key === S[kind + "Model"]) || ms[0] || null; }
 function defaultDur(m) { const ds = (m && m.durations) || [5, 10]; return ds.reduce((a, b) => Math.abs(b - 6) < Math.abs(a - 6) ? b : a, ds[0]); }
 function clampDur(m, d) { const ds = (m && m.durations) || [5, 10]; d = +d || defaultDur(m); return ds.reduce((a, b) => Math.abs(b - d) < Math.abs(a - d) ? b : a, ds[0]); }
+// Preisstufen, damit auch Kinder Preise einordnen können
+function priceLevel(p) { p = +p || 0; return p <= 0 ? "gratis" : p < 0.02 ? "sehr günstig" : p < 0.1 ? "günstig" : p < 0.5 ? "mittel" : p < 1.5 ? "teuer" : "sehr teuer"; }
+const answerCost = m => ((m.inP || 0) * 2000 + (m.outP || 0) * 600) / 1e6;   // typische Chat-Antwort
+const taskCost = m => ((m.inP || 0) * 4000 + (m.outP || 0) * 5000) / 1e6;    // typische Programmieraufgabe
+const usd = p => p <= 0 ? "gratis" : p < 0.01 ? "unter 1 Cent" : p < 1 ? `ca. ${Math.round(p * 100)} Cent` : `ca. ${p.toFixed(2).replace(".", ",")} $`;
 function estCost(m, o) {
+  if (o.kind === "code") return taskCost(m);
   if (o.kind === "video") return (m.imgP || 0.1) * (o.dur || defaultDur(m));
   if (o.kind === "music") return m.imgP || 0.05;
   return m.imgP || 0.04;
 }
-function mediaTools() {
+function pickModel(kind, id) {
+  const list = kind === "code" ? codeModels() : mediaModels(kind);
+  const want = id && list.find(m => m.id === id || m.label === id);
+  if (want) return want;
+  if (kind === "code") return list.find(m => m.key === S.codeModel) || list[0] || null;
+  return defaultMediaModel(kind);
+}
+function modelParam(kind, list) {
+  return { type: "string", enum: list.map(m => m.id), description: "Welches Spezial-Modell? Siehe Preisliste im Systemhinweis. Ohne Angabe wird das voreingestellte genommen." };
+}
+function mediaTools(cur0) {
   const t = [];
   const ref = { type: "string", enum: ["keine", "letztes_bild", "hochgeladenes_bild"], description: "Ein vorhandenes Bild als Vorlage verwenden: das zuletzt erstellte Bild oder das Bild, das die Person gerade hochgeladen hat." };
   if (kindAllowed("image")) t.push({ name: "erstelle_bild", description: "Erzeugt mit einem Spezial-Bildmodell ein Bild (Foto, Illustration, Logo, Gemälde, Comic …) oder verändert ein vorhandenes Bild und zeigt es der Person im Chat.", parameters: { type: "object", properties: {
     beschreibung: { type: "string", description: "Ausführliche Bildbeschreibung: Motiv, Stil, Farben, Licht, Perspektive, Stimmung. Bei Änderungen: genau, was geändert werden soll." },
-    format: { type: "string", enum: ["quadrat", "hochformat", "querformat"] }, vorlage: ref }, required: ["beschreibung"] } });
+    format: { type: "string", enum: ["quadrat", "hochformat", "querformat"] }, vorlage: ref, modell: modelParam("image", mediaModels("image")) }, required: ["beschreibung"] } });
   if (kindAllowed("video")) t.push({ name: "erstelle_video", description: "Erzeugt mit einem Spezial-Videomodell einen kurzen Videoclip (einige Sekunden, je nach Modell mit Ton) und zeigt ihn im Chat. Teuer und langsam, nur wenn ausdrücklich ein Video gewünscht ist.", parameters: { type: "object", properties: {
     beschreibung: { type: "string", description: "Ausführliche Szenenbeschreibung: Handlung, Kamerabewegung, Stil, Licht, Ton/Geräusche." },
-    dauer_sekunden: { type: "integer", description: "Gewünschte Länge in Sekunden (meist 4 bis 10)." },
+    dauer_sekunden: { type: "integer", description: "Gewünschte Länge in Sekunden (meist 4 bis 10). Kürzer ist günstiger." },
     format: { type: "string", enum: ["quer", "hoch"] },
-    startbild: { type: "string", enum: ["keins", "letztes_bild", "hochgeladenes_bild"], description: "Ein Bild als erstes Bild des Videos verwenden." } }, required: ["beschreibung"] } });
+    startbild: { type: "string", enum: ["keins", "letztes_bild", "hochgeladenes_bild"], description: "Ein Bild als erstes Bild des Videos verwenden." },
+    modell: modelParam("video", mediaModels("video")) }, required: ["beschreibung"] } });
   if (kindAllowed("music")) t.push({ name: "erstelle_musik", description: "Erzeugt mit einem Spezial-Musikmodell ein Musikstück oder Lied (mit oder ohne Gesang) und spielt es im Chat ab.", parameters: { type: "object", properties: {
     beschreibung: { type: "string", description: "Stil, Genre, Stimmung, Tempo, Instrumente, Gesang ja/nein, Sprache des Gesangs." },
-    liedtext: { type: "string", description: "Optional: vollständiger Liedtext, wenn gesungen werden soll." } }, required: ["beschreibung"] } });
+    liedtext: { type: "string", description: "Optional: vollständiger Liedtext, wenn gesungen werden soll." },
+    modell: modelParam("music", mediaModels("music")) }, required: ["beschreibung"] } });
+  const cms = codeModels().filter(m => !cur0 || m.key !== cur0.key);
+  if (cms.length && S.imageOffer !== false) t.push({ name: "programmieren", description: "Gibt eine Programmieraufgabe (App, Spiel, Webseite, Skript, Code, Formel, Fehlersuche) an ein Spezial-Modell für Programmierung weiter. Dessen Lösung sieht die Person direkt im Chat. Nutze das für umfangreichere Programmieraufgaben; kurze Codeschnipsel oder Erklärungen kannst du selbst schreiben.", parameters: { type: "object", properties: {
+    aufgabe: { type: "string", description: "Vollständige, eigenständige Aufgabenbeschreibung mit allen Anforderungen, Wünschen und dem nötigen Zusammenhang. Das Spezial-Modell sieht den bisherigen Chat nicht." },
+    modell: modelParam("code", cms) }, required: ["aufgabe"] } });
   return t;
 }
-function toolsPrompt(tools) {
-  const names = tools.map(t => ({ erstelle_bild: "Bilder", erstelle_video: "Videos", erstelle_musik: "Musik" }[t.name]));
-  return `Du kannst über Werkzeuge Spezial-Modelle für ${names.join(", ")} steuern. Setze sie selbständig ein, wenn eine Aufgabe sie braucht, auch mehrere nacheinander in derselben Antwort (z. B. erst eine Geschichte schreiben, dann ein passendes Bild erstellen, dann ein Lied dazu). Sag vorher in einem kurzen Satz, was du als Nächstes machst. Schreibe den Werkzeugen ausführliche, präzise Beschreibungen. Erzeuge Medien nur, wenn sie gewünscht sind oder klar zur Aufgabe gehören, und frag bei Unklarheit lieber kurz nach. Teurere Schritte muss die Person bestätigen; das Werkzeug sagt dir, wenn das der Fall ist. Hinweise in eckigen Klammern wie „[Bild erstellt …]“ stehen für Medien, die die App bereits erzeugt und angezeigt hat.`;
+function modelCatalog(tools, cur0) {
+  const lines = [];
+  const has = n => tools.some(t => t.name === n);
+  const row = (m, price, extra = "") => `- ${m.id} („${m.label || m.id}“): ${price}${extra}`;
+  if (has("erstelle_bild")) { lines.push("Bilder (Preis pro Bild):"); mediaModels("image").forEach(m => lines.push(row(m, usd(estCost(m, { kind: "image" })), ` · ${priceLevel(estCost(m, { kind: "image" }))}`))); }
+  if (has("erstelle_video")) { lines.push("Videos (Preis pro Sekunde, Gesamtpreis hängt von der Länge ab):"); mediaModels("video").forEach(m => { const d = defaultDur(m), c = estCost(m, { kind: "video", dur: d }); lines.push(row(m, `${usd(m.imgP || 0.1)} pro Sekunde, also ${usd(c)} für ${d} Sek.`, ` · ${priceLevel(c)} · mögliche Längen: ${(m.durations || [5, 10]).join(", ")} Sek.`)); }); }
+  if (has("erstelle_musik")) { lines.push("Musik (Preis pro Stück):"); mediaModels("music").forEach(m => lines.push(row(m, usd(estCost(m, { kind: "music" })), ` · ${priceLevel(estCost(m, { kind: "music" }))}`))); }
+  if (has("programmieren")) { lines.push("Programmierung (Preis für eine typische Aufgabe; große Apps kosten mehr):"); codeModels().filter(m => !cur0 || m.key !== cur0.key).forEach(m => lines.push(row(m, isFree(m) ? "gratis (kann langsamer oder überlastet sein)" : usd(taskCost(m)), ` · ${priceLevel(taskCost(m))}`))); }
+  return lines.join("\n");
+}
+function toolsPrompt(tools, cur0) {
+  const names = tools.map(t => ({ erstelle_bild: "Bilder", erstelle_video: "Videos", erstelle_musik: "Musik", programmieren: "Programmierung" }[t.name]));
+  const left = budgetLeft();
+  let s = `Du kannst über Werkzeuge Spezial-Modelle für ${names.join(", ")} steuern. Setze sie selbständig ein, wenn eine Aufgabe sie braucht, auch mehrere nacheinander in derselben Antwort (z. B. erst eine Geschichte schreiben, dann ein passendes Bild erstellen, dann ein Lied dazu). Sag vorher in einem kurzen Satz, was du als Nächstes machst. Schreibe den Werkzeugen ausführliche, präzise Beschreibungen. Erzeuge Medien nur, wenn sie gewünscht sind oder klar zur Aufgabe gehören. Hinweise in eckigen Klammern wie „[Bild erstellt …]“ stehen für Medien, die die App bereits erzeugt und angezeigt hat.
+
+Preisliste der Spezial-Modelle (in US-Dollar):
+${modelCatalog(tools, cur0)}
+${cur0 ? `Zum Vergleich: Eine normale Antwort von dir (${cur0.label || cur0.id}) kostet ${usd(answerCost(cur0))}.` : ""}${isFinite(left) ? `
+Das restliche Monatsbudget der Person beträgt ${usd(Math.max(0, left))}.` : ""}
+
+Regeln für die Modellwahl:
+- Achte immer auf Preis-Leistung: Nimm das günstigste Modell, das die Aufgabe gut erfüllt. Ein teureres Modell nur, wenn die Qualität hier wirklich den Unterschied macht oder die Person es wünscht.
+- Wenn mehrere Modelle ernsthaft infrage kommen und sich deutlich im Preis oder in der Qualität unterscheiden (zum Beispiel ein günstiges und ein doppelt so teures), dann frag vorher kurz nach: Nenne 2 bis 3 Möglichkeiten mit Preis und was man dafür bekommt, empfiehl eine davon und warte auf die Antwort, bevor du das Werkzeug benutzt. Das gilt vor allem für Videos.
+- Hat die Person schon gesagt, was sie möchte (Modell, Qualität oder „mach einfach“), oder kostet der Schritt unter 5 Cent, frag nicht nach, sondern leg los.
+- Nenne bei jedem kostenpflichtigen Schritt kurz den ungefähren Preis, zum Beispiel „Ich erstelle das Bild mit Nano Banana, das kostet etwa 4 Cent.“
+- Teurere Schritte zeigt die App der Person zusätzlich als Karte zur Bestätigung; das Werkzeug sagt dir, wenn das der Fall ist.`;
+  if (me.kid) s += `
+- Du sprichst mit einem Kind, das Preise schlecht einschätzen kann. Sag deshalb zu jedem Preis dazu, ob er günstig, mittel oder teuer ist, und vergleiche ihn anschaulich mit normalen Antworten, zum Beispiel „Das Video kostet etwa 30 Cent. Das ist eher teuer, so viel wie ungefähr 30 normale Fragen an mich.“ Rate bei teuren Schritten eher zu einer günstigeren Möglichkeit.`;
+  return s;
 }
 function refFor(sel) {
   if (sel === "hochgeladenes_bild") { for (let i = cur.messages.length - 1; i >= 0; i--) { const m = cur.messages[i]; if (m.role === "user" && (m.images || []).length) return [m.images[0]]; } return []; }
@@ -1712,10 +1768,11 @@ function refFor(sel) {
   return [];
 }
 async function runTool(c) {
+  if (c.name === "programmieren") return runCodeTool(c.input || {});
   const kind = { erstelle_bild: "image", erstelle_video: "video", erstelle_musik: "music" }[c.name];
   if (!kind || !kindAllowed(kind)) return "Dieses Werkzeug ist hier nicht verfügbar.";
-  const mm = defaultMediaModel(kind);
   const a = c.input || {};
+  const mm = pickModel(kind, a.modell);
   const prompt = String(a.beschreibung || a.prompt || "").trim();
   if (!prompt) return "Fehler: Die Beschreibung fehlt.";
   const aspect = kind === "video" ? (a.format === "hoch" ? "9:16" : "16:9") : ({ hochformat: "2:3", querformat: "3:2" }[a.format] || "1:1");
@@ -1729,6 +1786,36 @@ async function runTool(c) {
     return `Noch nicht erstellt: Die Person muss diesen Schritt erst bestätigen (geschätzte Kosten ${fmtUSD(est)}). Die App zeigt ihr dafür direkt über deiner nächsten Nachricht eine Karte mit Preis an. Sag ihr in einem Satz, dass sie den Schritt in dieser Karte bestätigen kann, und mach mit anderen Teilen der Aufgabe weiter, falls es welche gibt.`;
   }
   return await createMedia(o, true);
+}
+
+async function runCodeTool(a) {
+  const cm = pickModel("code", a.modell);
+  if (!cm) return "Es ist kein Programmier-Modell verfügbar.";
+  const task = String(a.aufgabe || "").trim(); if (!task) return "Fehler: Die Aufgabe fehlt.";
+  const est = taskCost(cm), left = budgetLeft();
+  if (est > left) return `Nicht ausgeführt: Das restliche Monatsbudget reicht dafür nicht (noch ${fmtUSD(Math.max(0, left))}). Sag das der Person kurz.`;
+  const p = provOf(cm), sc = $("#scroller");
+  const seg = newSeg(); seg.st.textContent = `💻 ${cm.label || cm.id} programmiert …`;
+  const cb = {
+    text: d => { seg.reply.text += d; seg.st.textContent = ""; if (!seg.raf) seg.raf = requestAnimationFrame(() => { seg.raf = 0; const near = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 120; renderBody(seg.body, seg.reply.text); if (near) sc.scrollTop = sc.scrollHeight; }); },
+    status: t => { seg.st.textContent = t; },
+  };
+  const sys = systemPrompt(false, []) + "\n\nDu arbeitest in der Stube als Spezialist für Programmierung. Ein anderes Modell hat dir die folgende Aufgabe weitergegeben. Löse sie vollständig, funktionsfähig und verständlich erklärt für die Person. Apps, Spiele und Webseiten lieferst du als Artefakt.";
+  const native = p.type === "anthropic" ? anthMsgs([{ role: "user", text: task, images: [] }]) : oaMsgs([{ role: "user", text: task, images: [] }]);
+  let r;
+  try { r = p.type === "anthropic" ? await streamAnthropic(cm, p, sys, native, false, [], streaming.signal, cb) : await streamOpenAI(cm, p, sys, native, [], streaming.signal, cb); }
+  catch (e) {
+    if (e && e.name === "AbortError") { seg.reply.text = seg.reply.text || "_(abgebrochen)_"; await finishSeg(seg, true); throw e; }
+    seg.reply.error = e && ("status" in e || "msg" in e) ? friendlyError(e) : "Keine Verbindung zum Programmier-Modell. (" + (e && e.message || e) + ")";
+    await finishSeg(seg, true);
+    return "Fehler beim Programmier-Spezialisten: " + seg.reply.error + " Biete der Person an, es selbst zu versuchen.";
+  }
+  const cost = (r.inTok * (cm.inP || 0) + r.outTok * (cm.outP || 0)) / 1e6;
+  seg.reply.usage = { in: r.inTok, out: r.outTok, cost, model: "💻 " + (cm.label || cm.id), est: !!r.est };
+  if (r.truncated) seg.reply.truncated = true;
+  await addUsage(r.inTok, r.outTok, cost);
+  await finishSeg(seg, true);
+  return `Erledigt: ${cm.label || cm.id} hat die Lösung direkt im Chat angezeigt (Kosten ${usd(cost)}). Wiederhole den Code nicht, ergänze höchstens einen kurzen Satz.${r.truncated ? " Achtung: Die Lösung wurde wegen der Längengrenze abgeschnitten." : ""}\nAnfang der Lösung zur Orientierung:\n${r.text.slice(0, 1200)}`;
 }
 
 /* ---------- Chat mit selbständigem Modellwechsel ---------- */
@@ -1773,12 +1860,12 @@ async function runChat(choice, viaVoice) {
       m = resolveRoute(cat);
       if (cat === "aktuell") web = true;
     } else m = modelByKey(choice);
-    if (!m || !provOf(m) || (m.kind && m.kind !== "chat")) m = resolveRoute("komplex");
+    if (!m || !provOf(m) || !isChatKind(m)) m = resolveRoute("komplex");
     if (!m) throw { msg: "Kein Modell verfügbar. Prüfe die Modelle und Anbieter in den Einstellungen." };
     const p = provOf(m);
     web = web && p.type === "anthropic" && S.webSearch !== false;
-    const tools = toolsAvailable() ? mediaTools() : [];
-    const sys = systemPrompt(web, tools);
+    const tools = toolsAvailable() || codeModels().some(x => x.key !== m.key) ? mediaTools(m).filter(t => t.name === "programmieren" || toolsAvailable()) : [];
+    const sys = systemPrompt(web, tools, m);
     const native = p.type === "anthropic" ? anthMsgs(apiMessages()) : oaMsgs(apiMessages());
     seg.st.textContent = (cat ? "Automatisch → " : "") + (m.label || m.id) + (web ? " · mit Websuche" : "");
     for (let step = 0; step < 6; step++) {
@@ -1858,7 +1945,7 @@ function mediaIntent(text, userImgs) {
   if ((VID_NOUN.test(t) || MUS_NOUN.test(t)) && MEDIA_VERB.test(t)) return true;
   return !!imageIntent(t, userImgs);
 }
-const centsTxt = p => !p ? "" : p < 0.015 ? "ca. 1 Cent" : p < 1 ? `ca. ${Math.round(p * 100)} Cent` : `ca. ${p.toFixed(2).replace(".", ",")} $`;
+const centsTxt = p => !p ? "" : (p < 0.015 ? "ca. 1 Cent" : p < 1 ? `ca. ${Math.round(p * 100)} Cent` : `ca. ${p.toFixed(2).replace(".", ",")} $`) + (me && me.kid ? ` (${priceLevel(p)})` : "");
 async function offerMedia(o) {
   const m = { role: "assistant", text: "", offer: { kind: o.kind, prompt: o.prompt, model: o.model ? o.model.key : "", aspect: o.aspect, dur: o.dur, lyrics: o.lyrics || "", refs: o.refs || [], useRef: !!(o.refs || []).length, fromTool: !!o.fromTool } };
   cur.messages.push(m); cur.updated = Date.now(); await saveChats();
@@ -1876,7 +1963,7 @@ function offerEl(m) {
     <textarea class="inp offer-prompt" rows="2" aria-label="Beschreibung">${esc(o.prompt)}</textarea>
     ${kind === "music" ? `<textarea class="inp offer-lyrics" rows="2" placeholder="Liedtext (optional)" aria-label="Liedtext">${esc(o.lyrics || "")}</textarea>` : ""}
     <div class="offer-row">
-      <select class="inp offer-model" aria-label="Modell">${ms.map(x => `<option value="${esc(x.key)}" ${x.key === o.model ? "selected" : ""}>${esc(x.label || x.id)}</option>`).join("")}</select>
+      <select class="inp offer-model" aria-label="Modell">${ms.map(x => `<option value="${esc(x.key)}" ${x.key === o.model ? "selected" : ""}>${esc(x.label || x.id)} · ${esc(centsTxt(estCost(x, { kind, dur: kind === "video" ? clampDur(x, o.dur) : 0 })))}</option>`).join("")}</select>
       ${kind === "video" ? `<select class="inp offer-dur" aria-label="Länge" style="flex:0 0 auto;min-width:0;width:auto"></select>` : ""}
       ${aspects.length ? `<div class="seg offer-aspect" role="radiogroup" aria-label="Format">${aspects.map(([v, l]) => `<button data-a="${v}" class="${v === o.aspect ? "on" : ""}" role="radio" aria-checked="${v === o.aspect}">${l}</button>`).join("")}</div>` : ""}
     </div>
@@ -1909,7 +1996,7 @@ function offerEl(m) {
     await drop();
     if (o.fromTool) return;
     const sel = $("#modelSelect").value, sm = modelByKey(sel);
-    runChat(sm && sm.kind && sm.kind !== "chat" ? (routerReady() ? "auto" : (allowedModels()[0] || {}).key) : sel, false);
+    runChat(sm && !isChatKind(sm) ? (routerReady() ? "auto" : (allowedModels()[0] || {}).key) : sel, false);
   };
   return box;
 }
@@ -2192,7 +2279,7 @@ async function showUsage() {
 /* ---------- Settings ---------- */
 const BACK = `<button class="iconbtn" data-close aria-label="Zurück"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>`;
 const provShort = id => { const p = provById(id); return p ? p.name.split(" (")[0] : "?"; };
-function modelOptions(sel, filter = m => m.kind !== "image") {
+function modelOptions(sel, filter = isChatKind) {
   return S.models.filter(m => m.id && filter(m)).map(m => `<option value="${esc(m.key)}" ${m.key === sel ? "selected" : ""}>${esc(provShort(m.provider))} · ${esc(m.label || m.id)}</option>`).join("");
 }
 function guardSettings() {
@@ -2216,13 +2303,13 @@ function showSettings() {
     <div class="card"><h2>Modelle und Preise</h2><p class="hint">Preise in US-Dollar pro Million Tokens ; „$ Spezial“ gilt für Spezial-Modelle: pro Bild, pro Musikstück oder pro Sekunde Video. Nur für die Kostenschätzung. Prüfe sie auf den Preisseiten der Anbieter. Modelle mit „:free“ am Ende sind bei OpenRouter kostenlos.</p>
       <div class="tablewrap"><table class="models"><thead><tr><th>An</th><th>Art</th><th>Anbieter</th><th>Name</th><th>Modell-ID</th><th>Eingabe</th><th>Ausgabe</th><th>$ Spezial</th><th></th></tr></thead><tbody id="mRows">
       ${S.models.map((m, i) => `<tr><td><input type="checkbox" data-i="${i}" data-k="on" ${m.on ? "checked" : ""} aria-label="Aktiv"></td>
-        <td><select class="inp" data-i="${i}" data-k="kind" style="width:86px">${[["chat", "Chat"], ["image", "Bild"], ["video", "Video"], ["music", "Musik"]].map(([v, l]) => `<option value="${v}" ${(m.kind || "chat") === v ? "selected" : ""}>${l}</option>`).join("")}</select></td>
+        <td><select class="inp" data-i="${i}" data-k="kind" style="width:86px">${[["chat", "Chat"], ["code", "Programmierung"], ["image", "Bild"], ["video", "Video"], ["music", "Musik"]].map(([v, l]) => `<option value="${v}" ${(m.kind || "chat") === v ? "selected" : ""}>${l}</option>`).join("")}</select></td>
         <td><select class="inp" data-i="${i}" data-k="provider" style="width:120px">${S.providers.map(p => `<option value="${esc(p.id)}" ${p.id === m.provider ? "selected" : ""}>${esc(provShort(p.id))}</option>`).join("")}</select></td>
         <td><input class="inp" data-i="${i}" data-k="label" value="${esc(m.label)}" style="min-width:130px"></td>
         <td><input class="inp" data-i="${i}" data-k="id" value="${esc(m.id)}" style="min-width:170px"></td>
         <td><input class="inp" data-i="${i}" data-k="inP" type="number" step="0.01" min="0" value="${m.inP}" style="width:76px"></td>
         <td><input class="inp" data-i="${i}" data-k="outP" type="number" step="0.01" min="0" value="${m.outP}" style="width:76px"></td>
-        <td><input class="inp" data-i="${i}" data-k="imgP" type="number" step="0.001" min="0" value="${m.imgP || 0}" style="width:76px" ${m.kind && m.kind !== "chat" ? "" : "disabled"}></td>
+        <td><input class="inp" data-i="${i}" data-k="imgP" type="number" step="0.001" min="0" value="${m.imgP || 0}" style="width:76px" ${isChatKind(m) ? "disabled" : ""}></td>
         <td><button class="iconbtn" data-delm="${i}" aria-label="Modell entfernen"><svg class="icon" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></td></tr>`).join("")}
       </tbody></table></div>
       <div class="btnrow"><button class="btn ghost" id="addM">Modell von Hand hinzufügen</button></div>
@@ -2241,13 +2328,13 @@ function showSettings() {
       ${ROUTES.map(([k, l]) => `<label class="f" for="r_${k}">${l}</label><select class="inp" id="r_${k}">${modelOptions(S.router[k])}</select>`).join("")}
     </div>
 
-    <div class="card" id="imgCard"><h2>Spezial-Modelle: Bilder, Videos, Musik</h2><p class="hint">Claude selbst kann keine Bilder, Videos oder Musik erzeugen. Die Stube setzt dafür selbständig Spezial-Modelle ein, wenn eine Aufgabe sie braucht, und wechselt danach wieder zurück. Bilder gehen über OpenAI oder OpenRouter, Videos und Musik über OpenRouter.</p>
+    <div class="card" id="imgCard"><h2>Spezial-Modelle: Programmierung, Bilder, Videos, Musik</h2><p class="hint">Die Stube setzt selbständig Spezial-Modelle ein, wenn eine Aufgabe sie braucht, und wechselt danach wieder zurück. Das Grundmodell kennt dabei die Preise, achtet auf Preis-Leistung und fragt nach, wenn mehrere Modelle sinnvoll wären. Programmier-Modelle gibt es bei allen Anbietern, Bilder über OpenAI oder OpenRouter, Videos und Musik über OpenRouter.</p>
       <label class="check"><input type="checkbox" id="sImgOffer" ${S.imageOffer !== false ? "checked" : ""}><span>Spezial-Modelle einsetzen, wenn eine Aufgabe sie braucht</span></label>
       <label class="f" for="sAutoLimit">Ohne Nachfrage starten bis</label>
       <select class="inp" id="sAutoLimit">${[[0, "Immer vorher fragen"], [0.02, "2 Cent pro Schritt"], [0.05, "5 Cent pro Schritt"], [0.1, "10 Cent pro Schritt (empfohlen)"], [0.5, "50 Cent pro Schritt"], [2, "2 $ pro Schritt"]].map(([v, l]) => `<option value="${v}" ${(S.autoLimit != null ? +S.autoLimit : 0.1) == v ? "selected" : ""}>${l}</option>`).join("")}</select>
       <p class="hint" style="margin:6px 0 0">Teurere Schritte, zum Beispiel Videos, zeigt die Stube erst mit Preis zur Bestätigung an.</p>
-      ${[["image", "Bildmodell"], ["video", "Videomodell"], ["music", "Musikmodell"]].map(([k, l]) => S.models.some(m => m.kind === k) ? `<label class="f" for="sM_${k}">Vorausgewähltes ${l}</label><select class="inp" id="sM_${k}">${modelOptions(S[k + "Model"], m => m.kind === k)}</select>` : "").join("")}
-      ${[["image", "Bilder", "ca. 1–5 Cent pro Bild"], ["video", "Videos", "ca. 3–15 Cent pro Sekunde"], ["music", "Musik", "ca. 4–8 Cent pro Stück"]].map(([k, l, pr]) => `<span class="f">${l} schnell hinzufügen <span style="font-weight:400;color:var(--ink2)">· ${pr}</span></span>
+      ${[["code", "Programmiermodell"], ["image", "Bildmodell"], ["video", "Videomodell"], ["music", "Musikmodell"]].map(([k, l]) => S.models.some(m => m.kind === k) ? `<label class="f" for="sM_${k}">Vorausgewähltes ${l}</label><select class="inp" id="sM_${k}">${modelOptions(S[k + "Model"], m => m.kind === k)}</select>` : "").join("")}
+      ${[["code", "Programmierung", "gratis bis wenige Cent pro Aufgabe"], ["image", "Bilder", "ca. 1–5 Cent pro Bild"], ["video", "Videos", "ca. 3–15 Cent pro Sekunde"], ["music", "Musik", "ca. 4–8 Cent pro Stück"]].map(([k, l, pr]) => `<span class="f">${l} schnell hinzufügen <span style="font-weight:400;color:var(--ink2)">· ${pr}</span></span>
       <div class="chips small">${IMG_PRESETS.map((x, i) => x.kind !== k ? "" : (() => { const has = S.models.some(m => m.id === x.id && m.kind === x.kind); return `<button class="chip" data-imgp="${i}" ${has ? "disabled" : ""}>${has ? "✓ " : "+ "}${esc(x.label)} · ${esc(PRESETS[x.preset].name.split(" (")[0])}</button>`; })()).join("")}</div>`).join("")}
       <p class="hint" style="margin:8px 0 0">Weitere Modelle findest du bei einem Anbieter unter „Modelle vom Anbieter abrufen“. Für Bildmodelle von OpenAI muss deine Organisation dort einmalig verifiziert sein.</p>
     </div>
@@ -2289,7 +2376,7 @@ function showSettings() {
       m[k] = k === "on" ? inp.checked : (k === "inP" || k === "outP" || k === "imgP") ? parseFloat(inp.value) || 0 : inp.value.trim();
     });
     S.imageOffer = q("#sImgOffer").checked; S.autoLimit = +q("#sAutoLimit").value;
-    ["image", "video", "music"].forEach(k => { if (q("#sM_" + k)) S[k + "Model"] = q("#sM_" + k).value; });
+    ["code", "image", "video", "music"].forEach(k => { if (q("#sM_" + k)) S[k + "Model"] = q("#sM_" + k).value; });
     S.defaultModel = q("#sDef").value; S.maxTokens = +q("#sMax").value || 16000; S.history = +q("#sHist").value || 30;
     S.router.model = q("#rModel").value; ROUTES.forEach(([k]) => { S.router[k] = q("#r_" + k).value; });
     S.webSearch = q("#sWeb").checked; S.webMax = Math.min(10, Math.max(1, +q("#sWebMax").value || 3)); S.searchPrice = Math.max(0, parseFloat(q("#sWebPrice").value) || 0);
@@ -2310,12 +2397,13 @@ function showSettings() {
     const x = IMG_PRESETS[+b.dataset.imgp]; const p = S.providers.find(pp => pp.preset === x.preset);
     if (!p) return toast(`Füge zuerst ${PRESETS[x.preset].name} als Anbieter hinzu`);
     readForm();
-    const nm = { key: uid(), provider: p.id, id: x.id, label: x.label, inP: 0, outP: 0, imgP: x.imgP, on: true, kind: x.kind };
+    const nm = { key: uid(), provider: p.id, id: x.id, label: x.label, inP: x.inP || 0, outP: x.outP || 0, imgP: x.imgP || 0, on: true, kind: x.kind };
     if (x.durations) nm.durations = x.durations.slice();
     S.models.push(nm); const sk = x.kind + "Model"; if (!S[sk] || !modelByKey(S[sk])) S[sk] = nm.key;
+    if (x.kind === "code") { const rc = modelByKey(S.router.code); if (!rc || rc.kind !== "code") S.router.code = nm.key; }
     showSettings(); toast(x.label + " hinzugefügt – Speichern nicht vergessen");
   });
-  sc.querySelectorAll('#mRows select[data-k="kind"]').forEach(sel => sel.onchange = () => { sel.closest("tr").querySelector('[data-k="imgP"]').disabled = sel.value === "chat"; });
+  sc.querySelectorAll('#mRows select[data-k="kind"]').forEach(sel => sel.onchange = () => { sel.closest("tr").querySelector('[data-k="imgP"]').disabled = sel.value === "chat" || sel.value === "code"; });
   q("#addM").onclick = () => { readForm(); S.models.push({ key: uid(), provider: S.providers[0] ? S.providers[0].id : "", id: "", label: "", inP: 0, outP: 0, imgP: 0, on: true, kind: "chat" }); showSettings(); };
   sc.querySelectorAll("[data-delm]").forEach(b => b.onclick = () => { readForm(); S.models.splice(+b.dataset.delm, 1); showSettings(); });
   q("#addProv").onclick = async () => { if (await persist()) editProvider(null); };
@@ -2409,6 +2497,7 @@ async function fetchModelList(p, mode) {
     let kind = (images && p.preset === "openrouter") || /^(gpt-image|dall-e)/i.test(id) || (outMods.includes("image") && !outMods.includes("text")) ? "image" : "chat";
     if (mode === "video") kind = "video";
     if (mode === "music") kind = "music";
+    if (mode === "code") kind = "code";
     let imgP = OA_IMG_PRICES[id] || null, durations;
     if (kind === "video") {
       const skus = x.pricing_skus || {}; const v = Object.keys(skus).filter(k => /second/i.test(k)).map(k => +skus[k]).filter(n => n > 0);
@@ -2432,7 +2521,7 @@ async function pickModels(p) {
     <header class="topbar">${BACK}<div class="title">Modelle von ${esc(p.name)}</div></header>
     <div class="card" style="position:sticky;top:56px;z-index:1">
       <input class="inp" id="mSearch" type="search" placeholder="Suchen, z. B. llama, mistral, gpt" autocomplete="off">
-      ${p.preset === "openrouter" ? `<div class="seg" style="margin-top:10px;flex-wrap:wrap" role="tablist"><button data-mk="chat" class="on">Chat</button><button data-mk="image">Bilder</button><button data-mk="video">Videos</button><button data-mk="music">Musik</button></div><label class="check" style="margin-bottom:0" id="mFreeBox"><input type="checkbox" id="mFree" checked><span>Nur Gratis-Modelle</span></label>` : ""}
+      ${p.preset === "openrouter" ? `<div class="seg" style="margin-top:10px;flex-wrap:wrap" role="tablist"><button data-mk="chat" class="on">Chat</button><button data-mk="code">Programmierung</button><button data-mk="image">Bilder</button><button data-mk="video">Videos</button><button data-mk="music">Musik</button></div><label class="check" style="margin-bottom:0" id="mFreeBox"><input type="checkbox" id="mFree" checked><span>Nur Gratis-Modelle</span></label>` : ""}
     </div>
     <div id="mList"><p class="hint" style="padding:12px">Lade die Liste …</p></div>
     <div class="btnrow" style="position:sticky;bottom:12px"><button class="btn" id="mAdd" disabled>Hinzufügen</button></div>
@@ -2448,16 +2537,16 @@ async function pickModels(p) {
   };
   sc.querySelectorAll("[data-mk]").forEach(b => b.onclick = async () => {
     mode = b.dataset.mk; sc.querySelectorAll("[data-mk]").forEach(x => x.classList.toggle("on", x === b));
-    q("#mFreeBox").classList.toggle("hidden", mode !== "chat");
+    q("#mFreeBox").classList.toggle("hidden", mode !== "chat" && mode !== "code");
     if (await load()) draw();
   });
   const have = new Set(S.models.filter(m => m.provider === p.id).map(m => m.id));
   const chosenList = () => list || [];
   const chosen = new Map();
-  const priceTxt = x => x.kind === "image" ? (x.imgP ? `Bildmodell · ca. $${x.imgP} pro Bild` : "Bildmodell · Preis laut Abrechnung") : x.kind === "video" ? (x.imgP ? `Videomodell · ab $${x.imgP} pro Sekunde` : "Videomodell · Preis laut Abrechnung") + (x.durations ? ` · ${x.durations.join("/")} Sek.` : "") : x.kind === "music" ? `Musikmodell · ca. $${x.imgP} pro Stück` : /:free$/.test(x.id) ? "gratis" : x.inP != null ? `$${x.inP} / $${x.outP} pro Mio. Tokens` : "Preis bitte selbst eintragen";
+  const priceTxt = x => x.kind === "code" ? "Programmierung · " + (/:free$/.test(x.id) ? "gratis" : x.inP != null ? `$${x.inP} / $${x.outP} pro Mio. Tokens` : "Preis bitte selbst eintragen") : x.kind === "image" ? (x.imgP ? `Bildmodell · ca. $${x.imgP} pro Bild` : "Bildmodell · Preis laut Abrechnung") : x.kind === "video" ? (x.imgP ? `Videomodell · ab $${x.imgP} pro Sekunde` : "Videomodell · Preis laut Abrechnung") + (x.durations ? ` · ${x.durations.join("/")} Sek.` : "") : x.kind === "music" ? `Musikmodell · ca. $${x.imgP} pro Stück` : /:free$/.test(x.id) ? "gratis" : x.inP != null ? `$${x.inP} / $${x.outP} pro Mio. Tokens` : "Preis bitte selbst eintragen";
   const draw = () => {
     if (!list) return;
-    const s = q("#mSearch").value.trim().toLowerCase(), free = mode === "chat" && q("#mFree") && q("#mFree").checked;
+    const s = q("#mSearch").value.trim().toLowerCase(), free = (mode === "chat" || mode === "code") && q("#mFree") && q("#mFree").checked;
     const vis = list.filter(x => (!free || /:free$/.test(x.id)) && (!s || (x.id + " " + x.label).toLowerCase().includes(s)));
     q("#mList").innerHTML = vis.length ? `<div class="card plist">${vis.slice(0, 250).map(x => `<label class="check" style="margin:8px 0"><input type="checkbox" data-id="${esc(x.id)}" ${have.has(x.id) || chosen.has(x.id) ? "checked" : ""} ${have.has(x.id) ? "disabled" : ""}><span><b>${esc(x.label)}</b><br><span class="meta" style="color:var(--ink2);font-size:13px">${esc(x.id)} · ${esc(priceTxt(x))}${have.has(x.id) ? " · bereits vorhanden" : ""}</span></span></label>`).join("")}${vis.length > 250 ? `<p class="hint">… und ${vis.length - 250} weitere. Grenze die Suche ein.</p>` : ""}</div>` : `<p class="hint" style="padding:12px">Nichts gefunden.</p>`;
     q("#mList").querySelectorAll("input[data-id]").forEach(c => c.onchange = () => { c.checked ? chosen.set(c.dataset.id, list.find(y => y.id === c.dataset.id)) : chosen.delete(c.dataset.id); upd(); });
@@ -2472,6 +2561,7 @@ async function pickModels(p) {
       if (x.durations) nm.durations = x.durations;
       S.models.push(nm);
       const sk = nm.kind + "Model"; if (nm.kind !== "chat" && (!S[sk] || !modelByKey(S[sk]))) S[sk] = nm.key;
+      if (nm.kind === "code") { const rc = modelByKey(S.router.code); if (!rc || rc.kind !== "code") S.router.code = nm.key; }
     }
     await saveSettings(); fillModelSelect(); toast(`${chosen.size} ${chosen.size === 1 ? "Modell" : "Modelle"} hinzugefügt`); editProvider(p);
   };
