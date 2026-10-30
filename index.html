@@ -910,7 +910,14 @@ function msgEl(m) {
       }
       body.append(j);
     }
-    if (m.error) { const e = document.createElement("div"); e.className = "err"; e.textContent = m.error; body.append(e); }
+    if (m.error && m.interrupted) {
+      const h = document.createElement("div"); h.className = "trunc";
+      h.innerHTML = `<span>${esc(m.error)}</span>`;
+      const b = document.createElement("button"); b.className = "btn"; b.textContent = (m.text || "").trim() ? "Jetzt weiterschreiben" : "Erneut versuchen";
+      b.onclick = () => continueReply(m);
+      if (cur && cur.messages[cur.messages.length - 1] === m) h.append(b);
+      body.append(h);
+    } else if (m.error) { const e = document.createElement("div"); e.className = "err"; e.textContent = m.error; body.append(e); }
     if (m.truncated && !m.error) {
       const h = document.createElement("div"); h.className = "trunc";
       h.innerHTML = `<span>Die Antwort wurde abgeschnitten, weil die maximale Antwortlänge (${(+S.maxTokens || 0).toLocaleString("de-DE")} Tokens) erreicht war.</span>`;
@@ -1678,7 +1685,27 @@ async function deliverFile(f) {
 /* ---------- Composer ---------- */
 const input = $("#input");
 function autoGrow() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 180) + "px"; }
+/* ---------- Bildschirm wach halten, solange eine Antwort läuft ---------- */
+const Awake = {
+  lock: null, want: false,
+  async set(on) {
+    this.want = on;
+    if (!("wakeLock" in navigator)) return;
+    try {
+      if (on && !this.lock && document.visibilityState === "visible") { this.lock = await navigator.wakeLock.request("screen"); this.lock.addEventListener("release", () => { this.lock = null; }); }
+      else if (!on && this.lock) { const l = this.lock; this.lock = null; await l.release(); }
+    } catch (e) { console.warn("Wach halten nicht möglich:", e); }
+  },
+};
+let hiddenWhileBusy = false;
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") { if (streaming) hiddenWhileBusy = true; return; }
+  if (Awake.want) Awake.set(true);
+  setTimeout(resumeInterrupted, 600);
+});
+window.addEventListener("online", () => setTimeout(resumeInterrupted, 600));
 function updateSend() {
+  Awake.set(!!streaming && !!S && S.keepAwake !== false);
   const btn = $("#send");
   if (streaming) { btn.disabled = false; btn.setAttribute("aria-label", "Stoppen"); btn.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor"/></svg>'; return; }
   btn.setAttribute("aria-label", "Senden"); btn.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
@@ -2197,11 +2224,18 @@ async function runChat(choice, viaVoice) {
   } catch (e) {
     if (e && e.name === "AbortError") { if (!seg.reply.text) seg.reply.text = "_(abgebrochen)_"; }
     else if (e && ("status" in e || "msg" in e)) seg.reply.error = friendlyError(e);
+    else if (m && (seg.reply.text || hiddenWhileBusy || document.visibilityState === "hidden" || !navigator.onLine)) {
+      seg.reply.error = INTERRUPT_MSG;
+      seg.reply.interrupted = { mk: m.key, auto: true };
+      logError("Verbindung während der Antwort unterbrochen", e && (e.stack || e.message));
+    }
     else {
       seg.reply.error = "Keine Verbindung zum Anbieter. Prüfe deine Internetverbindung" + (m && provOf(m) && provOf(m).type !== "anthropic" ? " und ob der Anbieter Anfragen direkt aus dem Browser erlaubt" : "") + ". (" + (e && e.message || e) + ")";
+      if (m) seg.reply.interrupted = { mk: m.key, auto: false };
       logError(seg.reply.error, e && e.stack);
     }
   }
+  hiddenWhileBusy = false;
   streaming = null; updateSend();
   const inT = tot.in + route.in, outT = tot.out + route.out;
   if (inT || outT) {
@@ -2213,8 +2247,64 @@ async function runChat(choice, viaVoice) {
   }
   if (tot.sources.length) seg.reply.sources = tot.sources.slice(0, 8);
   if (tot.truncated) { seg.reply.truncated = true; seg.reply.choice = choice; }
-  const done = await finishSeg(seg, !tot.steps);
+  const done = await finishSeg(seg, !tot.steps || !!seg.reply.interrupted);
   if (done && viaVoice && S.voiceAutoSpeak !== false && !seg.reply.error && seg.reply.text) TTS.speak(seg.reply.text, done.querySelector("[data-speak]"));
+  if (seg.reply.interrupted && seg.reply.interrupted.auto) setTimeout(resumeInterrupted, 800);
+}
+
+/* ---------- Unterbrochene Antworten fortsetzen ---------- */
+const INTERRUPT_MSG = "Die Verbindung wurde unterbrochen, zum Beispiel weil das Handy in den Ruhezustand ging oder das Netz weg war. Die Antwort wird automatisch fortgesetzt, sobald die App wieder offen und online ist.";
+const CONT_NOTE = "(Hinweis der App: Deine vorige Antwort wurde durch einen Verbindungsabbruch unterbrochen. Setze sie genau an der Stelle fort, an der sie aufgehört hat. Wiederhole nichts, schreib keine Einleitung und erwähne die Unterbrechung nicht.)";
+function resumeInterrupted() {
+  if (streaming || !cur || !me || document.visibilityState !== "visible" || !navigator.onLine) return;
+  const last = cur.messages[cur.messages.length - 1];
+  if (last && last.role === "assistant" && last.interrupted && last.interrupted.auto) { last.interrupted.auto = false; continueReply(last); }
+}
+async function continueReply(msg) {
+  if (streaming) return toast("Warte, bis die aktuelle Antwort fertig ist");
+  if (budgetBlocked()) return;
+  const info = msg.interrupted || {};
+  const m = modelByKey(info.mk) && modelAllowed(modelByKey(info.mk)) ? modelByKey(info.mk) : resolveRoute("komplex");
+  if (!m || !provOf(m)) return toast("Kein Modell verfügbar");
+  const p = provOf(m);
+  const idx = cur.messages.indexOf(msg); if (idx < 0) return;
+  const partial = msg.text || "";
+  const all = cur.messages; cur.messages = all.slice(0, idx);
+  let base; try { base = apiMessages(); } finally { cur.messages = all; }
+  if (partial.trim()) base.push({ role: "assistant", text: partial, images: [], files: [] }, { role: "user", text: CONT_NOTE, images: [], files: [] });
+  if (!base.length || base[base.length - 1].role !== "user") return toast("Diese Antwort kann nicht fortgesetzt werden");
+  delete msg.error; delete msg.interrupted;
+  renderChat();
+  const sc = $("#scroller"); const el = sc.lastElementChild;
+  const body = el.querySelector(".body") || el; const st = document.createElement("div"); st.className = "status"; st.textContent = `${m.label || m.id} schreibt weiter …`; el.append(st);
+  el.querySelectorAll(".msg-actions").forEach(x => x.remove());
+  streaming = new AbortController(); updateSend();
+  let raf = 0, r = null;
+  const cb = {
+    text: d => { msg.text = (msg.text || "") + d; st.textContent = ""; if (!raf) raf = requestAnimationFrame(() => { raf = 0; const near = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 120; renderBody(body, msg.text); if (near) sc.scrollTop = sc.scrollHeight; }); },
+    status: t => { st.textContent = t; },
+  };
+  try {
+    const sys = systemPrompt(false, [], m);
+    const native = p.type === "anthropic" ? anthMsgs(base) : oaMsgs(base);
+    r = p.type === "anthropic" ? await streamAnthropic(m, p, sys, native, false, [], streaming.signal, cb) : await streamOpenAI(m, p, sys, native, [], streaming.signal, cb);
+    if (r.truncated) { msg.truncated = true; msg.choice = m.key; }
+  } catch (e) {
+    if (e && e.name === "AbortError") { /* abgebrochen: Text behalten */ }
+    else if (e && ("status" in e || "msg" in e)) msg.error = friendlyError(e);
+    else { msg.error = INTERRUPT_MSG; msg.interrupted = { mk: m.key, auto: true }; logError("Verbindung beim Fortsetzen unterbrochen", e && (e.stack || e.message)); }
+  }
+  if (raf) cancelAnimationFrame(raf);
+  hiddenWhileBusy = false;
+  streaming = null; updateSend();
+  if (r && (r.inTok || r.outTok)) {
+    const cost = (r.inTok * (m.inP || 0) + r.outTok * (m.outP || 0)) / 1e6;
+    const u = msg.usage || { in: 0, out: 0, cost: 0, model: m.label || m.id };
+    u.in += r.inTok; u.out += r.outTok; u.cost += cost; if (r.est) u.est = true;
+    msg.usage = u; await addUsage(r.inTok, r.outTok, cost);
+  }
+  cur.updated = Date.now(); await saveChats();
+  el.replaceWith(msgEl(msg)); sc.scrollTop = sc.scrollHeight;
 }
 
 /* ---------- Bilder, Videos, Musik ---------- */
@@ -2652,6 +2742,7 @@ function showSettings() {
         <label style="flex:1;min-width:140px"><span class="f" style="margin-top:0">Max. Suchen pro Antwort</span><input class="inp" id="sWebMax" type="number" min="1" max="10" value="${S.webMax || 3}"></label>
         <label style="flex:1;min-width:140px"><span class="f" style="margin-top:0">$ pro 1.000 Suchen</span><input class="inp" id="sWebPrice" type="number" min="0" step="0.5" value="${S.searchPrice != null ? S.searchPrice : 10}"></label>
       </div>
+      <label class="check"><input type="checkbox" id="sAwake" ${S.keepAwake !== false ? "checked" : ""}><span><b>Bildschirm wach halten</b><br><span style="color:var(--ink2);font-size:14px">Solange eine Antwort läuft, geht das Handy nicht von selbst in den Ruhezustand. Bricht die Verbindung trotzdem ab, schreibt Claude automatisch weiter, sobald die App wieder offen ist.</span></span></label>
       <label class="check"><input type="checkbox" id="sArt" ${S.artifacts !== false ? "checked" : ""}><span><b>Artefakte</b><br><span style="color:var(--ink2);font-size:14px">Die KI kann kleine Apps, Spiele, Diagramme und Dokumente mit Live-Vorschau erstellen.</span></span></label>
     </div>
 
@@ -2688,7 +2779,7 @@ function showSettings() {
     S.defaultModel = q("#sDef").value; S.maxTokens = +q("#sMax").value || 16000; S.history = +q("#sHist").value || 30;
     S.router.model = q("#rModel").value; ROUTES.forEach(([k]) => { S.router[k] = q("#r_" + k).value; });
     S.webSearch = q("#sWeb").checked; S.webMax = Math.min(10, Math.max(1, +q("#sWebMax").value || 3)); S.searchPrice = Math.max(0, parseFloat(q("#sWebPrice").value) || 0);
-    S.artifacts = q("#sArt").checked;
+    S.artifacts = q("#sArt").checked; S.keepAwake = q("#sAwake").checked;
     S.voiceAutoSend = q("#sAutoSend").checked; S.voiceAutoSpeak = q("#sAutoSpeak").checked; S.ttsRate = +q("#sRate").value || 1;
     const pin = q("#sPin").value.trim();
     if (pin && !/^\d{4,6}$/.test(pin)) { toast("Die PIN braucht 4 bis 6 Ziffern"); return false; }
