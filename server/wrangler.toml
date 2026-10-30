@@ -1,0 +1,14 @@
+name = "stube-server"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[[durable_objects.bindings]]
+name = "FAMILY"
+class_name = "Family"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Family"]
+
+[observability]
+enabled = true

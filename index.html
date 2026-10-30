@@ -624,10 +624,18 @@ window.__katexReady = () => { try { if (cur && cur.messages.length && /[$\\]/.te
 /* ---------- Boot ---------- */
 async function boot() {
   await DB.init();
+  if (!SRV.load()) { const c = await DB.get("server"); if (c && c.url) await SRV.store(c); }
   S = await DB.get("settings");
   P = (await DB.get("profiles")) || [];
+  if (SRV.on()) {
+    try { await pullState(); }
+    catch (e) {
+      if (e && e.status === 401) toast("Das Familien-Passwort stimmt nicht mehr. Verbinde dieses Gerät unter Einstellungen → Familien-Server neu.", { err: true });
+      else toast("Der Familien-Server ist gerade nicht erreichbar. Du siehst den zuletzt gespeicherten Stand.", { err: true });
+    }
+  }
   if (!S || !P.length) return showOnboarding();
-  if (migrate()) { await saveSettings(); await saveProfiles(); }
+  if (migrate()) { try { await saveSettings(true); await saveProfiles(true); } catch (e) { console.warn(e); } }
   if (P.length === 1 && !P[0].pin) return enterProfile(P[0]);
   showPicker();
 }
@@ -675,9 +683,349 @@ function migrate() {
   return ch;
 }
 function localStorageSafe(op, k, v) { try { return op === "get" ? localStorage.getItem(k) : localStorage.setItem(k, v); } catch { return null; } }
-const saveSettings = () => DB.set("settings", S);
-const saveProfiles = () => DB.set("profiles", P);
-const saveChats = () => DB.set("chats:" + me.id, chats);
+async function saveSettings(quiet) {
+  if (SRV.on()) {
+    if (!SRV.admin) { await DB.set("settings", S); if (!quiet) toast("Nur auf diesem Gerät gespeichert: Für gemeinsame Einstellungen fehlt das Admin-Passwort.", { err: true }); return; }
+    const r = await SRV.api("/settings", { method: "PUT", body: S, admin: true });
+    // Schlüssel nur auf dem Server behalten
+    S.providers.forEach(p => { const sp = r && r.settings && (r.settings.providers || []).find(x => x.id === p.id); p.hasKey = sp ? !!sp.hasKey : !!(p.apiKey || p.hasKey); p.apiKey = ""; });
+  }
+  return DB.set("settings", S);
+}
+async function saveProfiles(quiet) {
+  if (SRV.on()) {
+    if (!SRV.admin) { await DB.set("profiles", P); if (!quiet) toast("Nur auf diesem Gerät gespeichert: Für gemeinsame Profile fehlt das Admin-Passwort.", { err: true }); return; }
+    await SRV.api("/profiles", { method: "PUT", body: P, admin: true });
+  }
+  return DB.set("profiles", P);
+}
+const saveChats = async () => { await DB.set("chats:" + me.id, chats); if (SRV.on()) schedulePush(); };
+const hasKey = p => !!(p && (p.apiKey || p.hasKey));
+
+/* ---------- Familien-Server: gemeinsame Chats und Budgets, Schlüssel nur auf dem Server ---------- */
+const SRV = {
+  cfg: null, admin: false, reachable: true,
+  load() { try { this.cfg = JSON.parse(localStorage.getItem("stube-server") || "null"); } catch { this.cfg = null; } return this.cfg; },
+  async store(c) {
+    this.cfg = c || null; if (!c) this.admin = false;
+    try { c ? localStorage.setItem("stube-server", JSON.stringify(c)) : localStorage.removeItem("stube-server"); } catch {}
+    try { await DB.set("server", c || null); } catch {}
+  },
+  on() { return !!(this.cfg && this.cfg.url && this.cfg.key); },
+  base(c = this.cfg) { return String(c.url).trim().replace(/\/+$/, "").replace(/\/api$/, ""); },
+  async api(path, { method = "GET", body, admin = false, signal, timeout = 30000, cfg, raw = false } = {}) {
+    const c = cfg || this.cfg;
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), timeout);
+    const onAbort = () => ctl.abort();
+    if (signal) { if (signal.aborted) ctl.abort(); else signal.addEventListener("abort", onAbort, { once: true }); }
+    const h = {}; if (c.key) h["x-stube-key"] = c.key; if (admin && c.admin) h["x-stube-admin"] = c.admin;
+    if (body !== undefined && typeof body !== "string") h["content-type"] = "application/json";
+    let res, txt;
+    try {
+      res = await fetch(this.base(c) + "/api" + path, { method, headers: h, body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body), signal: ctl.signal });
+      txt = await res.text();
+    } catch (e) {
+      if (signal && signal.aborted) throw new DOMException("abgebrochen", "AbortError");
+      if (!cfg) this.reachable = false;
+      const er = new Error(ctl.signal.aborted ? "Der Familien-Server antwortet nicht." : "Der Familien-Server ist nicht erreichbar."); er.offline = true; throw er;
+    } finally { clearTimeout(t); if (signal) signal.removeEventListener("abort", onAbort); }
+    if (!cfg) this.reachable = true;
+    if (raw && res.ok) return txt;
+    let j = null; try { j = txt ? JSON.parse(txt) : null; } catch {}
+    if (!res.ok) { const er = new Error((j && j.error && j.error.message) || `Fehler ${res.status} vom Familien-Server`); er.status = res.status; er.body = txt; throw er; }
+    return j;
+  },
+};
+async function sha256hex(text) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+// Anfrage an einen Anbieter: im Server-Modus über den Server, der den Schlüssel ergänzt
+function viaServer(p, url, init = {}) {
+  const base = baseUrl(p);
+  if (!SRV.on() || !String(url).startsWith(base)) return null;
+  const h = {};
+  const src = init.headers || {};
+  for (const k of Object.keys(src)) if (!/^(x-api-key|authorization|anthropic-dangerous-direct-browser-access|anthropic-workspace-id)$/i.test(k)) h[k] = src[k];
+  h["x-stube-key"] = SRV.cfg.key; if (me) h["x-profile"] = me.id; h["x-month"] = month();
+  const path = url.slice(base.length);
+  return { url: SRV.base() + "/api/proxy/" + encodeURIComponent(p.id) + path, init: Object.assign({}, init, { headers: h }), path, headers: h };
+}
+function pfetch(p, url, init) { const v = viaServer(p, url, init); return v ? fetch(v.url, v.init) : fetch(url, init); }
+
+/* Lange Antworten laufen auf dem Server als Auftrag weiter, auch wenn das Handy schläft oder die App geschlossen wird. */
+const LIVE_JOBS = new Set();
+const openJobs = {
+  all() { try { return JSON.parse(localStorage.getItem("stube-jobs") || "[]"); } catch { return []; } },
+  put(list) { try { localStorage.setItem("stube-jobs", JSON.stringify(list.slice(-30))); } catch {} },
+  add(j) { this.put([...this.all().filter(x => x.id !== j.id), j]); },
+  del(id) { this.put(this.all().filter(x => x.id !== id)); },
+};
+function waitUsable(ms) {
+  return new Promise(res => {
+    let done = false; const fin = () => { if (done) return; done = true; window.removeEventListener("online", fin); res(); };
+    setTimeout(() => { if (navigator.onLine) fin(); else { window.addEventListener("online", fin); setTimeout(fin, 15000); } }, ms);
+  });
+}
+async function sfetch(p, url, init = {}) {
+  const v = viaServer(p, url, init);
+  if (!v) return fetch(url, init);
+  const signal = init.signal;
+  const hdr = {}; for (const k of ["content-type", "accept", "anthropic-version", "anthropic-beta"]) if (v.headers[k]) hdr[k] = v.headers[k];
+  let model = ""; try { model = JSON.parse(init.body).model || ""; } catch {}
+  const info = { id: "", pid: me ? me.id : "", chat: cur ? cur.id : "", prov: p.id, ptype: p.type, model, t: Date.now() };
+  let created;
+  try { created = await SRV.api("/jobs", { method: "POST", signal, body: { provider: p.id, path: v.path, pid: info.pid, month: month(), chat: info.chat, headers: hdr, body: init.body, meta: { prov: p.id, model } } }); }
+  catch (e) {
+    if (e && e.name === "AbortError") throw e;
+    if (e && e.status) return new Response(e.body || JSON.stringify({ error: { message: e.message, stube: true } }), { status: e.status });
+    throw new TypeError(e && e.message || "Der Familien-Server ist nicht erreichbar.");
+  }
+  const id = info.id = created.id;
+  openJobs.add(info); LIVE_JOBS.add(id);
+  let closed = false;
+  const forget = (cancel) => {
+    if (closed) return; closed = true;
+    openJobs.del(id); LIVE_JOBS.delete(id);
+    SRV.api("/jobs/" + id, { method: "DELETE", timeout: 10000 }).catch(() => {});
+    if (cancel) console.info("Auftrag abgebrochen", id);
+  };
+  if (signal) signal.addEventListener("abort", () => forget(true), { once: true });
+  let from = 0;
+  const poll = async () => {
+    for (let attempt = 0; ; attempt++) {
+      if (signal && signal.aborted) throw new DOMException("abgebrochen", "AbortError");
+      try { return await SRV.api(`/jobs/${id}?from=${from}`, { signal, timeout: 40000 }); }
+      catch (e) {
+        if (e && e.name === "AbortError") throw e;
+        if (e && e.status === 404) { forget(); throw new TypeError("Der Auftrag ist auf dem Server verloren gegangen."); }
+        if (attempt >= 60) { forget(); throw new TypeError(e && e.message || "Der Familien-Server ist nicht erreichbar."); }
+        await waitUsable(Math.min(5000, 400 * (attempt + 1)));
+      }
+    }
+  };
+  let d = await poll();
+  while (!d.status && !d.done) { from = d.next; d = await poll(); }
+  if (d.status !== 200 || (d.done && d.error && !d.events.length)) { forget(); return new Response(d.error || "", { status: d.status && d.status !== 200 ? d.status : 502 }); }
+  if (d.raw) {
+    // nicht gestreamte Antwort: warten, bis sie vollständig da ist
+    let all = d.events.slice(); from = d.next;
+    while (!d.done) { d = await poll(); all = all.concat(d.events); from = d.next; }
+    forget();
+    return new Response(all.join(""), { status: 200, headers: { "content-type": "application/json" } });
+  }
+  let pending = d.events, done = d.done, error = d.error; from = d.next;
+  const enc = new TextEncoder();
+  const body = new ReadableStream({
+    async pull(ctrl) {
+      try {
+        while (!pending.length && !done) { const x = await poll(); pending = x.events; done = x.done; error = x.error; from = x.next; }
+        if (pending.length) { ctrl.enqueue(enc.encode(pending.map(e => "data: " + e + "\n\n").join(""))); pending = []; return; }
+        if (error) {
+          let msg = error; try { const j = JSON.parse(error); msg = (j.error && (j.error.message || j.error)) || error; } catch {}
+          ctrl.enqueue(enc.encode("data: " + JSON.stringify({ type: "error", error: { type: "stube", stube: true, message: String(msg) } }) + "\n\n"));
+        }
+        forget(); ctrl.close();
+      } catch (e) { ctrl.error(e); }
+    },
+    cancel() { forget(true); },
+  });
+  return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
+}
+function parseJobEvents(ptype, events) {
+  const r = { text: "", in: 0, out: 0, tool: false, searches: 0 };
+  for (const e of events) {
+    let ev; try { ev = JSON.parse(e); } catch { continue; }
+    if (ptype === "anthropic") {
+      if (ev.type === "message_start" && ev.message) { const u = ev.message.usage || {}; r.in = (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0); }
+      else if (ev.type === "content_block_start" && ev.content_block && ev.content_block.type === "tool_use") r.tool = true;
+      else if (ev.type === "content_block_delta" && ev.delta && ev.delta.type === "text_delta") r.text += ev.delta.text || "";
+      else if (ev.type === "message_delta" && ev.usage) { r.out = ev.usage.output_tokens || r.out; if (ev.usage.server_tool_use) r.searches = ev.usage.server_tool_use.web_search_requests || 0; }
+    } else {
+      const ch = ev.choices && ev.choices[0];
+      if (ch && ch.delta) { if (typeof ch.delta.content === "string") r.text += ch.delta.content; if (ch.delta.tool_calls) r.tool = true; }
+      if (ev.usage) { r.in = ev.usage.prompt_tokens || r.in; r.out = ev.usage.completion_tokens || r.out; }
+    }
+  }
+  return r;
+}
+// Antworten abholen, die im Hintergrund fertig geworden sind, während die App geschlossen war
+let recovering = false;
+async function recoverJobs() {
+  if (!SRV.on() || !me || recovering) return;
+  recovering = true;
+  let again = false;
+  try {
+    for (const j of openJobs.all().filter(x => x.pid === me.id && !LIVE_JOBS.has(x.id))) {
+      let d;
+      try { d = await SRV.api(`/jobs/${j.id}?from=0`, { timeout: 40000 }); }
+      catch (e) { if (e && (e.status === 404 || e.status === 401)) openJobs.del(j.id); else again = true; continue; }
+      if (!d.done) { again = true; if (!j.told) { j.told = true; openJobs.add(j); toast("Eine Antwort wird im Hintergrund noch fertig geschrieben …"); } continue; }
+      openJobs.del(j.id); SRV.api("/jobs/" + j.id, { method: "DELETE" }).catch(() => {});
+      if (d.raw || d.status !== 200) continue;
+      const r = parseJobEvents(j.ptype, d.events);
+      const c = chats.find(x => x.id === j.chat);
+      if (!c || !r.text.trim()) continue;
+      const m = S.models.find(x => x.provider === j.prov && x.id === j.model);
+      const cost = m ? (r.in * (m.inP || 0) + r.out * (m.outP || 0)) / 1e6 + r.searches * (S.searchPrice != null ? +S.searchPrice : 10) / 1000 : 0;
+      const last = c.messages[c.messages.length - 1];
+      if (last && last.role === "assistant" && last.interrupted) c.messages.pop();
+      c.messages.push({ role: "assistant", text: r.text + (r.tool ? "\n\n_(Diese Antwort wurde im Hintergrund fertig geschrieben. Weitere Schritte wie Bilder oder Dateien wurden dabei nicht ausgeführt – bitte einfach noch einmal darum bitten.)_" : ""), usage: { in: r.in, out: r.out, cost, model: m ? (m.label || m.id) : j.model, searches: r.searches }, background: true });
+      c.updated = Date.now();
+      if (r.in || r.out) await addUsage(r.in, r.out, cost);
+      await saveChats();
+      if (cur && cur.id === c.id && !streaming) renderChat(); else renderChatList();
+      toast(`Im Hintergrund fertig geworden: „${c.title}“ – tippen zum Öffnen`, { onClick: () => { if (streaming) return; cur = chats.find(x => x.id === c.id); renderChat(); } });
+    }
+  } finally { recovering = false; }
+  if (again) setTimeout(recoverJobs, 8000);
+}
+
+/* ---------- Abgleich von Chats, Einstellungen und Verbrauch ---------- */
+const MEDIA_MIN = 20000;
+const SYNC = { pid: null, meta: {}, timer: 0, busy: null, again: false, lastPull: 0, known: new Set(), cache: new Map() };
+function chatSig(c) {
+  return [c.updated, c.title, c.messages.length, ...c.messages.map(m => [(m.text || "").length, m.error ? 1 : 0, (m.images || []).length, (m.files || []).length, (m.media || []).length, m.job ? 1 : 0, m.interrupted ? 1 : 0, m.offer ? 1 : 0, m.usage ? 1 : 0].join("."))].join("|");
+}
+async function loadSyncMeta(pid) { SYNC.pid = pid; SYNC.meta = (await DB.get("sync:" + pid).catch(() => null)) || {}; }
+async function packChat(c) {
+  const longs = new Set();
+  JSON.stringify(c, (k, v) => { if (typeof v === "string" && v.length >= MEDIA_MIN) longs.add(v); return v; });
+  const map = new Map();
+  for (const s of longs) map.set(s, await sha256hex(s));
+  const packed = map.size ? JSON.parse(JSON.stringify(c, (k, v) => typeof v === "string" && map.has(v) ? "@m:" + map.get(v) : v)) : c;
+  return { packed, media: [...map] };
+}
+async function putMedia(h, s) {
+  if (SYNC.known.has(h)) return;
+  const r = await SRV.api("/media/" + h + "?exists=1");
+  if (!r.exists) await SRV.api("/media/" + h, { method: "PUT", body: s, timeout: 180000 });
+  SYNC.known.add(h);
+}
+async function unpackChat(c) {
+  const refs = new Set();
+  JSON.stringify(c, (k, v) => { if (typeof v === "string" && /^@m:[a-f0-9]{64}$/.test(v)) refs.add(v.slice(3)); return v; });
+  if (!refs.size) return c;
+  const got = new Map();
+  for (const h of refs) {
+    if (SYNC.cache.has(h)) { got.set(h, SYNC.cache.get(h)); continue; }
+    try { const t = await SRV.api("/media/" + h, { raw: true, timeout: 180000 }); got.set(h, t); SYNC.known.add(h); if (t.length < 3e6) SYNC.cache.set(h, t); }
+    catch (e) { if (e && e.offline) throw e; got.set(h, ""); }
+  }
+  return JSON.parse(JSON.stringify(c, (k, v) => typeof v === "string" && v.length === 67 && v.startsWith("@m:") && got.has(v.slice(3)) ? got.get(v.slice(3)) : v));
+}
+function schedulePush(ms = 1200) { clearTimeout(SYNC.timer); SYNC.timer = setTimeout(() => pushChats().catch(e => console.warn("Abgleich:", e)), ms); }
+async function pushChatsFor(pid, list, meta) {
+  for (const c of list) {
+    if (!c || !c.messages || !c.messages.length) continue;
+    const sig = chatSig(c), m = meta[c.id];
+    if (m && m.sig === sig) continue;
+    const rev = Math.max(Date.now(), ((m && m.rev) || 0) + 1);
+    const { packed, media } = await packChat(c);
+    for (const [s, h] of media) await putMedia(h, s);
+    const r = await SRV.api(`/chat?pid=${encodeURIComponent(pid)}&id=${encodeURIComponent(c.id)}`, { method: "PUT", body: { chat: packed, updated: rev }, timeout: 120000 });
+    if (r && r.newer) continue;
+    meta[c.id] = { sig, rev };
+  }
+}
+async function pushChats() {
+  if (!SRV.on() || !me) return;
+  if (SYNC.busy) { SYNC.again = true; return SYNC.busy; }
+  const pid = me.id, meta = SYNC.meta, list = chats.slice();
+  SYNC.busy = (async () => {
+    try { await pushChatsFor(pid, list, meta); }
+    catch (e) { if (!(e && e.offline)) logError("Chat konnte nicht mit dem Familien-Server abgeglichen werden", e && (e.message || e)); }
+    try { await DB.set("sync:" + pid, meta); } catch {}
+  })();
+  try { await SYNC.busy; } finally { SYNC.busy = null; }
+  if (SYNC.again) { SYNC.again = false; schedulePush(300); }
+}
+async function deleteChatRemote(id) {
+  if (!SRV.on() || !me) return;
+  delete SYNC.meta[id]; DB.set("sync:" + me.id, SYNC.meta).catch(() => {});
+  try { await SRV.api(`/chat?pid=${encodeURIComponent(me.id)}&id=${encodeURIComponent(id)}`, { method: "DELETE" }); }
+  catch (e) { logError("Chat konnte auf dem Familien-Server nicht gelöscht werden", e && e.message); }
+}
+async function pullChats(force) {
+  if (!SRV.on() || !me) return;
+  if (!force && Date.now() - SYNC.lastPull < 8000) return;
+  SYNC.lastPull = Date.now();
+  await pushChats();
+  const pid = me.id, meta = SYNC.meta;
+  let list; try { list = (await SRV.api("/chats?pid=" + encodeURIComponent(pid))).chats || []; } catch { return; }
+  let changed = false, reRender = false;
+  for (const x of list) {
+    if (!me || me.id !== pid) return;
+    const local = chats.find(c => c.id === x.id), m = meta[x.id];
+    const busyHere = streaming && cur && cur.id === x.id;
+    if (x.deleted) {
+      if (local && !busyHere && (!m || x.updated >= m.rev)) { chats = chats.filter(c => c !== local); changed = true; if (cur === local) { cur = null; reRender = true; } }
+      if (!busyHere) delete meta[x.id];
+      continue;
+    }
+    if (local && m && m.rev >= x.updated) continue;
+    if (busyHere) continue;
+    try {
+      const d = await SRV.api(`/chat?pid=${encodeURIComponent(pid)}&id=${encodeURIComponent(x.id)}`, { timeout: 60000 });
+      const c = await unpackChat(d.chat);
+      if (!me || me.id !== pid || (streaming && cur && cur.id === x.id)) continue;
+      const i = chats.findIndex(y => y.id === x.id);
+      if (i >= 0) chats[i] = c; else chats.push(c);
+      meta[x.id] = { sig: chatSig(c), rev: d.updated };
+      changed = true;
+      if (cur && cur.id === c.id) { cur = c; reRender = true; }
+    } catch (e) { if (e && e.offline) break; }
+  }
+  if (changed && me && me.id === pid) {
+    try { await DB.set("chats:" + pid, chats); await DB.set("sync:" + pid, meta); } catch {}
+    renderChatList();
+    if (reRender && !streaming) renderChat();
+  }
+  // Chats, die es nur auf diesem Gerät gibt, hochladen
+  schedulePush(500);
+}
+async function pullState() {
+  const st = await SRV.api("/state", { admin: true, timeout: 12000 });
+  SRV.admin = !!st.admin;
+  if (st.settings) { S = st.settings; await DB.set("settings", S); }
+  if (Array.isArray(st.profiles) && st.profiles.length) { P = st.profiles; await DB.set("profiles", P); }
+  USAGE = st.usage || {}; await DB.set("usage", USAGE);
+  await flushUsageQueue();
+  return st;
+}
+const usageQ = {
+  all() { try { return JSON.parse(localStorage.getItem("stube-usageq") || "[]"); } catch { return []; } },
+  put(l) { try { localStorage.setItem("stube-usageq", JSON.stringify(l)); } catch {} },
+};
+async function flushUsageQueue() {
+  const q = usageQ.all(); if (!q.length) return;
+  const rest = [];
+  for (const u of q) { try { const r = await SRV.api("/usage", { method: "POST", body: u }); if (r && r.usage) USAGE = r.usage; } catch (e) { if (e && e.offline) rest.push(u); } }
+  usageQ.put(rest);
+  try { await DB.set("usage", USAGE); } catch {}
+}
+let lastRefresh = 0;
+async function refreshFromServer(force) {
+  if (!SRV.on() || !me) return;
+  if (!force && Date.now() - lastRefresh < 15000) return;
+  lastRefresh = Date.now();
+  const screenOpen = !$("#screen").classList.contains("hidden");
+  if (!streaming && !screenOpen) {
+    try {
+      await pullState();
+      const nm = P.find(x => x.id === me.id);
+      if (nm) { me = nm; applyAccent(me.color); $("#dName").textContent = me.name; }
+      fillModelSelect();
+    } catch (e) { if (e && e.status === 401) toast("Das Familien-Passwort wurde geändert. Verbinde dieses Gerät unter Einstellungen neu.", { err: true }); }
+  } else {
+    try { const r = await SRV.api("/usage"); USAGE = r.usage || USAGE; await DB.set("usage", USAGE); } catch {}
+  }
+  updateBudgetUI();
+  pullChats(true);
+  recoverJobs();
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") setTimeout(() => refreshFromServer(), 300); });
+setInterval(() => { if (document.visibilityState === "visible" && !streaming) refreshFromServer(); }, 60000);
 
 /* ---------- Screens ---------- */
 function openScreen(html) { const sc = $("#screen"); sc.innerHTML = html; sc.classList.remove("hidden"); sc.scrollTop = 0; return sc; }
@@ -698,8 +1046,11 @@ function showOnboarding() {
     <div class="btnrow"><button class="btn" id="obGo">Los geht's</button></div>
     <div class="card" style="margin-top:20px"><h2>Schon auf einem anderen Gerät eingerichtet?</h2><p class="hint">Übernimm Anbieter, Schlüssel und Profile mit einem verschlüsselten Übertragungs-Code, statt alles abzutippen.</p>
       <button class="btn ghost" id="obImport">Einstellungen übernehmen</button></div>
+    <div class="card"><h2>Familien-Server</h2><p class="hint">Habt ihr einen eigenen Stube-Server, verbinde dieses Gerät damit. Dann sind Chats und Budget auf allen Geräten gleich.</p>
+      <button class="btn ghost" id="obServer">Mit Familien-Server verbinden</button></div>
     <p class="err hidden" id="obErr" style="margin-top:12px"></p></div>`);
   sc.querySelector("#obImport").onclick = () => showImport(true);
+  sc.querySelector("#obServer").onclick = () => showServer("onboarding");
   sc.querySelector("#obGo").onclick = async () => {
     const key = sc.querySelector("#obKey").value.trim(), name = sc.querySelector("#obName").value.trim();
     const err = sc.querySelector("#obErr");
@@ -760,6 +1111,11 @@ async function enterProfile(p) {
   updateBudgetUI();
   fillModelSelect();
   newChat();
+  if (SRV.on()) {
+    await loadSyncMeta(p.id);
+    SRV.api("/usage", { timeout: 10000 }).then(r => { if (r && r.usage && me === p) { USAGE = r.usage; DB.set("usage", USAGE).catch(() => {}); updateBudgetUI(); } }).catch(() => {});
+    pullChats(true).then(recoverJobs);
+  }
 }
 
 /* ---------- Modelle und Anbieter ---------- */
@@ -833,7 +1189,7 @@ function renderChatList() {
   list.querySelectorAll(".open").forEach(b => b.onclick = () => { cur = chats.find(c => c.id === b.dataset.id); renderChat(); closeDrawer(); });
   list.querySelectorAll(".del").forEach(b => b.onclick = async () => {
     if (!confirm("Diesen Chat löschen?")) return;
-    chats = chats.filter(c => c.id !== b.dataset.del); await saveChats();
+    chats = chats.filter(c => c.id !== b.dataset.del); await saveChats(); deleteChatRemote(b.dataset.del);
     if (cur && cur.id === b.dataset.del) newChat();
     renderChatList();
   });
@@ -1525,7 +1881,7 @@ const DOC_NAME = { praesentation: "Präsentation", word: "Word-Dokument", excel:
 const docCost = m => ((m.inP || 0) * 30000 + (m.outP || 0) * 9000) / 1e6;   // grobe Schätzung inkl. Lesen der Skill-Anleitung
 function docModels(prof = me) {
   const seen = new Set();
-  return S.models.filter(m => isChatKind(m) && modelAllowed(m, prof) && provOf(m).type === "anthropic" && provOf(m).apiKey)
+  return S.models.filter(m => isChatKind(m) && modelAllowed(m, prof) && provOf(m).type === "anthropic" && hasKey(provOf(m)))
     .sort((a, b) => (a.kind === "code") - (b.kind === "code"))
     .filter(m => !seen.has(m.id) && seen.add(m.id));
 }
@@ -1544,11 +1900,11 @@ function docTool() {
 function anthFileHeaders(p) { const h = anthHeaders(p); delete h["content-type"]; h["anthropic-beta"] = "files-api-2025-04-14"; return h; }
 async function anthFetchFile(p, id, signal) {
   let h = anthFileHeaders(p);
-  let meta = await fetch(baseUrl(p) + "/v1/files/" + encodeURIComponent(id), { signal, headers: h });
-  if (!meta.ok && meta.status === 400) { const t = await meta.text(); if (/beta/i.test(t)) { delete h["anthropic-beta"]; meta = await fetch(baseUrl(p) + "/v1/files/" + encodeURIComponent(id), { signal, headers: h }); } else throw { status: 400, body: t, provider: p }; }
+  let meta = await pfetch(p, baseUrl(p) + "/v1/files/" + encodeURIComponent(id), { signal, headers: h });
+  if (!meta.ok && meta.status === 400) { const t = await meta.text(); if (/beta/i.test(t)) { delete h["anthropic-beta"]; meta = await pfetch(p, baseUrl(p) + "/v1/files/" + encodeURIComponent(id), { signal, headers: h }); } else throw { status: 400, body: t, provider: p }; }
   if (!meta.ok) throw { status: meta.status, body: await meta.text(), provider: p };
   const mj = await meta.json();
-  const res = await fetch(baseUrl(p) + "/v1/files/" + encodeURIComponent(id) + "/content", { signal, headers: h });
+  const res = await pfetch(p, baseUrl(p) + "/v1/files/" + encodeURIComponent(id) + "/content", { signal, headers: h });
   if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
   const blob = await res.blob();
   const name = mj.filename || ("datei-" + id.slice(-6));
@@ -1585,7 +1941,7 @@ async function runDocTool(a) {
   try {
     for (let i = 0; i < 10; i++) {
       const body = { model: dm.id, max_tokens: 16000, system: sys, messages: native, container: container ? { id: container, skills } : { skills }, tools: [{ type: "code_execution_20260521", name: "code_execution" }] };
-      const res = await fetch(baseUrl(p) + "/v1/messages", { method: "POST", signal: streaming.signal, headers: anthHeaders(p), body: JSON.stringify(body) });
+      const res = await sfetch(p, baseUrl(p) + "/v1/messages", { method: "POST", signal: streaming.signal, headers: anthHeaders(p), body: JSON.stringify(body) });
       if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
       resp = await res.json();
       const u = resp.usage || {}; tin += (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0); tout += u.output_tokens || 0;
@@ -1791,6 +2147,7 @@ function friendlyError(e) {
 function friendlyError0(e) {
   const status = e.status, body = e.body || "", pn = e.provider ? e.provider.name : "dem Anbieter";
   if (e.msg) return e.msg;
+  try { const j = JSON.parse(body); if (j && j.error && j.error.stube) return j.error.message; } catch {}
   let msg = "";
   try { let j = JSON.parse(body); if (Array.isArray(j)) j = j[0]; const er = j.error || j; msg = (typeof er === "string" ? er : er.message) || ""; } catch { msg = body.slice(0, 200); }
   if (/verif/i.test(msg) && /organi[sz]ation/i.test(msg)) return "OpenAI verlangt für Bildmodelle eine einmalige Verifizierung: platform.openai.com → Settings → Organization → General → Verify Organization. Danach kann es bis zu 15 Minuten dauern.";
@@ -1855,7 +2212,7 @@ async function streamAnthropic(m, p, sys, native, web, tools, signal, cb) {
   if (web) tl.push({ type: "web_search_20250305", name: "web_search", max_uses: +S.webMax || 3 });
   tools.forEach(t => tl.push({ name: t.name, description: t.description, input_schema: t.parameters }));
   if (tl.length) body.tools = tl;
-  const res = await fetch(baseUrl(p) + "/v1/messages", { method: "POST", signal, headers: anthHeaders(p), body: JSON.stringify(body) });
+  const res = await sfetch(p, baseUrl(p) + "/v1/messages", { method: "POST", signal, headers: anthHeaders(p), body: JSON.stringify(body) });
   if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
   const r = { inTok: 0, outTok: 0, searches: 0, sources: [], text: "", calls: [], blocks: [] };
   const blocks = [], json = {};
@@ -1917,7 +2274,7 @@ async function streamOpenAI(m, p, sys, native, tools, signal, cb) {
     const alts = S.models.filter(x => x.on && isChatKind(x) && x.provider === p.id && isFree(x) && x.key !== m.key).map(x => x.id).slice(0, 2);
     if (alts.length) body.models = [m.id, ...alts];
   }
-  const post = () => fetch(baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+  const post = () => sfetch(p, baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
   let res = await post();
   for (let tries = 0; !res.ok && tries < 2; tries++) {
     const t = await res.text();
@@ -1961,14 +2318,14 @@ async function streamOpenAI(m, p, sys, native, tools, signal, cb) {
 async function complete(m, sys, userText, signal) {
   const p = provOf(m);
   if (p.type === "anthropic") {
-    const res = await fetch(baseUrl(p) + "/v1/messages", { method: "POST", signal, headers: anthHeaders(p), body: JSON.stringify({ model: m.id, max_tokens: 10, system: sys, messages: [{ role: "user", content: userText }] }) });
+    const res = await pfetch(p, baseUrl(p) + "/v1/messages", { method: "POST", signal, headers: anthHeaders(p), body: JSON.stringify({ model: m.id, max_tokens: 10, system: sys, messages: [{ role: "user", content: userText }] }) });
     if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
     const j = await res.json(); const u = j.usage || {};
     return { text: (j.content || []).map(c => c.text || "").join(""), inTok: u.input_tokens || 0, outTok: u.output_tokens || 0 };
   }
   const body = { model: m.id, messages: [{ role: "system", content: sys }, { role: "user", content: userText }] };
   if (p.preset === "openai") body.max_completion_tokens = 400; else body.max_tokens = 400;
-  const res = await fetch(baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+  const res = await pfetch(p, baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
   if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
   const j = await res.json(); const u = j.usage || {};
   return { text: (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "", inTok: u.prompt_tokens || 0, outTok: u.completion_tokens || 0 };
@@ -2479,7 +2836,7 @@ async function generateImage(m, prompt, refs, aspect, signal) {
   if (p.preset === "openrouter") {
     const body = { model: m.id, prompt, n: 1, aspect_ratio: aspect };
     if (refs.length) body.input_references = refs.map(i => ({ type: "image_url", image_url: { url: imgSrc(i) } }));
-    res = await fetch(baseUrl(p) + "/images", json(body));
+    res = await pfetch(p, baseUrl(p) + "/images", json(body));
   } else if (refs.length) {
     const fd = new FormData();
     fd.append("model", m.id); fd.append("prompt", prompt); fd.append("size", sizes[aspect] || "1024x1024");
@@ -2487,11 +2844,11 @@ async function generateImage(m, prompt, refs, aspect, signal) {
     const blobs = await Promise.all(refs.map(async i => i.data ? b64ToBlob(i.data, i.media_type) : (await fetch(i.url)).blob()));
     blobs.forEach((b, k) => fd.append(refs.length > 1 ? "image[]" : "image", b, `vorlage${k + 1}.${(b.type.split("/")[1] || "png").replace("jpeg", "jpg")}`));
     const h = oaHeaders(p); delete h["content-type"];
-    res = await fetch(baseUrl(p) + "/images/edits", { method: "POST", signal, headers: h, body: fd });
+    res = await pfetch(p, baseUrl(p) + "/images/edits", { method: "POST", signal, headers: h, body: fd });
   } else {
     const body = { model: m.id, prompt, n: 1, size: sizes[aspect] || "1024x1024" };
     if (/gpt-image/i.test(m.id)) body.quality = "medium"; else if (p.preset !== "openai") body.response_format = "b64_json";
-    res = await fetch(baseUrl(p) + "/images/generations", json(body));
+    res = await pfetch(p, baseUrl(p) + "/images/generations", json(body));
   }
   if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
   const j = await res.json();
@@ -2535,7 +2892,7 @@ async function generateVideo(m, prompt, refs, aspect, dur, signal, onStatus, onJ
   const body = { model: m.id, prompt, aspect_ratio: aspect || "16:9" };
   if (dur) body.duration = dur;
   if (refs.length) body.frame_images = [{ type: "image_url", image_url: { url: imgSrc(refs[0]) }, frame_type: "first_frame" }];
-  const res = await fetch(baseUrl(p) + "/videos", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+  const res = await pfetch(p, baseUrl(p) + "/videos", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
   if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
   const j = await res.json();
   if (!j.id) throw { msg: "Der Anbieter hat keinen Auftrag für das Video angelegt." };
@@ -2546,7 +2903,7 @@ async function generateVideo(m, prompt, refs, aspect, dur, signal, onStatus, onJ
 async function pollVideo(m, p, job, signal, onStatus) {
   const t0 = job.started || Date.now();
   for (let i = 0; i < 240; i++) {
-    const res = await fetch(job.url, { signal, headers: oaHeaders(p) });
+    const res = await pfetch(p, job.url, { signal, headers: oaHeaders(p) });
     if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
     const j = await res.json();
     const sec = Math.round((Date.now() - t0) / 1000);
@@ -2554,7 +2911,7 @@ async function pollVideo(m, p, job, signal, onStatus) {
       if (onStatus) onStatus("Lädt das fertige Video …");
       const url = (j.unsigned_urls || [])[0] || (j.urls || [])[0] || baseUrl(p) + "/videos/" + job.id + "/content?index=0";
       const signed = (j.urls || []).includes(url);
-      const vr = await fetch(url, { signal, headers: signed ? {} : oaHeaders(p) });
+      const vr = signed ? await fetch(url, { signal }) : await pfetch(p, url, { signal, headers: oaHeaders(p) });
       if (!vr.ok) throw { status: vr.status, body: await vr.text(), provider: p };
       const blob = await vr.blob();
       const type = blob.type && blob.type.startsWith("video/") ? blob.type : "video/mp4";
@@ -2574,7 +2931,7 @@ async function generateMusic(m, prompt, lyrics, signal) {
   if (p.type === "anthropic") throw { msg: "Claude kann keine Musik erzeugen. Wähle ein Musikmodell über OpenRouter." };
   const content = prompt + (lyrics ? "\n\nLiedtext:\n" + lyrics : "");
   const body = { model: m.id, messages: [{ role: "user", content }], modalities: ["text", "audio"], stream: true, usage: { include: true } };
-  const post = () => fetch(baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+  const post = () => pfetch(p, baseUrl(p) + "/chat/completions", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
   let res = await post();
   if (!res.ok) {
     const t = await res.text();
@@ -2634,11 +2991,17 @@ function updateBudgetUI() {
 }
 async function addUsage(i, o, c) {
   const k = month(), before = spent(me.id);
-  try { const fresh = await DB.get("usage"); if (fresh) USAGE = fresh; } catch {}
+  if (!SRV.on()) { try { const fresh = await DB.get("usage"); if (fresh) USAGE = fresh; } catch {} }
   USAGE[me.id] = USAGE[me.id] || {}; USAGE[me.id][k] = USAGE[me.id][k] || { in: 0, out: 0, cost: 0, n: 0 };
   const r = USAGE[me.id][k]; r.in += i; r.out += o; r.cost += c; r.n += 1;
+  if (SRV.on()) {
+    // gemeinsamer Verbrauch aller Geräte: auf dem Server addieren und den Gesamtstand übernehmen
+    const u = { pid: me.id, month: k, in: i, out: o, cost: c };
+    try { const res = await SRV.api("/usage", { method: "POST", body: u }); if (res && res.usage) USAGE = res.usage; }
+    catch (e) { usageQ.put([...usageQ.all(), u]); }
+  }
   await DB.set("usage", USAGE);
-  const lim = +me.limit || 0, after = r.cost;
+  const after = spent(me.id), lim = +me.limit || 0;
   if (lim && before < lim * 0.8 && after >= lim * 0.8 && after < lim) toast(`Hinweis: 80 % des Monatsbudgets sind verbraucht (${fmtUSD(after)} von ${fmtUSD(lim)})`);
   if (lim && before < lim && after >= lim) toast(`Das Monatsbudget von ${fmtUSD(lim)} ist jetzt aufgebraucht`);
   updateBudgetUI();
@@ -2648,6 +3011,7 @@ async function addUsage(i, o, c) {
 async function showUsage() {
   closeDrawer();
   USAGE = (await DB.get("usage")) || USAGE || {};
+  if (SRV.on()) { try { const r = await SRV.api("/usage", { timeout: 8000 }); if (r && r.usage) { USAGE = r.usage; DB.set("usage", USAGE).catch(() => {}); } } catch {} }
   const k = month(); const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); const k2 = month(d);
   const mi = monthInfo();
   const row = (p, key) => (USAGE[p.id] || {})[key] || { in: 0, out: 0, cost: 0, n: 0 };
@@ -2679,6 +3043,7 @@ function modelOptions(sel, filter = isChatKind) {
 }
 function guardSettings() {
   closeDrawer();
+  if (SRV.on() && !SRV.admin) return showServer();
   if (S.adminPin) askPin("Einstellungen", S.adminPin, showSettings, closeScreen); else showSettings();
 }
 function showSettings() {
@@ -2690,8 +3055,8 @@ function showSettings() {
       <div class="btnrow"><button class="btn ghost" id="addP">Profil hinzufügen</button></div>
     </div>
 
-    <div class="card"><h2>Anbieter und Schlüssel</h2><p class="hint">Claude, ChatGPT, OpenRouter (viele Gratis- und Open-Source-Modelle), Gemini oder jeder andere OpenAI-kompatible Anbieter. Schlüssel bleiben auf diesem Gerät. Setze bei jedem Anbieter ein Ausgabenlimit.</p>
-      <div class="plist">${S.providers.map(p => { const n = S.models.filter(m => m.provider === p.id).length; return `<button class="pitem" data-prov="${esc(p.id)}"><span class="avatar prov">${esc((p.name[0] || "?").toUpperCase())}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${p.apiKey ? "Schlüssel hinterlegt" : p.preset === "custom" ? "ohne Schlüssel" : "⚠ Schlüssel fehlt"} · ${n} ${n === 1 ? "Modell" : "Modelle"}</span></span></button>`; }).join("")}</div>
+    <div class="card"><h2>Anbieter und Schlüssel</h2><p class="hint">Claude, ChatGPT, OpenRouter (viele Gratis- und Open-Source-Modelle), Gemini oder jeder andere OpenAI-kompatible Anbieter. ${SRV.on() ? "Die Schlüssel liegen nur auf dem Familien-Server." : "Schlüssel bleiben auf diesem Gerät."} Setze bei jedem Anbieter ein Ausgabenlimit.</p>
+      <div class="plist">${S.providers.map(p => { const n = S.models.filter(m => m.provider === p.id).length; return `<button class="pitem" data-prov="${esc(p.id)}"><span class="avatar prov">${esc((p.name[0] || "?").toUpperCase())}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${p.apiKey ? "Schlüssel hinterlegt" : p.hasKey ? "Schlüssel auf dem Server" : p.preset === "custom" ? "ohne Schlüssel" : "⚠ Schlüssel fehlt"} · ${n} ${n === 1 ? "Modell" : "Modelle"}</span></span></button>`; }).join("")}</div>
       <div class="btnrow"><button class="btn ghost" id="addProv">Anbieter hinzufügen</button></div>
     </div>
 
@@ -2746,8 +3111,11 @@ function showSettings() {
       <label class="check"><input type="checkbox" id="sArt" ${S.artifacts !== false ? "checked" : ""}><span><b>Artefakte</b><br><span style="color:var(--ink2);font-size:14px">Die KI kann kleine Apps, Spiele, Diagramme und Dokumente mit Live-Vorschau erstellen.</span></span></label>
     </div>
 
-    <div class="card"><h2>Auf anderes Gerät übertragen</h2><p class="hint">Richte zum Beispiel ein zweites Handy mit einem verschlüsselten Code ein, statt alles abzutippen. Chats werden nicht übertragen.</p>
-      <div class="btnrow" style="margin-top:0"><button class="btn ghost" id="xOpen">Code erstellen</button><button class="btn ghost" id="iOpen">Code einfügen</button></div></div>
+    <div class="card"><h2>Familien-Server</h2><p class="hint">${SRV.on() ? `Verbunden mit ${esc(SRV.base())}. Chats, Einstellungen und Verbrauch werden mit allen Geräten geteilt; die API-Schlüssel liegen nur auf dem Server.` : "Gemeinsame Chats auf mehreren Geräten, ein gemeinsames Budget pro Person, Antworten laufen im Hintergrund weiter, und die API-Schlüssel liegen nicht mehr auf den Geräten. Braucht einen kostenlosen Cloudflare-Server."}</p>
+      <div class="btnrow" style="margin-top:0"><button class="btn ghost" id="srvOpen">${SRV.on() ? "Server-Einstellungen" : "Familien-Server verbinden"}</button></div></div>
+
+    <div class="card"><h2>${SRV.on() ? "Weiteres Gerät verbinden" : "Auf anderes Gerät übertragen"}</h2><p class="hint">${SRV.on() ? "Ein verschlüsselter Code verbindet ein weiteres Gerät mit dem Familien-Server." : "Richte zum Beispiel ein zweites Handy mit einem verschlüsselten Code ein, statt alles abzutippen. Chats werden nicht übertragen."}</p>
+      <div class="btnrow" style="margin-top:0"><button class="btn ghost" id="xOpen">Code erstellen</button>${SRV.on() ? "" : `<button class="btn ghost" id="iOpen">Code einfügen</button>`}</div></div>
 
     <div class="card"><h2>Einstellungen schützen</h2><p class="hint">Mit einer Admin-PIN können nur Eltern Schlüssel, Modelle und Profile ändern. Leer lassen für keinen Schutz.</p>
       <input class="inp" id="sPin" inputmode="numeric" maxlength="6" placeholder="4–6 Ziffern" value="${esc(S.adminPin)}">
@@ -2809,11 +3177,12 @@ function showSettings() {
   sc.querySelectorAll("[data-prov]").forEach(b => b.onclick = async () => { if (await persist()) editProvider(provById(b.dataset.prov)); });
   q("#wipe").onclick = async () => {
     if (!confirm("Wirklich alle Daten auf diesem Gerät löschen? Das lässt sich nicht rückgängig machen.")) return;
-    await DB.clear(); localStorageSafe("set", "stube-last", ""); location.reload();
+    await DB.clear(); await SRV.store(null); localStorageSafe("set", "stube-last", ""); try { localStorage.removeItem("stube-jobs"); localStorage.removeItem("stube-usageq"); } catch {} location.reload();
   };
   q("#addP").onclick = async () => { if (await persist()) editProfile(null); };
   q("#xOpen").onclick = async () => { if (await persist()) showExport(); };
-  q("#iOpen").onclick = async () => { if (await persist()) showImport(false); };
+  if (q("#iOpen")) q("#iOpen").onclick = async () => { if (await persist()) showImport(false); };
+  q("#srvOpen").onclick = async () => { if (await persist()) showServer("settings"); };
   q("#tTest").onclick = () => { if (!TTS.ok) return toast("Vorlesen wird nicht unterstützt"); const r = S.ttsRate; S.ttsRate = +q("#sRate").value || 1; TTS.speak(`Hallo ${me ? me.name : ""}, so klinge ich beim Vorlesen.`); S.ttsRate = r; };
   sc.querySelectorAll("[data-pid]").forEach(b => b.onclick = async () => { if (await persist()) editProfile(P.find(p => p.id === b.dataset.pid)); });
 }
@@ -2829,7 +3198,7 @@ function editProvider(p) {
       ${isNew ? `<label class="f" for="vPreset">Anbieter</label><select class="inp" id="vPreset">${["openrouter", "openai", "gemini", "anthropic", "custom"].map(k => `<option value="${k}" ${k === d.preset ? "selected" : ""}>${esc(PRESETS[k].name)}</option>`).join("")}</select>` : ""}
       <label class="f" for="vName">Name</label><input class="inp" id="vName" value="${esc(d.name)}">
       <label class="f" for="vKey">API-Schlüssel</label>
-      <div class="row"><input class="inp" id="vKey" type="password" autocomplete="off" value="${esc(d.apiKey)}" placeholder="${esc(PRESETS[d.preset].keyHint)}"><button class="btn ghost" id="vShow" style="margin-left:8px">Zeigen</button></div>
+      <div class="row"><input class="inp" id="vKey" type="password" autocomplete="off" value="${esc(d.apiKey)}" placeholder="${esc(d.hasKey ? "Auf dem Server hinterlegt – leer lassen zum Behalten" : PRESETS[d.preset].keyHint)}"><button class="btn ghost" id="vShow" style="margin-left:8px">Zeigen</button></div>
       <p class="hint" id="vWhere" style="margin:6px 0 0"></p>
       <label class="f" for="vUrl">Adresse der Schnittstelle</label><input class="inp" id="vUrl" value="${esc(d.baseUrl)}" placeholder="https://…/v1" inputmode="url">
       <p class="hint" style="margin:6px 0 0">Muss mit https:// beginnen. Bei OpenAI-kompatiblen Anbietern endet sie meist auf /v1.</p>
@@ -2880,11 +3249,11 @@ const OA_IMG_PRICES = { "gpt-image-1-mini": 0.011, "gpt-image-1.5": 0.034, "gpt-
 async function fetchModelList(p, mode) {
   let res;
   const images = mode === "image";
-  if (p.type === "anthropic") res = await fetch(baseUrl(p) + "/v1/models?limit=100", { headers: anthHeaders(p) });
-  else if (images && p.preset === "openrouter") res = await fetch(baseUrl(p) + "/images/models", { headers: oaHeaders(p) });
-  else if (mode === "video" && p.preset === "openrouter") res = await fetch(baseUrl(p) + "/videos/models", { headers: oaHeaders(p) });
-  else if (mode === "music" && p.preset === "openrouter") res = await fetch(baseUrl(p) + "/models?output_modalities=audio", { headers: oaHeaders(p) });
-  else res = await fetch(baseUrl(p) + "/models", { headers: oaHeaders(p) });
+  if (p.type === "anthropic") res = await pfetch(p, baseUrl(p) + "/v1/models?limit=100", { headers: anthHeaders(p) });
+  else if (images && p.preset === "openrouter") res = await pfetch(p, baseUrl(p) + "/images/models", { headers: oaHeaders(p) });
+  else if (mode === "video" && p.preset === "openrouter") res = await pfetch(p, baseUrl(p) + "/videos/models", { headers: oaHeaders(p) });
+  else if (mode === "music" && p.preset === "openrouter") res = await pfetch(p, baseUrl(p) + "/models?output_modalities=audio", { headers: oaHeaders(p) });
+  else res = await pfetch(p, baseUrl(p) + "/models", { headers: oaHeaders(p) });
   if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
   const j = await res.json();
   let list = (j.data || j.models || []).map(x => {
@@ -2983,9 +3352,13 @@ async function transferKey(pw, salt) {
   return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: TRANSFER_ITER, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
 }
 async function makeTransferCode(pw, withKeys) {
-  const settings = JSON.parse(JSON.stringify(S));
-  if (!withKeys) settings.providers.forEach(p => { p.apiKey = ""; });
-  const data = { v: 1, t: Date.now(), from: me ? me.name : "", settings, profiles: JSON.parse(JSON.stringify(P)) };
+  let data;
+  if (SRV.on()) data = { v: 1, t: Date.now(), from: me ? me.name : "", server: { url: SRV.base(), key: SRV.cfg.key } };
+  else {
+    const settings = JSON.parse(JSON.stringify(S));
+    if (!withKeys) settings.providers.forEach(p => { p.apiKey = ""; });
+    data = { v: 1, t: Date.now(), from: me ? me.name : "", settings, profiles: JSON.parse(JSON.stringify(P)) };
+  }
   const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await transferKey(pw, salt);
   const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(data))));
@@ -3002,6 +3375,7 @@ async function readTransferCode(code, pw) {
   try { plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: all.slice(16, 28) }, key, all.slice(28)); }
   catch { throw new Error("Das Passwort stimmt nicht, oder der Code wurde beim Kopieren verändert."); }
   const data = JSON.parse(new TextDecoder().decode(plain));
+  if (data && data.server && data.server.url && data.server.key) return data;
   if (!data || !data.settings || !Array.isArray(data.profiles)) throw new Error("Der Code enthält keine gültigen Einstellungen.");
   return data;
 }
@@ -3020,11 +3394,12 @@ async function applyTransfer(data) {
   await saveSettings(); await saveProfiles();
   return fresh;
 }
-function showExport() {
+function showExport(from) {
+  const srv = SRV.on();
   const sc = openScreen(`<div class="inner">
-    <header class="topbar">${BACK}<div class="title">Auf anderes Gerät übertragen</div></header>
-    <div class="card"><p class="hint" style="margin:0">Übertragen werden Anbieter, Modelle, Einstellungen und Profile (mit PINs und Budgets). Chats und Verbrauch bleiben auf diesem Gerät. Der Code ist mit dem Passwort verschlüsselt und ohne es nicht lesbar.</p>
-      <label class="check"><input type="checkbox" id="xKeys" checked><span><b>API-Schlüssel mitnehmen</b><br><span style="color:var(--ink2);font-size:14px">Sonst musst du sie auf dem anderen Gerät von Hand eintragen.</span></span></label>
+    <header class="topbar">${BACK}<div class="title">${srv ? "Weiteres Gerät verbinden" : "Auf anderes Gerät übertragen"}</div></header>
+    <div class="card"><p class="hint" style="margin:0">${srv ? "Der Code verbindet ein weiteres Gerät mit eurem Familien-Server. Er enthält die Server-Adresse und das Familien-Passwort, aber nicht das Admin-Passwort. Chats, Profile und Verbrauch kommen danach automatisch vom Server." : "Übertragen werden Anbieter, Modelle, Einstellungen und Profile (mit PINs und Budgets). Chats und Verbrauch bleiben auf diesem Gerät."} Der Code ist mit dem Passwort verschlüsselt und ohne es nicht lesbar.</p>
+      <label class="check ${srv ? "hidden" : ""}"><input type="checkbox" id="xKeys" ${srv ? "" : "checked"}><span><b>API-Schlüssel mitnehmen</b><br><span style="color:var(--ink2);font-size:14px">Sonst musst du sie auf dem anderen Gerät von Hand eintragen.</span></span></label>
       <label class="f" for="xPw">Passwort für die Übertragung</label>
       <div class="row"><input class="inp" id="xPw" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${suggestPw()}"><button class="btn ghost" id="xNew" style="margin-left:8px">Neu</button></div>
       <p class="hint" style="margin:6px 0 0">Mindestens 10 Zeichen. Groß- und Kleinschreibung, Leerzeichen und Bindestriche spielen keine Rolle.</p>
@@ -3042,7 +3417,7 @@ function showExport() {
     </div>
   </div>`);
   const q = s => sc.querySelector(s);
-  q("[data-close]").onclick = showSettings;
+  q("[data-close]").onclick = from === "server" ? () => showServer() : showSettings;
   q("#xNew").onclick = () => { q("#xPw").value = suggestPw(); q("#xOut").classList.add("hidden"); };
   q("#xPw").oninput = () => q("#xOut").classList.add("hidden");
   q("#xKeys").onchange = () => q("#xOut").classList.add("hidden");
@@ -3060,7 +3435,7 @@ function showExport() {
   q("#xCopy").onclick = async () => { try { await navigator.clipboard.writeText(q("#xCode").value); toast("Code kopiert"); } catch { q("#xCode").select(); toast("Markiere den Code und kopiere ihn von Hand"); } };
   if (q("#xShare")) q("#xShare").onclick = async () => { try { await navigator.share({ text: q("#xCode").value }); } catch (e) { if (e.name !== "AbortError") toast("Teilen nicht möglich"); } };
 }
-function showImport(fromOnboarding) {
+function showImport(fromOnboarding, from) {
   const sc = openScreen(`<div class="inner">
     <header class="topbar">${BACK}<div class="title">Einstellungen übernehmen</div></header>
     <div class="card"><p class="hint" style="margin:0">Erstelle auf dem Gerät, das schon eingerichtet ist, unter Einstellungen → „Auf anderes Gerät übertragen“ einen Code und füge ihn hier ein.${fromOnboarding ? "" : " Anbieter und Einstellungen dieses Geräts werden dabei ersetzt; vorhandene Chats bleiben erhalten."}</p>
@@ -3074,16 +3449,24 @@ function showImport(fromOnboarding) {
     </div>
   </div>`);
   const q = s => sc.querySelector(s);
-  q("[data-close]").onclick = fromOnboarding ? showOnboarding : showSettings;
+  q("[data-close]").onclick = from === "server" ? () => showServer(fromOnboarding ? "onboarding" : "settings") : fromOnboarding ? showOnboarding : showSettings;
   if (q("#iPaste")) q("#iPaste").onclick = async () => { try { q("#iCode").value = await navigator.clipboard.readText(); } catch { toast("Halte im Feld gedrückt und wähle „Einsetzen“"); } };
   q("#iGo").onclick = async () => {
     const err = q("#iErr"); err.classList.add("hidden");
     const b = q("#iGo"); b.disabled = true; b.textContent = "Entschlüssele …";
     try {
       const data = await readTransferCode(q("#iCode").value, q("#iPw").value);
+      if (data.server) {
+        if (SRV.on()) throw new Error("Dieses Gerät ist schon mit einem Familien-Server verbunden.");
+        if (!fromOnboarding && !confirm("Dieses Gerät mit dem Familien-Server verbinden? Seine Einstellungen werden durch die des Servers ersetzt; Chats von Profilen mit gleichem Namen werden übernommen.")) { b.disabled = false; b.textContent = "Übernehmen"; return; }
+        b.textContent = "Verbindet …";
+        await joinServer(data.server.url, data.server.key, "", t => { b.textContent = t.length > 40 ? "Verbindet …" : t; });
+        toast("Mit dem Familien-Server verbunden");
+        await enterAfterConnect(); return;
+      }
       if (!fromOnboarding && !confirm("Anbieter, Modelle und Einstellungen dieses Geräts werden durch die übertragenen ersetzt. Fortfahren?")) { b.disabled = false; b.textContent = "Übernehmen"; return; }
       await applyTransfer(data);
-      const keys = S.providers.filter(p => p.apiKey).length;
+      const keys = S.providers.filter(hasKey).length;
       toast(`Übernommen: ${S.providers.length} Anbieter${keys < S.providers.length ? ` (${S.providers.length - keys} ohne Schlüssel)` : ""}, ${P.length} ${P.length === 1 ? "Profil" : "Profile"}`);
       if (me && P.find(x => x.id === me.id)) { await enterProfile(P.find(x => x.id === me.id)); }
       else if (P.length === 1 && !P[0].pin) await enterProfile(P[0]); else showPicker();
@@ -3091,6 +3474,170 @@ function showImport(fromOnboarding) {
       err.textContent = errText(e); err.classList.remove("hidden");
       b.disabled = false; b.textContent = "Übernehmen";
     }
+  };
+}
+
+/* ---------- Familien-Server einrichten und verbinden ---------- */
+async function setupServer(url, fam, adm, step) {
+  if (!S || !P.length) throw new Error("Richte die Stube zuerst auf diesem Gerät ein (API-Schlüssel und Profil). Danach kannst du den Server einrichten.");
+  const cfg = { url, key: fam, admin: adm };
+  await SRV.api("/setup", { method: "POST", body: { familyPass: fam, adminPass: adm }, cfg });
+  step("Lädt Einstellungen, Schlüssel und Profile hoch …");
+  await SRV.api("/settings", { method: "PUT", body: S, admin: true, cfg });
+  await SRV.api("/profiles", { method: "PUT", body: P, admin: true, cfg });
+  step("Lädt den bisherigen Verbrauch hoch …");
+  const U = (await DB.get("usage")) || {};
+  for (const pid in U) for (const mk in U[pid]) { const r = U[pid][mk] || {}; if (r.cost || r.in || r.out) await SRV.api("/usage", { method: "POST", body: { pid, month: mk, in: r.in || 0, out: r.out || 0, cost: r.cost || 0, n: r.n || 0 }, cfg }); }
+  await SRV.store(cfg); SRV.admin = true;
+  for (const p of P) {
+    const list = (await DB.get("chats:" + p.id)) || []; if (!list.length) continue;
+    step(`Lädt die Chats von ${p.name} hoch (${list.length}) …`);
+    const meta = {}; await pushChatsFor(p.id, list, meta); await DB.set("sync:" + p.id, meta);
+  }
+  step("Fertig. Die Schlüssel werden auf diesem Gerät gelöscht …");
+  await pullState();
+}
+async function joinServer(url, fam, adm, step) {
+  const cfg = { url, key: fam, admin: adm || "" };
+  const ck = await SRV.api("/check", { admin: true, cfg });
+  if (adm && !ck.admin) throw new Error("Das Admin-Passwort stimmt nicht. Lass das Feld leer, wenn du es nicht kennst.");
+  const oldP = (P || []).slice(), oldS = S;
+  await SRV.store(cfg); SRV.admin = !!ck.admin;
+  step("Lädt Einstellungen und Profile …");
+  let st = await pullState();
+  if (!st.settings || !Array.isArray(st.profiles) || !st.profiles.length) {
+    if (SRV.admin && oldS && oldP.length) {
+      step("Der Server ist noch leer: Lädt die Einstellungen dieses Geräts hoch …");
+      await SRV.api("/settings", { method: "PUT", body: oldS, admin: true });
+      await SRV.api("/profiles", { method: "PUT", body: oldP, admin: true });
+      st = await pullState();
+    } else { await SRV.store(null); throw new Error("Auf dem Server sind noch keine Einstellungen. Verbinde zuerst das Gerät, auf dem alles eingerichtet ist, mit dem Admin-Passwort."); }
+  }
+  // Chats gleichnamiger Profile von diesem Gerät mitnehmen
+  for (const lp of oldP) {
+    const sp = P.find(x => x.id === lp.id) || P.find(x => x.name.trim().toLowerCase() === String(lp.name || "").trim().toLowerCase());
+    if (!sp) continue;
+    let list = (await DB.get("chats:" + lp.id)) || []; if (!list.length) continue;
+    if (sp.id !== lp.id) {
+      const ex = (await DB.get("chats:" + sp.id)) || [];
+      list = [...ex, ...list.filter(c => !ex.some(e => e.id === c.id))];
+      await DB.set("chats:" + sp.id, list); await DB.del("chats:" + lp.id);
+    }
+    step(`Übernimmt die Chats von ${sp.name} …`);
+    const meta = (await DB.get("sync:" + sp.id)) || {}; await pushChatsFor(sp.id, list, meta); await DB.set("sync:" + sp.id, meta);
+  }
+}
+function enterAfterConnect() {
+  const last = localStorageSafe("get", "stube-last");
+  const lp = P.find(x => x.id === last);
+  if (lp && !lp.pin) return enterProfile(lp);
+  if (P.length === 1 && !P[0].pin) return enterProfile(P[0]);
+  showPicker();
+}
+function showServer(from) {
+  const on = SRV.on();
+  const sc = openScreen(`<div class="inner">
+    <header class="topbar">${BACK}<div class="title">Familien-Server</div></header>
+    ${on ? `
+    <div class="card"><h2>Verbunden</h2>
+      <p class="hint" style="margin:0">Dieses Gerät nutzt den Familien-Server <b style="word-break:break-all">${esc(SRV.base())}</b>. Chats, Einstellungen und Verbrauch sind auf allen verbundenen Geräten gleich, das Budget gilt pro Person für alle Geräte zusammen. Die API-Schlüssel liegen nur auf dem Server.${SRV.reachable ? "" : "<br><b>Der Server ist gerade nicht erreichbar.</b>"}</p>
+      <p class="hint">${SRV.admin ? "<b>Admin:</b> Auf diesem Gerät kannst du Anbieter, Modelle und Profile für alle ändern." : "Einstellungen kann nur ändern, wer das Admin-Passwort kennt."}</p>
+      <div class="btnrow"><button class="btn ghost" id="srvSync">Jetzt abgleichen</button>${SRV.admin ? `<button class="btn ghost" id="srvAll">Alle Einstellungen</button>` : ""}<button class="btn ghost" id="srvCode">Weiteres Gerät verbinden</button></div>
+    </div>
+    ${SRV.admin ? "" : `<div class="card"><h2>Einstellungen ändern</h2><p class="hint">Gib das Admin-Passwort ein. Es bleibt auf diesem Gerät gespeichert, trag es also nur auf Geräten der Eltern ein.</p>
+      <input class="inp" id="srvAdm" type="password" autocomplete="off" placeholder="Admin-Passwort">
+      <div class="btnrow"><button class="btn" id="srvAdmGo">Freischalten</button></div></div>`}
+    <div class="card"><h2>Vom Server trennen</h2><p class="hint">Dieses Gerät arbeitet danach wieder allein. Die Chats bleiben als Kopie hier, die API-Schlüssel musst du neu eintragen.</p>
+      <button class="btn danger" id="srvOff">Trennen</button></div>` : `
+    <div class="card"><p class="hint" style="margin:0">Mit einem eigenen kleinen Server (kostenlos bei Cloudflare) teilt ihr die Chats über mehrere Geräte, das Budget gilt pro Person für alle Geräte zusammen, lange Antworten laufen weiter, auch wenn das Handy ausgeht, und die API-Schlüssel liegen nicht mehr auf den Geräten. Die Anleitung steht im GitHub-Projekt unter <b>server/ANLEITUNG.md</b>.</p>
+      <label class="f" for="srvUrl">Adresse des Servers</label>
+      <input class="inp" id="srvUrl" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://stube-server.….workers.dev">
+      <div class="btnrow"><button class="btn" id="srvCheck">Weiter</button></div>
+      <div id="srvStep"></div>
+      <p class="hint hidden" id="srvMsg" style="margin-top:12px"></p>
+      <p class="err hidden" id="srvErr" style="margin-top:12px"></p>
+    </div>
+    <div class="card"><h2>Code von einem anderen Gerät?</h2><p class="hint">Ist der Server auf einem anderen Gerät schon verbunden, erstelle dort unter Einstellungen → Familien-Server → „Weiteres Gerät verbinden“ einen Code.</p>
+      <button class="btn ghost" id="srvImp">Code einfügen</button></div>`}
+  </div>`);
+  const q = s => sc.querySelector(s);
+  q("[data-close]").onclick = from === "onboarding" ? showOnboarding : from === "settings" ? showSettings : closeScreen;
+  if (on) {
+    q("#srvSync").onclick = async e => {
+      const b = e.target; b.disabled = true; b.textContent = "Gleicht ab …";
+      try { await pullState(); const nm = P.find(x => x.id === (me && me.id)); if (nm) me = nm; if (me) { fillModelSelect(); updateBudgetUI(); await pullChats(true); await pushChats(); recoverJobs(); } toast("Abgeglichen"); }
+      catch (er) { toast(errText(er), { err: true }); }
+      b.disabled = false; b.textContent = "Jetzt abgleichen";
+    };
+    if (q("#srvAll")) q("#srvAll").onclick = showSettings;
+    q("#srvCode").onclick = () => showExport("server");
+    if (q("#srvAdmGo")) q("#srvAdmGo").onclick = async () => {
+      const pw = q("#srvAdm").value;
+      if (!pw) return toast("Bitte gib das Admin-Passwort ein");
+      try {
+        const ck = await SRV.api("/check", { admin: true, cfg: Object.assign({}, SRV.cfg, { admin: pw }) });
+        if (!ck.admin) return toast("Das Admin-Passwort stimmt nicht", { err: true });
+        await SRV.store(Object.assign({}, SRV.cfg, { admin: pw })); SRV.admin = true;
+        await pullState().catch(() => {});
+        toast("Freigeschaltet"); showSettings();
+      } catch (er) { toast(errText(er), { err: true }); }
+    };
+    q("#srvOff").onclick = async () => {
+      if (!confirm("Dieses Gerät vom Familien-Server trennen? Die API-Schlüssel musst du danach hier neu eintragen.")) return;
+      if (streaming) streaming.abort();
+      await SRV.store(null);
+      if (S && S.providers) { S.providers.forEach(p => { delete p.hasKey; p.apiKey = ""; }); await DB.set("settings", S); }
+      openJobs.put([]);
+      location.reload();
+    };
+    return;
+  }
+  q("#srvImp").onclick = () => showImport(from === "onboarding", "server");
+  const err = t => { q("#srvErr").textContent = t; q("#srvErr").classList.toggle("hidden", !t); };
+  const msg = t => { q("#srvMsg").textContent = t; q("#srvMsg").classList.toggle("hidden", !t); };
+  let url = "";
+  q("#srvCheck").onclick = async () => {
+    err(""); msg("");
+    url = q("#srvUrl").value.trim().replace(/\/+$/, "").replace(/\/api$/, "");
+    if (!/^https?:\/\/[^/]+/i.test(url)) url = url ? "https://" + url : "";
+    if (!url) return err("Bitte gib die Adresse des Servers ein.");
+    q("#srvUrl").value = url;
+    const b = q("#srvCheck"); b.disabled = true; b.textContent = "Prüft …";
+    let hello;
+    try { hello = await SRV.api("/hello", { cfg: { url, key: "" }, timeout: 15000 }); }
+    catch (e) { b.disabled = false; b.textContent = "Weiter"; return err("Unter dieser Adresse antwortet kein Stube-Server. Prüfe die Adresse (sie endet meist auf .workers.dev). (" + errText(e) + ")"); }
+    b.disabled = false; b.textContent = "Weiter";
+    if (!hello || !hello.stube) return err("Unter dieser Adresse läuft kein Stube-Server.");
+    const fresh = !hello.setup;
+    q("#srvStep").innerHTML = fresh ? `
+      <h2 style="margin-top:18px">Neuen Server einrichten</h2>
+      <p class="hint">Alle Einstellungen, API-Schlüssel, Profile, Chats und der Verbrauch dieses Geräts werden auf den Server übertragen. Danach werden die Schlüssel auf diesem Gerät gelöscht.</p>
+      <label class="f" for="srvFam">Familien-Passwort (für alle Geräte)</label><input class="inp" id="srvFam" type="password" autocomplete="new-password" placeholder="mindestens 8 Zeichen">
+      <label class="f" for="srvAd">Admin-Passwort (nur für Eltern)</label><input class="inp" id="srvAd" type="password" autocomplete="new-password" placeholder="mindestens 8 Zeichen, anders als oben">
+      <p class="hint" style="margin:6px 0 0">Schreib dir beide Passwörter auf. Mit dem Familien-Passwort kann jedes Gerät die Stube nutzen; mit dem Admin-Passwort lassen sich Schlüssel, Modelle, Profile und Budgets ändern.</p>
+      <div class="btnrow"><button class="btn" id="srvGo">Server einrichten</button></div>` : `
+      <h2 style="margin-top:18px">Mit dem Server verbinden</h2>
+      <label class="f" for="srvFam">Familien-Passwort</label><input class="inp" id="srvFam" type="password" autocomplete="current-password">
+      <label class="f" for="srvAd">Admin-Passwort (optional, nur Eltern)</label><input class="inp" id="srvAd" type="password" autocomplete="off" placeholder="leer lassen, wenn unbekannt">
+      <p class="hint" style="margin:6px 0 0">Die Einstellungen dieses Geräts werden durch die des Servers ersetzt. Chats von Profilen mit gleichem Namen werden übernommen.</p>
+      <div class="btnrow"><button class="btn" id="srvGo">Verbinden</button></div>`;
+    q("#srvGo").onclick = async () => {
+      err("");
+      const fam = q("#srvFam").value, adm = q("#srvAd").value;
+      if (fresh) {
+        if (fam.length < 8 || adm.length < 8) return err("Beide Passwörter brauchen mindestens 8 Zeichen.");
+        if (fam === adm) return err("Familien- und Admin-Passwort müssen sich unterscheiden.");
+      } else if (!fam) return err("Bitte gib das Familien-Passwort ein.");
+      const g = q("#srvGo"); g.disabled = true; g.textContent = fresh ? "Richtet ein …" : "Verbindet …";
+      try {
+        if (fresh) await setupServer(url, fam, adm, msg); else await joinServer(url, fam, adm, msg);
+        toast(fresh ? "Der Familien-Server ist eingerichtet" : "Mit dem Familien-Server verbunden");
+        await enterAfterConnect();
+      } catch (e) {
+        err(errText(e)); msg("");
+        g.disabled = false; g.textContent = fresh ? "Server einrichten" : "Verbinden";
+      }
+    };
   };
 }
 
