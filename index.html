@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#24456B">
 <title>Stube – Familien-Chat</title>
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" onload="window.__katexReady && window.__katexReady()"></script>
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="48x48" href="data:image/png;base64,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">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -277,6 +279,17 @@ table.models .inp{padding:8px}
 .code-out{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;resize:vertical}
 .steps{margin:14px 0 0;padding-left:1.3em;font-size:15px;line-height:1.5}
 .steps li{margin:6px 0}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.fchip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:6px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:13px;position:relative}
+.bubble .fchip{background:color-mix(in srgb,var(--surface) 70%,transparent)}
+.fchip b{font-size:11px;letter-spacing:.02em;color:var(--accent)}
+.fchip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.previews .fchip{margin-top:2px}
+.previews .fchip button{position:static;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:13px;line-height:1;flex:none}
+.fchip.loading{color:var(--ink2)}
+.img-wait.doc{aspect-ratio:auto;height:64px;width:min(100%,360px);border-radius:16px}
+.export-row{justify-content:flex-start;margin-bottom:8px}
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:4px 0}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:14px;z-index:50}
 </style>
 </head>
@@ -294,8 +307,8 @@ table.models .inp{padding:8px}
       <div class="previews" id="previews"></div>
       <textarea id="input" rows="1" placeholder="Schreib eine Nachricht" aria-label="Nachricht"></textarea>
       <div class="row">
-        <button class="iconbtn" id="attachBtn" aria-label="Bild anhängen"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-        <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
+        <button class="iconbtn" id="attachBtn" aria-label="Bild oder Datei anhängen" title="Bild oder Datei anhängen (PDF, Word, Excel, PowerPoint …)"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        <input type="file" id="fileInput" accept="image/*,.pdf,.docx,.xlsx,.xlsm,.xls,.ods,.csv,.pptx,.txt,.md,.json,.html,.htm,.rtf" multiple class="hidden">
         <button class="iconbtn hidden" id="webBtn" aria-label="Websuche" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></button>
         <label class="modelchip" id="modelChip"><select id="modelSelect" aria-label="Modell"></select></label>
         <span class="spacer"></span>
@@ -585,13 +598,28 @@ function codeButtons(root) {
   });
 }
 
-function md(text) {
-  if (window.marked) {
-    const html = marked.parse(text, { breaks: true, gfm: true });
-    return window.DOMPurify ? DOMPurify.sanitize(html) : esc(text).replace(/\n/g, "<br>");
-  }
-  return esc(text).replace(/\n/g, "<br>");
+// Mathe-Formeln ($…$, $$…$$, \(…\), \[…\]) vor Markdown schützen und mit KaTeX darstellen
+const MATH_RE = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|(^|[^\\$\w])\$(?=\S)([^$\n]*?\S)\$(?![\w$])/g;
+function renderTex(tex, display) {
+  if (window.katex) { try { return katex.renderToString(tex, { displayMode: display, throwOnError: false, output: "html", strict: "ignore" }); } catch {} }
+  return `<code>${esc(tex)}</code>`;
 }
+function md(text) {
+  const store = [];
+  let src = String(text);
+  if (/[$\\]/.test(src)) src = src.replace(MATH_RE, (m0, a, b, c, pre, d) => {
+    if (d !== undefined) { if (/^\d+([.,]\d+)?$/.test(d.trim())) return m0; store.push({ tex: d, display: false }); return pre + "KXPH" + (store.length - 1) + "KX"; }
+    store.push({ tex: a || b || c, display: !!(a || b) }); return "KXPH" + (store.length - 1) + "KX";
+  });
+  let html;
+  if (window.marked) {
+    const raw = marked.parse(src, { breaks: true, gfm: true });
+    html = window.DOMPurify ? DOMPurify.sanitize(raw) : esc(src).replace(/\n/g, "<br>");
+  } else html = esc(src).replace(/\n/g, "<br>");
+  if (store.length) html = html.replace(/KXPH(\d+)KX/g, (m0, i) => { const x = store[+i]; return x ? renderTex(x.tex, x.display) : m0; });
+  return html;
+}
+window.__katexReady = () => { try { if (cur && cur.messages.length && /[$\\]/.test(cur.messages.map(m => m.text || "").join(""))) renderChat(); } catch {} };
 
 /* ---------- Boot ---------- */
 async function boot() {
@@ -632,6 +660,7 @@ function migrate() {
   if (!S.mt16) { if ((+S.maxTokens || 0) < 16000) S.maxTokens = 16000; S.mt16 = true; ch = true; }
   if (S.imageOffer === undefined) { S.imageOffer = true; ch = true; }
   if (S.autoLimit === undefined) { S.autoLimit = 0.1; ch = true; }
+  if (S.docs === undefined) { S.docs = true; ch = true; }
   if (!S.router.medien) { const rm = modelByKey(S.router.model); S.router.medien = rm && provOf(rm) && provOf(rm).type === "anthropic" ? rm.key : S.router.komplex; ch = true; }
   if (!S.autoDef) { if (S.router.model) S.defaultModel = "auto"; S.autoDef = true; ch = true; }
   S.models.forEach(m => { if (!m.kind) { m.kind = "chat"; ch = true; } });
@@ -641,6 +670,7 @@ function migrate() {
     if (p.images === undefined) { p.images = !p.kid; ch = true; }
     if (p.videos === undefined) { p.videos = !p.kid; ch = true; }
     if (p.music === undefined) { p.music = !p.kid; ch = true; }
+    if (p.docs === undefined) { p.docs = true; ch = true; }
   }
   return ch;
 }
@@ -840,6 +870,7 @@ function msgEl(m) {
   if (m.role === "user") {
     const b = document.createElement("div"); b.className = "bubble";
     (m.images || []).forEach(i => { const im = document.createElement("img"); im.src = `data:${i.media_type};base64,${i.data}`; im.alt = "Angehängtes Bild"; b.append(im); });
+    if ((m.files || []).length) { const fc = document.createElement("div"); fc.className = "fchips"; fc.innerHTML = m.files.map(f => fileChip(f, false)).join(""); b.append(fc); }
     b.append(document.createTextNode(m.text)); d.append(b);
   } else if (m.offer) {
     d.append(offerEl(m));
@@ -847,6 +878,7 @@ function msgEl(m) {
     d.innerHTML = `<div class="body"></div>`;
     const body = d.querySelector(".body");
     if (m.text) renderBody(body, m.text, true);
+    (m.files || []).forEach(f => body.append(fileCard({ name: f.name, b64: f.b64, type: f.type, size: f.size, done: true })));
     if ((m.images || []).length) {
       const g = document.createElement("div"); g.className = "gen-imgs";
       m.images.forEach(i => {
@@ -1050,6 +1082,81 @@ function loadLib(key) {
     throw new Error("Die Bibliothek für ." + key + " konnte nicht geladen werden. Besteht eine Internetverbindung?");
   })());
 }
+/* ---------- Dateien anhängen: PDF, Word, Excel, PowerPoint, Text ---------- */
+const DOC_LIBS = {
+  pdfjs: { test: () => window.pdfjsLib, urls: ["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js", "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"] },
+  mammoth: { test: () => window.mammoth, urls: ["https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"] },
+  jszip: { test: () => window.JSZip, urls: ["https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js", "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"] },
+  html2canvas: { test: () => window.html2canvas, urls: ["https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"] },
+  jspdf: { test: () => window.jspdf && window.jspdf.jsPDF, urls: ["https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"] },
+};
+Object.assign(LIBS, DOC_LIBS);
+const ATTACH_ACCEPT = "image/*,.pdf,.docx,.xlsx,.xlsm,.xls,.ods,.csv,.pptx,.txt,.md,.json,.html,.htm,.rtf";
+const MAX_TEXT = 150000;
+const capText = t => t.length > MAX_TEXT ? t.slice(0, MAX_TEXT) + "\n\n[… Datei gekürzt, sie ist sehr lang]" : t;
+const FILE_ICON = { pdf: "PDF", docx: "DOC", xlsx: "XLS", xlsm: "XLS", xls: "XLS", ods: "XLS", csv: "CSV", pptx: "PPT", txt: "TXT", md: "TXT", json: "JSON", html: "HTML", htm: "HTML", rtf: "RTF" };
+async function pdfText(buf) {
+  await loadLib("pdfjs");
+  try { pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; } catch {}
+  const doc = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+  const out = []; const n = Math.min(doc.numPages, 150);
+  for (let i = 1; i <= n; i++) {
+    const pg = await doc.getPage(i); const tc = await pg.getTextContent();
+    let line = "", lastY = null;
+    const parts = [];
+    for (const it of tc.items) { const y = it.transform ? it.transform[5] : null; if (lastY !== null && y !== null && Math.abs(y - lastY) > 2) { parts.push(line); line = ""; } line += it.str; lastY = y; }
+    parts.push(line);
+    out.push(`--- Seite ${i} ---\n` + parts.join("\n").replace(/\n{3,}/g, "\n\n"));
+    if (out.join("").length > MAX_TEXT) break;
+  }
+  return { text: out.join("\n\n"), pages: doc.numPages };
+}
+async function pptxText(buf) {
+  await loadLib("jszip");
+  const zip = await JSZip.loadAsync(buf);
+  const num = p => +((p.match(/(\d+)\.xml$/) || [])[1] || 0);
+  const slides = Object.keys(zip.files).filter(p => /^ppt\/slides\/slide\d+\.xml$/.test(p)).sort((a, b) => num(a) - num(b));
+  const textOf = xml => xml.split(/<\/a:p>/).map(p => (p.match(/<a:t>([\s\S]*?)<\/a:t>/g) || []).map(t => t.replace(/<\/?a:t>/g, "")).join("")).filter(s => s.trim()).map(decodeEnt).join("\n");
+  const out = [];
+  for (const s of slides) {
+    const n = num(s); let t = textOf(await zip.file(s).async("string"));
+    const notes = zip.file(`ppt/notesSlides/notesSlide${n}.xml`);
+    if (notes) { const nt = textOf(await notes.async("string")).replace(/^\d+$/m, "").trim(); if (nt) t += `\n(Notizen: ${nt})`; }
+    out.push(`--- Folie ${n} ---\n${t}`);
+  }
+  return out.join("\n\n");
+}
+async function readAttachment(file) {
+  const name = file.name || "Datei"; const ext = extOf(name);
+  if ((file.type || "").startsWith("image/") && !/svg/.test(file.type)) return shrinkImage(file);
+  if (file.size > 25 * 1024 * 1024) throw new Error(`„${name}“ ist größer als 25 MB.`);
+  const buf = await file.arrayBuffer();
+  const base = { file: true, name, ext };
+  if (ext === "pdf") {
+    const data = await blobToB64(new Blob([buf], { type: "application/pdf" }));
+    let text = "", pages = 0;
+    try { const r = await pdfText(buf.slice(0)); text = r.text; pages = r.pages; } catch (e) { console.warn("PDF-Text nicht lesbar", e); }
+    return { ...base, kind: "pdf", media_type: "application/pdf", data, text: capText(text), pages };
+  }
+  if (ext === "docx") { await loadLib("mammoth"); const r = await mammoth.extractRawText({ arrayBuffer: buf }); return { ...base, kind: "text", text: capText(r.value.replace(/\n{3,}/g, "\n\n")) }; }
+  if (["xlsx", "xlsm", "xls", "ods", "csv"].includes(ext)) {
+    await loadLib("xlsx");
+    const wb = XLSX.read(new Uint8Array(buf), { type: "array" });
+    const text = wb.SheetNames.map(n => `--- Tabellenblatt „${n}“ ---\n` + XLSX.utils.sheet_to_csv(wb.Sheets[n], { blankrows: false })).join("\n\n");
+    return { ...base, kind: "text", text: capText(text) };
+  }
+  if (ext === "pptx") return { ...base, kind: "text", text: capText(await pptxText(buf)) };
+  if (ext === "doc" || ext === "ppt") throw new Error(`Das alte Format .${ext} kann ich nicht lesen. Speichere die Datei bitte als .${ext}x oder PDF.`);
+  let text = new TextDecoder().decode(buf);
+  if (ext === "html" || ext === "htm") { const d = new DOMParser().parseFromString(text, "text/html"); text = d.body ? d.body.innerText || d.body.textContent : text; }
+  if (ext === "rtf") text = text.replace(/\\par[d]?/g, "\n").replace(/\{\*?\\[^{}]+}|[{}]|\\\n?[A-Za-z]+-?\d* ?/g, "");
+  return { ...base, kind: "text", text: capText(text) };
+}
+function fileTag(f) { return `<datei name="${String(f.name).replace(/"/g, "'")}">\n${f.text || "(Kein Text lesbar. Vielleicht ist es ein eingescanntes Dokument; dann schick es als Foto.)"}\n</datei>`; }
+function fileChip(f, removable, i) {
+  return `<span class="fchip"><b>${esc(FILE_ICON[f.ext] || "DATEI")}</b><span>${esc(f.name)}</span>${removable ? `<button data-i="${i}" aria-label="Datei entfernen">×</button>` : ""}</span>`;
+}
+
 const extOf = name => (name.split(".").pop() || "txt").toLowerCase();
 
 async function buildFile(f) {
@@ -1178,6 +1285,13 @@ function fileButtons(f, cls = "") {
 
 function fileCard(f) {
   const ext = extOf(f.name);
+  if (f.b64) {
+    const card = document.createElement("div"); card.className = "filecard ready";
+    const kb = f.size ? (f.size > 1048576 ? (f.size / 1048576).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(f.size / 1024)) + " KB") : "";
+    card.innerHTML = `<div class="fc-icon">${esc(ext.toUpperCase().slice(0, 4))}</div><div class="fc-meta"><b>${esc(f.name)}</b><span>${esc([{ pptx: "PowerPoint", docx: "Word", xlsx: "Excel", pdf: "PDF" }[ext] || "Datei", kb].filter(Boolean).join(" · "))} · zum Öffnen herunterladen</span></div>`;
+    card.append(fileButtons(f));
+    return card;
+  }
   const card = document.createElement("div"); card.className = "filecard" + (f.done ? " ready" : "");
   card.innerHTML = `<div class="fc-icon">${esc(ext.toUpperCase().slice(0, 4))}</div><div class="fc-meta"><b>${esc(f.name)}</b><span>${f.done ? "Tippen für Vorschau" : "Wird erstellt …"}</span></div>`;
   if (!f.done) return card;
@@ -1280,18 +1394,18 @@ function artifactDoc(a) {
   const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(a.title)}</title>`;
   if (a.type === "html") {
     const c = a.content.trim();
-    if (/^<!doctype|^<html/i.test(c)) return injectHead(c, STORAGE_SHIM + ERR_SCRIPT);
-    return `<!DOCTYPE html><html lang="de"><head>${head}${STORAGE_SHIM}${ERR_SCRIPT}<style>body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:16px}</style></head><body>${c}</body></html>`;
+    if (/^<!doctype|^<html/i.test(c)) return injectHead(c, STORAGE_SHIM + ERR_SCRIPT + EXPORT_SCRIPT);
+    return `<!DOCTYPE html><html lang="de"><head>${head}${STORAGE_SHIM}${ERR_SCRIPT}${EXPORT_SCRIPT}<style>body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:16px}</style></head><body>${c}</body></html>`;
   }
-  if (a.type === "svg") return `<!DOCTYPE html><html><head>${head}<style>html,body{margin:0;height:100%;background:#fff}body{display:grid;place-items:center}svg{max-width:100%;max-height:100vh;height:auto}</style></head><body>${a.content}</body></html>`;
-  if (a.type === "mermaid") return `<!DOCTYPE html><html><head>${head}<style>body{margin:0;padding:16px;background:#fff;font-family:system-ui,sans-serif}.mermaid{display:flex;justify-content:center}.mermaid svg{max-width:100%;height:auto}</style>${ERR_SCRIPT}
+  if (a.type === "svg") return `<!DOCTYPE html><html><head>${head}${EXPORT_SCRIPT}<style>html,body{margin:0;height:100%;background:#fff}body{display:grid;place-items:center}svg{max-width:100%;max-height:100vh;height:auto}</style></head><body>${a.content}</body></html>`;
+  if (a.type === "mermaid") return `<!DOCTYPE html><html><head>${head}<style>body{margin:0;padding:16px;background:#fff;font-family:system-ui,sans-serif}.mermaid{display:flex;justify-content:center}.mermaid svg{max-width:100%;height:auto}</style>${ERR_SCRIPT}${EXPORT_SCRIPT}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"><\/script>
 <script>if(!window.mermaid)document.write('<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"><\\/script>')<\/script>
 </head><body><pre class="mermaid" id="m"></pre>
 <script>document.getElementById("m").textContent=${jsonForScript(a.content.trim())};
 if(!window.mermaid){window.__err("Die Diagramm-Bibliothek konnte nicht geladen werden. Besteht eine Internetverbindung?")}
 else{mermaid.initialize({startOnLoad:false,securityLevel:"strict"});mermaid.run({querySelector:"#m"}).catch(function(e){window.__err(e)});}<\/script></body></html>`;
-  if (a.type === "react") return `<!DOCTYPE html><html lang="de"><head>${head}${STORAGE_SHIM}${ERR_SCRIPT}
+  if (a.type === "react") return `<!DOCTYPE html><html lang="de"><head>${head}${STORAGE_SHIM}${ERR_SCRIPT}${EXPORT_SCRIPT}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"><\/script>
@@ -1345,7 +1459,7 @@ function artifactFile(a) {
 function openArtifact(a) {
   const vs = versionsOf(a);
   let idx = Math.max(0, vs.findIndex(x => x.content === a.content));
-  let tab = "preview";
+  let tab = "preview", frame = null;
   const sc = openScreen(`<div class="pv">
     <header class="topbar pv-bar"><button class="iconbtn" data-close aria-label="Zurück"><svg class="icon" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
       <div class="title"><span id="aTitle"></span><span class="pv-type" id="aSub"></span></div>
@@ -1374,9 +1488,16 @@ function openArtifact(a) {
       fr.setAttribute("sandbox", "allow-scripts allow-popups allow-forms allow-modals");
       fr.setAttribute("allow", "fullscreen");
       fr.title = v.title; fr.srcdoc = artifactDoc(v);
-      content.classList.add("frame"); content.append(fr);
+      content.classList.add("frame"); content.append(fr); frame = fr;
     }
     foot.innerHTML = "";
+    if (tab === "preview" && v.type !== "markdown") {
+      const ex = document.createElement("div"); ex.className = "fc-btns pv-btns export-row";
+      const bi = document.createElement("button"); bi.className = "btn ghost"; bi.textContent = "Als Bild speichern"; bi.onclick = () => exportArtifact(frame, v.title, "png", bi);
+      const bp = document.createElement("button"); bp.className = "btn ghost"; bp.textContent = "Als PDF speichern"; bp.onclick = () => exportArtifact(frame, v.title, "pdf", bp);
+      const pr = document.createElement("button"); pr.className = "btn ghost"; pr.textContent = "Drucken"; pr.onclick = () => frame && frame.contentWindow.postMessage({ stubeExport: "print" }, "*");
+      ex.append(bi, bp, pr); foot.append(ex);
+    }
     const f = artifactFile(v);
     const btns = fileButtons(f, "pv-btns");
     const cp = document.createElement("button"); cp.className = "btn ghost"; cp.textContent = "Code kopieren";
@@ -1389,6 +1510,169 @@ function openArtifact(a) {
   sc.querySelector("#aReload").onclick = render;
   sc.querySelector("[data-close]").onclick = () => { sc.classList.remove("noscroll"); closeScreen(); };
   render();
+}
+
+/* ---------- Echte Office-Dokumente über Anthropic-Skills ---------- */
+const DOC_SKILL = { praesentation: "pptx", word: "docx", excel: "xlsx", pdf: "pdf" };
+const DOC_NAME = { praesentation: "Präsentation", word: "Word-Dokument", excel: "Excel-Tabelle", pdf: "PDF" };
+const docCost = m => ((m.inP || 0) * 30000 + (m.outP || 0) * 9000) / 1e6;   // grobe Schätzung inkl. Lesen der Skill-Anleitung
+function docModels(prof = me) {
+  const seen = new Set();
+  return S.models.filter(m => isChatKind(m) && modelAllowed(m, prof) && provOf(m).type === "anthropic" && provOf(m).apiKey)
+    .sort((a, b) => (a.kind === "code") - (b.kind === "code"))
+    .filter(m => !seen.has(m.id) && seen.add(m.id));
+}
+function docsAvailable(prof = me) { return S.docs !== false && S.imageOffer !== false && prof.docs !== false && docModels(prof).length > 0; }
+function pickDocModel(id) {
+  const ms = docModels(); const want = id && ms.find(m => m.id === id || m.label === id);
+  return want || ms.find(m => m.key === S.docModel) || ms.find(m => /sonnet/i.test(m.id)) || ms[0] || null;
+}
+function docTool() {
+  const ms = docModels();
+  return { name: "erstelle_dokument", description: "Erstellt mit Anthropics Office-Werkzeugen eine echte, sauber gestaltete Datei: PowerPoint-Präsentation (z. B. für ein Referat), Word-Dokument (Aufsatz, Handout, Bewerbung, Brief, Arbeitsblatt), Excel-Tabelle (mit Formeln und Diagrammen) oder PDF. Die Datei erscheint im Chat zum Herunterladen. Angehängte Dateien aus dem Chat stehen dem Werkzeug zur Verfügung.", parameters: { type: "object", properties: {
+    art: { type: "string", enum: Object.keys(DOC_SKILL) },
+    auftrag: { type: "string", description: "Vollständiger Auftrag: Thema, Inhalt bzw. Gliederung, Umfang (z. B. Anzahl Folien), Zielgruppe (z. B. 7. Klasse), Gestaltung, gewünschter Dateiname. Alles, was in die Datei soll, muss hier stehen oder aus dem Chat hervorgehen." },
+    modell: { type: "string", enum: ms.map(m => m.id), description: "Welches Claude-Modell die Datei baut. Siehe Preisliste." } }, required: ["art", "auftrag"] } };
+}
+function anthFileHeaders(p) { const h = anthHeaders(p); delete h["content-type"]; h["anthropic-beta"] = "files-api-2025-04-14"; return h; }
+async function anthFetchFile(p, id, signal) {
+  let h = anthFileHeaders(p);
+  let meta = await fetch(baseUrl(p) + "/v1/files/" + encodeURIComponent(id), { signal, headers: h });
+  if (!meta.ok && meta.status === 400) { const t = await meta.text(); if (/beta/i.test(t)) { delete h["anthropic-beta"]; meta = await fetch(baseUrl(p) + "/v1/files/" + encodeURIComponent(id), { signal, headers: h }); } else throw { status: 400, body: t, provider: p }; }
+  if (!meta.ok) throw { status: meta.status, body: await meta.text(), provider: p };
+  const mj = await meta.json();
+  const res = await fetch(baseUrl(p) + "/v1/files/" + encodeURIComponent(id) + "/content", { signal, headers: h });
+  if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+  const blob = await res.blob();
+  const name = mj.filename || ("datei-" + id.slice(-6));
+  const type = mj.mime_type || blob.type || MIME[extOf(name)] || "application/octet-stream";
+  return { name, type, b64: await blobToB64(blob), size: mj.size_bytes || blob.size };
+}
+function collectFileIds(node, out = new Set()) {
+  if (!node || typeof node !== "object") return out;
+  if (Array.isArray(node)) { node.forEach(x => collectFileIds(x, out)); return out; }
+  if (typeof node.file_id === "string") out.add(node.file_id);
+  for (const k in node) if (k !== "file_id" && node[k] && typeof node[k] === "object") collectFileIds(node[k], out);
+  return out;
+}
+async function runDocTool(a) {
+  if (!docsAvailable()) return "Dieses Werkzeug ist hier nicht verfügbar.";
+  const art = DOC_SKILL[a.art] ? a.art : "word";
+  const dm = pickDocModel(a.modell);
+  const task = String(a.auftrag || "").trim(); if (!task) return "Fehler: Der Auftrag fehlt.";
+  const est = docCost(dm), left = budgetLeft();
+  if (est > left) return `Nicht erstellt: Das restliche Monatsbudget reicht dafür nicht (noch ${fmtUSD(Math.max(0, left))}, geschätzt ${fmtUSD(est)}). Sag das der Person kurz.`;
+  const p = provOf(dm);
+  const seg = newSeg(); const st = seg.st;
+  seg.body.innerHTML = `<div class="img-wait doc"></div>`;
+  st.textContent = `📄 ${dm.label || dm.id} erstellt ${art === "excel" ? "die" : art === "praesentation" ? "die" : "das"} ${DOC_NAME[art]} … das dauert meist 1–3 Minuten.`;
+  const t0 = Date.now(); const tick = setInterval(() => { const s = Math.round((Date.now() - t0) / 1000); st.textContent = `📄 ${dm.label || dm.id} arbeitet an ${art === "praesentation" ? "der Präsentation" : art === "excel" ? "der Tabelle" : "dem Dokument"} … ${s >= 60 ? Math.floor(s / 60) + " Min. " : ""}${s % 60} Sek.`; }, 1000);
+  const sys = systemPrompt(false, []) + `\n\nDu arbeitest in der Stube als Spezialist für Office-Dokumente. Ein anderes Modell hat dir einen Auftrag weitergegeben. Erstelle genau eine fertige Datei vom Typ ${DOC_NAME[art]} mit dem passenden Skill. Achte auf eine klare, ansprechende Gestaltung, korrekte deutsche Rechtschreibung und einen Umfang, der zur Zielgruppe passt (bei Referaten: wenige Stichpunkte pro Folie, Sprechernotizen mit dem Vortragstext). Gib der Datei einen kurzen deutschen Dateinamen ohne Leerzeichen und lege sie zum Schluss in $OUTPUT_DIR ab. Antworte danach mit zwei, drei Sätzen, was in der Datei steht.`;
+  const msgs = apiMessages();
+  const lastU = msgs[msgs.length - 1];
+  if (lastU && lastU.role === "user") lastU.text = (lastU.text ? lastU.text + "\n\n" : "") + "Auftrag an dich: " + task;
+  else msgs.push({ role: "user", text: "Auftrag an dich: " + task, images: [], files: [] });
+  const native = anthMsgs(msgs);
+  const skills = [{ type: "anthropic", skill_id: DOC_SKILL[art], version: "latest" }];
+  let tin = 0, tout = 0, container = null, finalText = "", resp = null;
+  try {
+    for (let i = 0; i < 10; i++) {
+      const body = { model: dm.id, max_tokens: 16000, system: sys, messages: native, container: container ? { id: container, skills } : { skills }, tools: [{ type: "code_execution_20260521", name: "code_execution" }] };
+      const res = await fetch(baseUrl(p) + "/v1/messages", { method: "POST", signal: streaming.signal, headers: anthHeaders(p), body: JSON.stringify(body) });
+      if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+      resp = await res.json();
+      const u = resp.usage || {}; tin += (u.input_tokens || 0) + (u.cache_creation_input_tokens || 0) + (u.cache_read_input_tokens || 0); tout += u.output_tokens || 0;
+      if (resp.container && resp.container.id) container = resp.container.id;
+      finalText = (resp.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim() || finalText;
+      native.push({ role: "assistant", content: resp.content });
+      if (resp.stop_reason !== "pause_turn") break;
+    }
+    const ids = [...collectFileIds(native.filter(x => x.role === "assistant").map(x => x.content))];
+    if (!ids.length) throw { msg: "Es wurde keine Datei erzeugt. Versuch es bitte noch einmal oder formuliere den Auftrag genauer." };
+    st.textContent = "Lädt die Datei herunter …";
+    const files = [];
+    for (const id of ids.slice(-4)) { try { files.push(await anthFetchFile(p, id, streaming.signal)); } catch (e) { if (e && e.name === "AbortError") throw e; logError("Datei konnte nicht geladen werden", e && (e.body || e.message)); } }
+    if (!files.length) throw { msg: "Die Datei wurde erstellt, konnte aber nicht heruntergeladen werden. Details stehen im Fehlerprotokoll." };
+    clearInterval(tick);
+    const cost = (tin * (dm.inP || 0) + tout * (dm.outP || 0)) / 1e6;
+    seg.reply.text = finalText;
+    seg.reply.files = files;
+    seg.reply.note = `[${DOC_NAME[art]} erstellt: ${files.map(f => f.name).join(", ")}]`;
+    seg.reply.usage = { in: tin, out: tout, cost, model: "📄 " + (dm.label || dm.id) };
+    seg.body.innerHTML = "";
+    await addUsage(tin, tout, cost);
+    await finishSeg(seg, true);
+    return `Erledigt: ${files.map(f => f.name).join(", ")} wurde erstellt und der Person zum Herunterladen angezeigt (Kosten ${usd(cost)}). Wiederhole den Inhalt nicht, ergänze höchstens einen kurzen Satz.`;
+  } catch (e) {
+    clearInterval(tick); seg.body.innerHTML = "";
+    if (e && e.name === "AbortError") { seg.reply.text = "_(abgebrochen)_"; await finishSeg(seg, true); throw e; }
+    seg.reply.error = e && ("status" in e || "msg" in e) ? friendlyError(e) : "Keine Verbindung zu Anthropic. (" + (e && e.message || e) + ")";
+    if (tin || tout) { const cost = (tin * (dm.inP || 0) + tout * (dm.outP || 0)) / 1e6; seg.reply.usage = { in: tin, out: tout, cost, model: "📄 " + (dm.label || dm.id) }; await addUsage(tin, tout, cost); }
+    await finishSeg(seg, true);
+    return "Fehler beim Erstellen der Datei: " + seg.reply.error;
+  }
+}
+
+/* ---------- Plakate & Co. als Bild oder PDF speichern ---------- */
+// Im (abgeschotteten) Artefakt: aktuellen Stand als statisches HTML zurückgeben, Canvas-Inhalte als Bilder
+const EXPORT_SCRIPT = `<script>window.addEventListener("message",function(e){var d=e.data||{};if(!d.stubeExport)return;
+if(d.stubeExport==="print"){try{window.print()}catch(x){}return;}
+try{var src=document.documentElement,cl=src.cloneNode(true),a=src.querySelectorAll("canvas"),b=cl.querySelectorAll("canvas");
+for(var i=0;i<a.length;i++){try{var im=document.createElement("img");im.src=a[i].toDataURL("image/png");im.style.cssText=a[i].style.cssText;im.width=a[i].clientWidth||a[i].width;im.height=a[i].clientHeight||a[i].height;im.className=a[i].className;b[i].parentNode.replaceChild(im,b[i])}catch(x){}}
+var ins=src.querySelectorAll("input,textarea,select"),cins=cl.querySelectorAll("input,textarea,select");for(var k=0;k<ins.length;k++){if(ins[k].type==="checkbox"||ins[k].type==="radio"){if(ins[k].checked)cins[k].setAttribute("checked","")}else cins[k].setAttribute("value",ins[k].value)}
+var sc=cl.querySelectorAll("script");for(var j=0;j<sc.length;j++)sc[j].parentNode.removeChild(sc[j]);
+var bg=getComputedStyle(document.body).backgroundColor;
+parent.postMessage({stubeId:d.id,html:"<!DOCTYPE html>"+cl.outerHTML,w:Math.max(src.scrollWidth,document.body.scrollWidth),h:Math.max(src.scrollHeight,document.body.scrollHeight),bg:bg},"*")}
+catch(x){parent.postMessage({stubeId:d.id,error:String(x&&x.message||x)},"*")}
+});<\/script>`;
+function exportFrame(fr) {
+  return new Promise((res, rej) => {
+    if (!fr || !fr.contentWindow) return rej(new Error("Die Vorschau ist noch nicht bereit."));
+    const id = uid();
+    const t = setTimeout(() => { window.removeEventListener("message", on); rej(new Error("Die Vorschau hat nicht geantwortet. Lade sie neu und versuch es noch einmal.")); }, 15000);
+    const on = e => { const d = e.data || {}; if (d.stubeId !== id) return; clearTimeout(t); window.removeEventListener("message", on); d.error ? rej(new Error(d.error)) : res(d); };
+    window.addEventListener("message", on);
+    fr.contentWindow.postMessage({ stubeExport: "snapshot", id }, "*");
+  });
+}
+// Den Schnappschuss ohne Skripte rendern und als Bild abfotografieren
+async function snapshotToPng(snap) {
+  await loadLib("html2canvas");
+  const w = Math.min(Math.max(snap.w || 800, 320), 2400), h = Math.min(Math.max(snap.h || 600, 200), 12000);
+  const box = document.createElement("iframe");
+  box.setAttribute("sandbox", "allow-same-origin");
+  box.style.cssText = `position:fixed;left:-20000px;top:0;width:${w}px;height:${h}px;border:0;visibility:hidden`;
+  document.body.append(box);
+  try {
+    await new Promise(r => { box.onload = r; box.srcdoc = snap.html; setTimeout(r, 4000); });
+    const doc = box.contentDocument;
+    try { if (doc.fonts && doc.fonts.ready) await Promise.race([doc.fonts.ready, new Promise(r => setTimeout(r, 2500))]); } catch {}
+    await Promise.all([...doc.images].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; setTimeout(r, 4000); })));
+    let bg = snap.bg; if (!bg || bg === "rgba(0, 0, 0, 0)" || bg === "transparent") bg = "#ffffff";
+    const c = await html2canvas(doc.documentElement, { scale: 2, backgroundColor: bg, useCORS: true, logging: false, width: w, height: h, windowWidth: w, windowHeight: h });
+    return { png: c.toDataURL("image/png"), w: c.width, h: c.height };
+  } finally { box.remove(); }
+}
+async function exportArtifact(fr, title, kind, btn) {
+  await withBusy(btn, async () => {
+    const r = await snapshotToPng(await exportFrame(fr));
+    const b64 = r.png.split(",")[1];
+    if (kind === "png") return deliverFile({ name: slug(title) + ".png", b64, type: "image/png" });
+    await loadLib("jspdf");
+    const { jsPDF } = window.jspdf;
+    const landscape = r.w > r.h * 1.1;
+    const pdf = new jsPDF({ orientation: landscape ? "landscape" : "portrait", unit: "mm", format: "a4" });
+    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+    const imgH = r.h * pw / r.w;
+    if (imgH <= ph * 1.08) { const s = Math.min(pw / r.w, ph / r.h); const w = r.w * s, h = r.h * s; pdf.addImage(r.png, "PNG", (pw - w) / 2, (ph - h) / 2, w, h); }
+    else { let y = 0; while (y < imgH) { if (y > 0) pdf.addPage(); pdf.addImage(r.png, "PNG", 0, -y, pw, imgH); y += ph; } }
+    const blob = pdf.output("blob");
+    return deliverFile({ name: slug(title) + ".pdf", b64: await blobToB64(blob), type: "application/pdf" });
+  });
+}
+async function deliverFile(f) {
+  if (canShareFiles() && /iPhone|iPad|iPod/.test(navigator.userAgent)) { try { await shareFile(f); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+  await downloadFile(f);
 }
 
 /* ---------- Composer ---------- */
@@ -1409,12 +1693,19 @@ $("#attachBtn").onclick = () => $("#fileInput").click();
 $("#webBtn").onclick = () => { webOn = !webOn; updateWebBtn(); toast(webOn ? "Websuche an" : "Websuche aus"); };
 $("#modelSelect").onchange = updateWebBtn;
 $("#fileInput").onchange = async e => {
-  for (const f of [...e.target.files].slice(0, 5)) { try { pending.push(await shrinkImage(f)); } catch { toast("Bild konnte nicht gelesen werden"); } }
-  e.target.value = ""; renderPreviews(); updateSend();
+  const list = [...e.target.files].slice(0, 6); e.target.value = "";
+  const btn = $("#attachBtn"); btn.disabled = true;
+  for (const f of list) {
+    const ph = document.createElement("span"); ph.className = "fchip loading"; ph.textContent = "Liest " + f.name + " …"; $("#previews").append(ph);
+    try { pending.push(await readAttachment(f)); }
+    catch (err) { toast(errText(err) || "Die Datei konnte nicht gelesen werden", { err: true }); logError("Datei konnte nicht gelesen werden: " + f.name, err && (err.stack || err.message)); }
+    ph.remove();
+  }
+  btn.disabled = false; renderPreviews(); updateSend();
 };
 function renderPreviews() {
   const pv = $("#previews");
-  pv.innerHTML = pending.map((p, i) => `<div><img src="data:${p.media_type};base64,${p.data}" alt=""><button data-i="${i}" aria-label="Bild entfernen">×</button></div>`).join("");
+  pv.innerHTML = pending.map((p, i) => p.file ? fileChip(p, true, i) : `<div><img src="data:${p.media_type};base64,${p.data}" alt=""><button data-i="${i}" aria-label="Bild entfernen">×</button></div>`).join("");
   pv.querySelectorAll("button").forEach(b => b.onclick = () => { pending.splice(+b.dataset.i, 1); renderPreviews(); updateSend(); });
 }
 function shrinkImage(file) {
@@ -1438,7 +1729,9 @@ function systemPrompt(web, tools = [], cur0 = null) {
   let s = `Du bist ein hilfreicher Assistent in der Familien-App „Stube“. Du sprichst gerade mit ${me.name}. Heute ist ${date}. Antworte auf Deutsch, außer die Person schreibt in einer anderen Sprache.`;
   if (web) s += "\n\nDu kannst im Internet suchen. Nutze die Suche für aktuelle Informationen. Die Quellen werden automatisch unter deiner Antwort angezeigt, liste sie nicht noch einmal auf.";
   s += "\n\n" + FILE_PROMPT;
-  if (S.artifacts !== false) s += "\n\n" + ARTIFACT_PROMPT;
+  if (tools.some(t => t.name === "erstelle_dokument")) s += "\nWichtig: Für Präsentationen (PowerPoint), Referate, Handouts, Bewerbungen, Arbeitsblätter, Excel-Tabellen mit Formeln oder Diagrammen und gestaltete Word- oder PDF-Dokumente nutze das Werkzeug erstelle_dokument. Den ~~~~datei-Block nur noch für einfache Text-, CSV-, Markdown-, JSON- oder HTML-Dateien.";
+  s += "\n\nAngehängte Dateien der Person (PDF, Word, Excel, PowerPoint, Text) stehen dir im Chat zur Verfügung; beziehe dich darauf. Schreibe mathematische Formeln in LaTeX zwischen $…$ (im Satz) oder $$…$$ (als eigene Zeile), sie werden dann sauber dargestellt.";
+  if (S.artifacts !== false) s += "\n\n" + ARTIFACT_PROMPT + "\nPlakate, Flyer, Einladungen, Urkunden, Lernplakate und Handouts gestaltest du als html-Artefakt im A4-Format (Hochformat 794 × 1123 Pixel, mit @page { size: A4 } fürs Drucken), mit großen, gut lesbaren Schriften und kräftigen Farben. Nutze Emojis, CSS-Formen oder eingebettete SVG-Grafiken statt externer Bilder. Die Person kann das Artefakt mit den Buttons darunter als Bild oder PDF speichern und drucken.";
   s += "\n\n" + (tools.length ? toolsPrompt(tools, cur0)
     : "Fotos, Videos oder Musikdateien kannst du in dieser App gerade nicht erzeugen. Biete stattdessen zum Beispiel eine Zeichnung als SVG-Artefakt an. Hinweise in eckigen Klammern wie „[Bild erstellt …]“ stehen für Medien, die die App früher erzeugt hat.");
   if (me.kid) s += "\n\n" + KID_PROMPT;
@@ -1447,17 +1740,18 @@ function systemPrompt(web, tools = [], cur0 = null) {
 }
 // neutraler Verlauf: [{role, text, images}]
 function apiMessages() {
-  let msgs = cur.messages.filter(m => !m.error && !m.offer && !m.job && (m.text || m.note || (m.images || []).length));
+  let msgs = cur.messages.filter(m => !m.error && !m.offer && !m.job && (m.text || m.note || (m.images || []).length || (m.files || []).length));
   msgs = msgs.slice(-Math.max(2, S.history || 30));
   while (msgs.length && msgs[0].role !== "user") msgs.shift();
   const out = [];
   for (const m of msgs) {
     const text = [m.note, m.text].filter(Boolean).join("\n") || "";
     const imgs = m.role === "user" ? (m.images || []) : [];
-    if (!text && !imgs.length) continue;
+    const files = m.role === "user" ? (m.files || []) : [];
+    if (!text && !imgs.length && !files.length) continue;
     const last = out[out.length - 1];
-    if (last && last.role === m.role) { last.text = [last.text, text].filter(Boolean).join("\n\n"); last.images = last.images.concat(imgs); }
-    else out.push({ role: m.role, text, images: imgs.slice() });
+    if (last && last.role === m.role) { last.text = [last.text, text].filter(Boolean).join("\n\n"); last.images = last.images.concat(imgs); last.files = (last.files || []).concat(files); }
+    else out.push({ role: m.role, text, images: imgs.slice(), files: files.slice() });
   }
   if (out.length && out[out.length - 1].role === "assistant") out.pop();
   return out;
@@ -1507,17 +1801,24 @@ async function readSSE(res, onEvent) {
 
 function anthMsgs(msgs) {
   return msgs.map(x => ({ role: x.role, content: [
+    ...(x.files || []).map(f => f.kind === "pdf" && f.data
+      ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: f.data }, title: f.name }
+      : { type: "text", text: fileTag(f) }),
     ...(x.images || []).map(i => ({ type: "image", source: { type: "base64", media_type: i.media_type, data: i.data } })),
     ...(x.text ? [{ type: "text", text: x.text }] : []),
-  ] }));
+  ] })).map(x => x.content.length ? x : { role: x.role, content: [{ type: "text", text: "…" }] });
 }
 function oaMsgs(msgs) {
-  return msgs.map(x => ({
-    role: x.role,
-    content: x.role === "user" && (x.images || []).length
-      ? [...(x.text ? [{ type: "text", text: x.text }] : []), ...x.images.map(i => ({ type: "image_url", image_url: { url: `data:${i.media_type};base64,${i.data}` } }))]
-      : x.text,
-  }));
+  return msgs.map(x => {
+    const fileText = (x.files || []).map(fileTag).join("\n\n");
+    const text = [fileText, x.text].filter(Boolean).join("\n\n");
+    return {
+      role: x.role,
+      content: x.role === "user" && (x.images || []).length
+        ? [...(text ? [{ type: "text", text }] : []), ...x.images.map(i => ({ type: "image_url", image_url: { url: `data:${i.media_type};base64,${i.data}` } }))]
+        : text,
+    };
+  });
 }
 const TOOL_LABEL = { erstelle_bild: "das Bild", erstelle_video: "das Video", erstelle_musik: "die Musik" };
 
@@ -1648,7 +1949,7 @@ async function complete(m, sys, userText, signal) {
 async function routeRequest(signal) {
   const last = cur.messages[cur.messages.length - 1];
   const empty = { in: 0, out: 0, cost: 0 };
-  if ((last.images || []).length) return { cat: "komplex", usage: empty };
+  if ((last.images || []).length || (last.files || []).length) return { cat: "komplex", usage: empty };
   const prev = cur.messages.slice(-3, -1).filter(m => !m.error).map(m => (m.role === "user" ? "Person: " : "Assistent: ") + (m.text || "").slice(0, 300)).join("\n");
   const content = (prev ? "Bisheriger Verlauf (gekürzt):\n" + prev + "\n\n" : "") + "Letzte Nachricht:\n" + (last.text || "").slice(0, 1500);
   const rm = modelByKey(S.router.model);
@@ -1664,11 +1965,12 @@ async function send() {
   if (budgetBlocked()) return;
   if (STT.active) STT.stop();
   const viaVoice = STT.used; STT.used = false;
-  if (!cur) { cur = { id: uid(), title: (text || "Bild").slice(0, 48), updated: Date.now(), messages: [] }; chats.push(cur); }
+  if (!cur) { cur = { id: uid(), title: (text || (pending[0] && pending[0].file ? pending[0].name : "Bild")).slice(0, 48), updated: Date.now(), messages: [] }; chats.push(cur); }
   const choice = $("#modelSelect").value;
-  const userImgs = pending;
+  const userImgs = pending.filter(x => !x.file), userFiles = pending.filter(x => x.file);
   const intent = imageIntent(text, userImgs);
-  cur.messages.push({ role: "user", text, images: pending });
+  if (!cur.messages.length && !text && userFiles.length) cur.title = userFiles[0].name.slice(0, 48);
+  cur.messages.push({ role: "user", text, images: userImgs, files: userFiles });
   pending = []; renderPreviews(); input.value = ""; autoGrow(); updateWebBtn();
   cur.updated = Date.now(); await saveChats();
   renderChat();
@@ -1740,10 +2042,11 @@ function modelCatalog(tools, cur0) {
   if (has("erstelle_video")) { lines.push("Videos (Preis pro Sekunde, Gesamtpreis hängt von der Länge ab):"); mediaModels("video").forEach(m => { const d = defaultDur(m), c = estCost(m, { kind: "video", dur: d }); lines.push(row(m, `${usd(m.imgP || 0.1)} pro Sekunde, also ${usd(c)} für ${d} Sek.`, ` · ${priceLevel(c)} · mögliche Längen: ${(m.durations || [5, 10]).join(", ")} Sek.`)); }); }
   if (has("erstelle_musik")) { lines.push("Musik (Preis pro Stück):"); mediaModels("music").forEach(m => lines.push(row(m, usd(estCost(m, { kind: "music" })), ` · ${priceLevel(estCost(m, { kind: "music" }))}`))); }
   if (has("programmieren")) { lines.push("Programmierung (Preis für eine typische Aufgabe; große Apps kosten mehr):"); codeModels().filter(m => !cur0 || m.key !== cur0.key).forEach(m => lines.push(row(m, isFree(m) ? "gratis (kann langsamer oder überlastet sein)" : usd(taskCost(m)), ` · ${priceLevel(taskCost(m))}`))); }
+  if (has("erstelle_dokument")) { lines.push("Office-Dokumente (Präsentation, Word, Excel, PDF; Preis für ein typisches Dokument, große Dokumente kosten mehr):"); docModels().forEach(m => lines.push(row(m, usd(docCost(m)), ` · ${priceLevel(docCost(m))}`))); }
   return lines.join("\n");
 }
 function toolsPrompt(tools, cur0) {
-  const names = tools.map(t => ({ erstelle_bild: "Bilder", erstelle_video: "Videos", erstelle_musik: "Musik", programmieren: "Programmierung" }[t.name]));
+  const names = tools.map(t => ({ erstelle_bild: "Bilder", erstelle_video: "Videos", erstelle_musik: "Musik", programmieren: "Programmierung", erstelle_dokument: "Office-Dokumente" }[t.name]));
   const left = budgetLeft();
   let s = `Du kannst über Werkzeuge Spezial-Modelle für ${names.join(", ")} steuern. Setze sie selbständig ein, wenn eine Aufgabe sie braucht, auch mehrere nacheinander in derselben Antwort (z. B. erst eine Geschichte schreiben, dann ein passendes Bild erstellen, dann ein Lied dazu). Sag vorher in einem kurzen Satz, was du als Nächstes machst. Schreibe den Werkzeugen ausführliche, präzise Beschreibungen. Erzeuge Medien nur, wenn sie gewünscht sind oder klar zur Aufgabe gehören. Hinweise in eckigen Klammern wie „[Bild erstellt …]“ stehen für Medien, die die App bereits erzeugt und angezeigt hat.
 
@@ -1769,6 +2072,7 @@ function refFor(sel) {
 }
 async function runTool(c) {
   if (c.name === "programmieren") return runCodeTool(c.input || {});
+  if (c.name === "erstelle_dokument") return runDocTool(c.input || {});
   const kind = { erstelle_bild: "image", erstelle_video: "video", erstelle_musik: "music" }[c.name];
   if (!kind || !kindAllowed(kind)) return "Dieses Werkzeug ist hier nicht verfügbar.";
   const a = c.input || {};
@@ -1864,7 +2168,8 @@ async function runChat(choice, viaVoice) {
     if (!m) throw { msg: "Kein Modell verfügbar. Prüfe die Modelle und Anbieter in den Einstellungen." };
     const p = provOf(m);
     web = web && p.type === "anthropic" && S.webSearch !== false;
-    const tools = toolsAvailable() || codeModels().some(x => x.key !== m.key) ? mediaTools(m).filter(t => t.name === "programmieren" || toolsAvailable()) : [];
+    const tools = mediaTools(m);
+    if (docsAvailable()) tools.push(docTool());
     const sys = systemPrompt(web, tools, m);
     const native = p.type === "anthropic" ? anthMsgs(apiMessages()) : oaMsgs(apiMessages());
     seg.st.textContent = (cat ? "Automatisch → " : "") + (m.label || m.id) + (web ? " · mit Websuche" : "");
@@ -2330,6 +2635,8 @@ function showSettings() {
 
     <div class="card" id="imgCard"><h2>Spezial-Modelle: Programmierung, Bilder, Videos, Musik</h2><p class="hint">Die Stube setzt selbständig Spezial-Modelle ein, wenn eine Aufgabe sie braucht, und wechselt danach wieder zurück. Das Grundmodell kennt dabei die Preise, achtet auf Preis-Leistung und fragt nach, wenn mehrere Modelle sinnvoll wären. Programmier-Modelle gibt es bei allen Anbietern, Bilder über OpenAI oder OpenRouter, Videos und Musik über OpenRouter.</p>
       <label class="check"><input type="checkbox" id="sImgOffer" ${S.imageOffer !== false ? "checked" : ""}><span>Spezial-Modelle einsetzen, wenn eine Aufgabe sie braucht</span></label>
+      <label class="check"><input type="checkbox" id="sDocs" ${S.docs !== false ? "checked" : ""}><span><b>Office-Dokumente erstellen</b><br><span style="color:var(--ink2);font-size:14px">Echte PowerPoint-, Word-, Excel- und PDF-Dateien, gebaut von Claude mit Anthropics Office-Werkzeugen. Braucht einen Claude-Schlüssel.</span></span></label>
+      ${docModels().length ? `<label class="f" for="sDocModel">Modell für Office-Dokumente</label><select class="inp" id="sDocModel">${docModels().map(m => `<option value="${esc(m.key)}" ${m.key === (pickDocModel() || {}).key ? "selected" : ""}>${esc(m.label || m.id)} · ${esc(usd(docCost(m)))} pro Dokument</option>`).join("")}</select>` : ""}
       <label class="f" for="sAutoLimit">Ohne Nachfrage starten bis</label>
       <select class="inp" id="sAutoLimit">${[[0, "Immer vorher fragen"], [0.02, "2 Cent pro Schritt"], [0.05, "5 Cent pro Schritt"], [0.1, "10 Cent pro Schritt (empfohlen)"], [0.5, "50 Cent pro Schritt"], [2, "2 $ pro Schritt"]].map(([v, l]) => `<option value="${v}" ${(S.autoLimit != null ? +S.autoLimit : 0.1) == v ? "selected" : ""}>${l}</option>`).join("")}</select>
       <p class="hint" style="margin:6px 0 0">Teurere Schritte, zum Beispiel Videos, zeigt die Stube erst mit Preis zur Bestätigung an.</p>
@@ -2376,6 +2683,7 @@ function showSettings() {
       m[k] = k === "on" ? inp.checked : (k === "inP" || k === "outP" || k === "imgP") ? parseFloat(inp.value) || 0 : inp.value.trim();
     });
     S.imageOffer = q("#sImgOffer").checked; S.autoLimit = +q("#sAutoLimit").value;
+    S.docs = q("#sDocs").checked; if (q("#sDocModel")) S.docModel = q("#sDocModel").value;
     ["code", "image", "video", "music"].forEach(k => { if (q("#sM_" + k)) S[k + "Model"] = q("#sM_" + k).value; });
     S.defaultModel = q("#sDef").value; S.maxTokens = +q("#sMax").value || 16000; S.history = +q("#sHist").value || 30;
     S.router.model = q("#rModel").value; ROUTES.forEach(([k]) => { S.router[k] = q("#r_" + k).value; });
@@ -2707,6 +3015,7 @@ function editProfile(p) {
       <label class="check"><input type="checkbox" id="pKid" ${d.kid ? "checked" : ""}><span><b>Kindermodus</b><br><span style="color:var(--ink2);font-size:14px">Altersgerechte, sichere Antworten und Hilfe beim Lernen statt fertiger Lösungen.</span></span></label>
       <label class="check"><input type="checkbox" id="pExt" ${d.external !== false ? "checked" : ""}><span><b>Auch Nicht-Claude-Modelle erlauben</b><br><span style="color:var(--ink2);font-size:14px">Gratis- und Open-Source-Modelle, ChatGPT, Gemini usw. Für Kinder nicht empfohlen, weil deren Schutzmechanismen oft schwächer sind.</span></span></label>
       <span class="f">Spezial-Modelle erlauben</span>
+      <label class="check" style="margin:6px 0"><input type="checkbox" id="pDocs" ${d.docs !== false ? "checked" : ""}><span>Office-Dokumente erstellen <span style="color:var(--ink2);font-size:14px">· Präsentationen, Word, Excel, PDF · ca. 5–30 Cent</span></span></label>
       <label class="check" style="margin:6px 0"><input type="checkbox" id="pImg" ${d.images !== false ? "checked" : ""}><span>Bilder erstellen <span style="color:var(--ink2);font-size:14px">· ca. 1–5 Cent pro Bild</span></span></label>
       <label class="check" style="margin:6px 0"><input type="checkbox" id="pVid" ${d.videos !== false ? "checked" : ""}><span>Videos erstellen <span style="color:var(--ink2);font-size:14px">· oft 20 Cent bis 1 $ pro Video</span></span></label>
       <label class="check" style="margin:6px 0 12px"><input type="checkbox" id="pMus" ${d.music !== false ? "checked" : ""}><span>Musik erstellen <span style="color:var(--ink2);font-size:14px">· ca. 4–8 Cent pro Stück</span></span></label>
@@ -2725,7 +3034,7 @@ function editProfile(p) {
   sc.querySelector("[data-close]").onclick = showSettings;
   sc.querySelector("#pSave").onclick = async () => {
     d.name = sc.querySelector("#pName").value.trim(); d.pin = sc.querySelector("#pPin").value.trim();
-    d.kid = sc.querySelector("#pKid").checked; d.external = sc.querySelector("#pExt").checked; d.images = sc.querySelector("#pImg").checked; d.videos = sc.querySelector("#pVid").checked; d.music = sc.querySelector("#pMus").checked; d.model = sc.querySelector("#pModel").value; d.prompt = sc.querySelector("#pPrompt").value;
+    d.kid = sc.querySelector("#pKid").checked; d.external = sc.querySelector("#pExt").checked; d.images = sc.querySelector("#pImg").checked; d.videos = sc.querySelector("#pVid").checked; d.music = sc.querySelector("#pMus").checked; d.docs = sc.querySelector("#pDocs").checked; d.model = sc.querySelector("#pModel").value; d.prompt = sc.querySelector("#pPrompt").value;
     d.limit = Math.max(0, parseFloat(String(sc.querySelector("#pLimit").value).replace(",", ".")) || 0);
     if (!d.name) return toast("Bitte gib einen Namen ein");
     if (d.pin && !/^\d{4,6}$/.test(d.pin)) return toast("Die PIN braucht 4 bis 6 Ziffern");
