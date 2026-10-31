@@ -442,6 +442,24 @@ function defaultModels() {
   ];
 }
 const KID_PROMPT = "Du sprichst mit einem Kind oder Jugendlichen. Antworte freundlich, geduldig und altersgerecht in einfacher Sprache. Vermeide Inhalte, die für Kinder ungeeignet sind (z. B. explizite Gewalt, Sexualität, Drogen, gefährliche Anleitungen). Bei Hausaufgaben erkläre den Lösungsweg und stelle Rückfragen, statt nur die fertige Lösung vorzugeben. Wenn das Kind von Sorgen, Angst, Mobbing oder etwas Gefährlichem erzählt, nimm es ernst und ermutige es, mit seinen Eltern oder einer anderen Vertrauensperson zu sprechen.";
+// Alter aus dem Geburtsjahr (ungefähr, das genaue Datum kennt die App nicht)
+function kidAge(p) { const y = +(p && p.birthYear); return y > 1900 ? new Date().getFullYear() - y : 0; }
+const AGE_TIERS = [
+  { max: 9, text: "Das Kind ist etwa {a} Jahre alt und geht in die Grundschule. Es liest vielleicht noch langsam. Schreibe deshalb sehr kurz: wenige, kurze Sätze mit einfachen, alltäglichen Wörtern, keine Fremdwörter und keine langen Listen. Erkläre mit anschaulichen Vergleichen aus der Welt eines Kindes (Spielzeug, Tiere, Familie, Schule). Ein paar passende Emojis sind gut. Sei warm, ermutigend und lobe Fortschritte. Stell höchstens eine Frage auf einmal. Bei Hausaufgaben hilf in kleinen Schritten, gib Tipps statt Lösungen und lass das Kind selbst rechnen oder schreiben. Bleib bei kindgerechten Themen; wenn etwas Ernstes oder Beängstigendes zur Sprache kommt (Krieg, Tod, Krankheit, Unfälle), antworte behutsam, ohne erschreckende Einzelheiten, und schlage vor, mit Mama oder Papa darüber zu sprechen." },
+  { max: 12, text: "Das Kind ist etwa {a} Jahre alt (ungefähr 4. bis 7. Klasse). Schreibe klar und gut verständlich in nicht zu langen Absätzen. Fachbegriffe sind in Ordnung, wenn du sie kurz erklärst. Nimm das Kind ernst und sprich nicht babyhaft. Beispiele aus Schule, Hobbys, Spielen und Natur helfen. Bei Hausaufgaben erkläre den Weg und lass das Kind die Schritte selbst machen; prüfe gern mit einer kleinen Rückfrage, ob es verstanden hat. Ernste Themen (Geschichte, Nachrichten, Körper und Pubertät) darfst du sachlich und altersgerecht erklären, ohne drastische Details." },
+  { max: 17, text: "Die Person ist etwa {a} Jahre alt, also jugendlich. Sprich mit ihr auf Augenhöhe, respektvoll und nicht kindlich, ohne gekünstelte Jugendsprache. Antworte so ausführlich und anspruchsvoll, wie es die Frage verlangt; Fachsprache und Schulniveau der Mittel- oder Oberstufe sind in Ordnung. Bei Hausaufgaben, Referaten und Prüfungsvorbereitung hilf beim Verstehen und Strukturieren, statt ganze Aufgaben oder Texte zum Abgeben fertig zu schreiben; bei Lernfragen und Erklärungen darfst du gründlich sein. Sensible Themen (Liebe, Sexualität, Drogen, psychische Gesundheit, Politik) darfst du sachlich, aufklärend und ohne Moralpredigt besprechen, aber ohne explizite oder gefährliche Inhalte. Bei Anzeichen von Krisen, Selbstverletzung oder Gefahr nimm das sehr ernst und nenne vertrauenswürdige Anlaufstellen wie die Nummer gegen Kummer (116 111) oder die Eltern." }
+];
+function kidPrompt(p) {
+  const a = kidAge(p), t = a > 0 && AGE_TIERS.find(x => a <= x.max);
+  return t ? KID_PROMPT.replace(" in einfacher Sprache", "") + "\n" + t.text.replace("{a}", a) : KID_PROMPT;
+}
+function kidMediaHint(p) {
+  const a = kidAge(p);
+  if (a > 0 && a <= 9) return ". Für ein Grundschulkind: freundlich, fröhlich, bunt, nichts Gruseliges, ohne Gewalt.";
+  if (a > 0 && a <= 12) return ". Für ein Kind von etwa " + a + " Jahren: kindgerecht, jugendfrei, ohne Gewalt und Horror.";
+  if (a > 12 && a <= 17) return ". Für Jugendliche geeignet: jugendfrei, ohne explizite Gewalt oder Sexualität.";
+  return ". Kinderfreundlich, jugendfrei, ohne Gewalt.";
+}
 
 const FILE_PROMPT = `Du kannst Dateien erstellen, die die Person herunterladen kann. Tu das nur, wenn sie eine Datei, ein Dokument zum Herunterladen oder ein bestimmtes Dateiformat möchte. Schreibe dafür den gesamten Inhalt in einen Block, der mit einer eigenen Zeile ~~~~datei:DATEINAME.ENDUNG beginnt und mit einer eigenen Zeile ~~~~ endet. Verwende genau vier Tilden. Schreibe außerhalb des Blocks höchstens ein, zwei Sätze dazu und wiederhole den Inhalt nicht.
 Unterstützte Formate:
@@ -2117,7 +2135,7 @@ function systemPrompt(web, tools = [], cur0 = null) {
   if (S.artifacts !== false) s += "\n\n" + ARTIFACT_PROMPT + "\nPlakate, Flyer, Einladungen, Urkunden, Lernplakate und Handouts gestaltest du als html-Artefakt im A4-Format (Hochformat 794 × 1123 Pixel, mit @page { size: A4 } fürs Drucken), mit großen, gut lesbaren Schriften und kräftigen Farben. Nutze Emojis, CSS-Formen oder eingebettete SVG-Grafiken statt externer Bilder. Die Person kann das Artefakt mit den Buttons darunter als Bild oder PDF speichern und drucken.";
   s += "\n\n" + (tools.length ? toolsPrompt(tools, cur0)
     : "Fotos, Videos oder Musikdateien kannst du in dieser App gerade nicht erzeugen. Biete stattdessen zum Beispiel eine Zeichnung als SVG-Artefakt an. Hinweise in eckigen Klammern wie „[Bild erstellt …]“ stehen für Medien, die die App früher erzeugt hat.");
-  if (me.kid) s += "\n\n" + KID_PROMPT;
+  if (me.kid) s += "\n\n" + kidPrompt(me);
   if (me.prompt && me.prompt.trim()) s += "\n\nZusätzliche Hinweise:\n" + me.prompt.trim();
   return s;
 }
@@ -2771,7 +2789,7 @@ async function createMedia(o, inLoop = false) {
   const signal = streaming.signal;
   const reply = { role: "assistant", text: "", kind, imgPrompt: o.prompt, imgModel: m.key, imgAspect: o.aspect, dur: o.dur, note: `[${KIND_NAME[kind]} ${o.refs && o.refs.length && kind === "image" ? "verändert" : "erstellt"} mit ${m.label || m.id}, Beschreibung: „${o.prompt}“${o.lyrics ? ", mit Liedtext" : ""}]` };
   let prompt = o.prompt;
-  if (me.kid) prompt += ". Kinderfreundlich, jugendfrei, ohne Gewalt.";
+  if (me.kid) prompt += kidMediaHint(me);
   let result;
   try {
     let r;
@@ -3051,7 +3069,7 @@ function showSettings() {
     <header class="topbar">${BACK}<div class="title">Einstellungen</div></header>
 
     <div class="card"><h2>Profile</h2><p class="hint">Jede Person hat eigene Chats. Eine PIN verhindert, dass andere sie lesen.</p>
-      <div class="plist">${P.map(p => `<button class="pitem" data-pid="${p.id}"><span class="avatar" style="background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${[p.kid ? "Kindermodus" : "", p.pin ? "PIN" : "", p.model ? "festes Modell" : "", p.external === false ? "nur Claude" : "", p.images === false && p.videos === false && p.music === false ? "keine Spezial-Modelle" : "", +p.limit > 0 ? "Budget " + fmtUSD(+p.limit) : ""].filter(Boolean).join(", ") || "Standard"}</span></span></button>`).join("")}</div>
+      <div class="plist">${P.map(p => `<button class="pitem" data-pid="${p.id}"><span class="avatar" style="background:${p.color}">${esc(p.name[0] || "?").toUpperCase()}</span><span style="flex:1"><b>${esc(p.name)}</b><br><span class="meta">${[p.kid ? "Kindermodus" + (kidAge(p) > 0 ? ", " + kidAge(p) + " Jahre" : "") : "", p.pin ? "PIN" : "", p.model ? "festes Modell" : "", p.external === false ? "nur Claude" : "", p.images === false && p.videos === false && p.music === false ? "keine Spezial-Modelle" : "", +p.limit > 0 ? "Budget " + fmtUSD(+p.limit) : ""].filter(Boolean).join(", ") || "Standard"}</span></span></button>`).join("")}</div>
       <div class="btnrow"><button class="btn ghost" id="addP">Profil hinzufügen</button></div>
     </div>
 
@@ -3651,6 +3669,11 @@ function editProfile(p) {
       <label class="f">Farbe</label><div class="swatches">${COLORS.map(c => `<button data-c="${c}" style="background:${c}" class="${c === d.color ? "on" : ""}" aria-label="Farbe ${c}"></button>`).join("")}</div>
       <label class="f" for="pPin">PIN (optional)</label><input class="inp" id="pPin" inputmode="numeric" maxlength="6" placeholder="4–6 Ziffern" value="${esc(d.pin)}">
       <label class="check"><input type="checkbox" id="pKid" ${d.kid ? "checked" : ""}><span><b>Kindermodus</b><br><span style="color:var(--ink2);font-size:14px">Altersgerechte, sichere Antworten und Hilfe beim Lernen statt fertiger Lösungen.</span></span></label>
+      <div id="pAgeBox" style="${d.kid ? "" : "display:none"}">
+        <label class="f" for="pBirth">Geburtsjahr</label>
+        <input class="inp" id="pBirth" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="z. B. ${new Date().getFullYear() - 8}" value="${esc(d.birthYear || "")}">
+        <p class="hint" style="margin:6px 0 10px" id="pAgeHint">${kidAge(d) > 0 ? `Etwa ${kidAge(d)} Jahre. ` : ""}Die KI passt Sprache, Länge, Ton und Themen ans Alter an (Grundschule, 10–12, 13–17). Das Alter rechnet die App jedes Jahr selbst neu aus.</p>
+      </div>
       <label class="check"><input type="checkbox" id="pExt" ${d.external !== false ? "checked" : ""}><span><b>Auch Nicht-Claude-Modelle erlauben</b><br><span style="color:var(--ink2);font-size:14px">Gratis- und Open-Source-Modelle, ChatGPT, Gemini usw. Für Kinder nicht empfohlen, weil deren Schutzmechanismen oft schwächer sind.</span></span></label>
       <span class="f">Spezial-Modelle erlauben</span>
       <label class="check" style="margin:6px 0"><input type="checkbox" id="pDocs" ${d.docs !== false ? "checked" : ""}><span>Office-Dokumente erstellen <span style="color:var(--ink2);font-size:14px">· Präsentationen, Word, Excel, PDF · ca. 5–30 Cent</span></span></label>
@@ -3668,11 +3691,15 @@ function editProfile(p) {
     <div class="btnrow"><button class="btn" id="pSave">${isNew ? "Profil anlegen" : "Speichern"}</button>${!isNew && P.length > 1 ? `<button class="btn danger" id="pDel">Profil löschen</button>` : ""}</div>
   </div>`);
   sc.querySelectorAll(".swatches button").forEach(b => b.onclick = () => { d.color = b.dataset.c; sc.querySelectorAll(".swatches button").forEach(x => x.classList.toggle("on", x === b)); });
-  sc.querySelector("#pKid").onchange = e => { if (e.target.checked) { ["#pExt", "#pImg", "#pVid", "#pMus"].forEach(x => { sc.querySelector(x).checked = false; }); } };
+  sc.querySelector("#pBirth").oninput = e => { const a = kidAge({ birthYear: e.target.value }); sc.querySelector("#pAgeHint").textContent = (a > 0 && a < 120 ? `Etwa ${a} Jahre. ` : "") + "Die KI passt Sprache, Länge, Ton und Themen ans Alter an (Grundschule, 10–12, 13–17). Das Alter rechnet die App jedes Jahr selbst neu aus."; };
+  sc.querySelector("#pKid").onchange = e => { sc.querySelector("#pAgeBox").style.display = e.target.checked ? "" : "none"; if (e.target.checked) { ["#pExt", "#pImg", "#pVid", "#pMus"].forEach(x => { sc.querySelector(x).checked = false; }); } };
   sc.querySelector("[data-close]").onclick = showSettings;
   sc.querySelector("#pSave").onclick = async () => {
     d.name = sc.querySelector("#pName").value.trim(); d.pin = sc.querySelector("#pPin").value.trim();
     d.kid = sc.querySelector("#pKid").checked; d.external = sc.querySelector("#pExt").checked; d.images = sc.querySelector("#pImg").checked; d.videos = sc.querySelector("#pVid").checked; d.music = sc.querySelector("#pMus").checked; d.docs = sc.querySelector("#pDocs").checked; d.model = sc.querySelector("#pModel").value; d.prompt = sc.querySelector("#pPrompt").value;
+    const by = sc.querySelector("#pBirth").value.trim(), yNow = new Date().getFullYear();
+    if (by && !(/^\d{4}$/.test(by) && +by > yNow - 30 && +by <= yNow)) return toast("Bitte ein gültiges Geburtsjahr eingeben, z. B. " + (yNow - 8));
+    d.birthYear = by ? +by : "";
     d.limit = Math.max(0, parseFloat(String(sc.querySelector("#pLimit").value).replace(",", ".")) || 0);
     if (!d.name) return toast("Bitte gib einen Namen ein");
     if (d.pin && !/^\d{4,6}$/.test(d.pin)) return toast("Die PIN braucht 4 bis 6 Ziffern");

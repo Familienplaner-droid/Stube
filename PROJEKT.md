@@ -13,6 +13,7 @@ Stand: 30.10.2026
 
 ## Funktionen (fertig)
 - **Bedienung:** Oberfläche wie die Claude-App, Profile mit Farbe, PIN, Kindermodus und Monatsbudget, Admin-PIN für die Einstellungen
+- **Alter der Kinder:** Feld „Geburtsjahr“ im Kindermodus; `kidPrompt(p)` schickt je nach Alter eigene Regeln mit (bis 9 / 10–12 / 13–17: Satzlänge, Ton, Themen, Hausaufgabenhilfe), `kidMediaHint(p)` passt Bild-, Video- und Musik-Beschreibungen an; gilt für alle Modelle, auch Code- und Dokument-Modell
 - **Anbieter und Modellwahl:** Mehrere Anbieter und Modelle; **„Automatisch“** als Standard: ein günstiges Verteiler-Modell wählt pro Nachricht einfach / aktuell / code / komplex / medien
 - **Websuche:** für Claude-Modelle
 - **Artefakte:** HTML, React, SVG, Mermaid in einer Sandbox, Export als PNG, PDF oder Druck
