@@ -2176,7 +2176,8 @@ function friendlyError0(e) {
   if (status === 429) return `${pn}: Zu viele Anfragen oder Gratis-Limit erreicht. Warte etwas oder wähle ein anderes Modell. (${msg})`;
   if (status === 529 || status === 503) return `${pn} ist gerade überlastet. Versuch es gleich noch einmal.`;
   if (/web.?search/i.test(msg)) return "Die Websuche ist nicht freigeschaltet. Aktiviere sie in der Claude Console unter Einstellungen → Privatsphäre, oder schalte sie in der App aus. (" + msg + ")";
-  if (status === 404 || /model/i.test(msg)) return `Das Modell ist bei ${pn} nicht verfügbar. Prüfe die Modell-ID in den Einstellungen. (${msg})`;
+  if (/duration/i.test(msg)) return `Diese Videolänge kann das Modell nicht. Wähle eine andere Länge. (${msg})`;
+  if (status === 404 || /(model|endpoint).{0,40}(not found|not exist|unknown|invalid|not available|unavailable)|no (such )?(model|endpoints)|(not a |in)valid model/i.test(msg)) return `Das Modell ist bei ${pn} nicht verfügbar. Prüfe die Modell-ID in den Einstellungen. (${msg})`;
   if (status === 0 && !msg) return "Keine Antwort vom Anbieter. Prüfe die Adresse in den Einstellungen.";
   return `Fehler ${status || ""} bei ${pn}: ${msg || "Unbekannter Fehler"}`;
 }
@@ -2391,8 +2392,15 @@ const KIND_NAME = { image: "Bild", video: "Video", music: "Musik" };
 function kindAllowed(kind, prof = me) { return S.imageOffer !== false && prof[KIND_FLAG[kind]] !== false && mediaModels(kind, prof).length > 0; }
 function toolsAvailable() { return ["image", "video", "music"].some(k => kindAllowed(k)); }
 function defaultMediaModel(kind) { const ms = mediaModels(kind); return ms.find(m => m.key === S[kind + "Model"]) || ms[0] || null; }
-function defaultDur(m) { const ds = (m && m.durations) || [5, 10]; return ds.reduce((a, b) => Math.abs(b - 6) < Math.abs(a - 6) ? b : a, ds[0]); }
-function clampDur(m, d) { const ds = (m && m.durations) || [5, 10]; d = +d || defaultDur(m); return ds.reduce((a, b) => Math.abs(b - d) < Math.abs(a - d) ? b : a, ds[0]); }
+function durOf(m) {
+  if (m && Array.isArray(m.durations) && m.durations.length) return m.durations;
+  const id = String(m && m.id || "").replace(/^[^/]*\/(?=[^/]*\/)/, ""), k = IMG_PRESETS.find(x => x.kind === "video" && x.durations && x.id === id);
+  if (k) return k.durations;
+  if (/veo/i.test(id)) return [4, 6, 8];
+  return [5, 10];
+}
+function defaultDur(m) { const ds = durOf(m); return ds.reduce((a, b) => Math.abs(b - 6) < Math.abs(a - 6) ? b : a, ds[0]); }
+function clampDur(m, d) { const ds = durOf(m); d = +d || defaultDur(m); return ds.reduce((a, b) => Math.abs(b - d) < Math.abs(a - d) ? b : a, ds[0]); }
 // Preisstufen, damit auch Kinder Preise einordnen können
 function priceLevel(p) { p = +p || 0; return p <= 0 ? "gratis" : p < 0.02 ? "sehr günstig" : p < 0.1 ? "günstig" : p < 0.5 ? "mittel" : p < 1.5 ? "teuer" : "sehr teuer"; }
 const answerCost = m => ((m.inP || 0) * 2000 + (m.outP || 0) * 600) / 1e6;   // typische Chat-Antwort
@@ -2441,7 +2449,7 @@ function modelCatalog(tools, cur0) {
   const has = n => tools.some(t => t.name === n);
   const row = (m, price, extra = "") => `- ${m.id} („${m.label || m.id}“): ${price}${extra}`;
   if (has("erstelle_bild")) { lines.push("Bilder (Preis pro Bild):"); mediaModels("image").forEach(m => lines.push(row(m, usd(estCost(m, { kind: "image" })), ` · ${priceLevel(estCost(m, { kind: "image" }))}`))); }
-  if (has("erstelle_video")) { lines.push("Videos (Preis pro Sekunde, Gesamtpreis hängt von der Länge ab):"); mediaModels("video").forEach(m => { const d = defaultDur(m), c = estCost(m, { kind: "video", dur: d }); lines.push(row(m, `${usd(m.imgP || 0.1)} pro Sekunde, also ${usd(c)} für ${d} Sek.`, ` · ${priceLevel(c)} · mögliche Längen: ${(m.durations || [5, 10]).join(", ")} Sek.`)); }); }
+  if (has("erstelle_video")) { lines.push("Videos (Preis pro Sekunde, Gesamtpreis hängt von der Länge ab):"); mediaModels("video").forEach(m => { const d = defaultDur(m), c = estCost(m, { kind: "video", dur: d }); lines.push(row(m, `${usd(m.imgP || 0.1)} pro Sekunde, also ${usd(c)} für ${d} Sek.`, ` · ${priceLevel(c)} · mögliche Längen: ${durOf(m).join(", ")} Sek.`)); }); }
   if (has("erstelle_musik")) { lines.push("Musik (Preis pro Stück):"); mediaModels("music").forEach(m => lines.push(row(m, usd(estCost(m, { kind: "music" })), ` · ${priceLevel(estCost(m, { kind: "music" }))}`))); }
   if (has("programmieren")) { lines.push("Programmierung (Preis für eine typische Aufgabe; große Apps kosten mehr):"); codeModels().filter(m => !cur0 || m.key !== cur0.key).forEach(m => lines.push(row(m, isFree(m) ? "gratis (kann langsamer oder überlastet sein)" : usd(taskCost(m)), ` · ${priceLevel(taskCost(m))}`))); }
   if (has("erstelle_dokument")) { lines.push("Office-Dokumente (Präsentation, Word, Excel, PDF; Preis für ein typisches Dokument, große Dokumente kosten mehr):"); docModels().forEach(m => lines.push(row(m, usd(docCost(m)), ` · ${priceLevel(docCost(m))}`))); }
@@ -2741,7 +2749,7 @@ function offerEl(m) {
     <div class="btnrow"><button class="btn offer-go"></button><button class="btn ghost offer-no">${o.fromTool ? "Nicht erstellen" : "Lieber als Text antworten"}</button></div>`;
   const q = s => box.querySelector(s);
   if (!o.aspect) o.aspect = aspects.length ? aspects[0][0] : "1:1";
-  const fillDur = () => { if (kind !== "video") return; const x = modelByKey(q(".offer-model").value); const ds = (x && x.durations) || [5, 10]; const cur0 = clampDur(x, o.dur); q(".offer-dur").innerHTML = ds.map(d => `<option value="${d}" ${d === cur0 ? "selected" : ""}>${d} Sek.</option>`).join(""); o.dur = cur0; };
+  const fillDur = () => { if (kind !== "video") return; const x = modelByKey(q(".offer-model").value); const ds = durOf(x); const cur0 = clampDur(x, o.dur); q(".offer-dur").innerHTML = ds.map(d => `<option value="${d}" ${d === cur0 ? "selected" : ""}>${d} Sek.</option>`).join(""); o.dur = cur0; };
   const label = () => {
     const x = modelByKey(q(".offer-model").value); const useRef = ref && q(".offer-ref input") && q(".offer-ref input").checked;
     const est = x ? estCost(x, { kind, dur: o.dur }) : 0;
@@ -2910,8 +2918,22 @@ async function generateVideo(m, prompt, refs, aspect, dur, signal, onStatus, onJ
   const body = { model: m.id, prompt, aspect_ratio: aspect || "16:9" };
   if (dur) body.duration = dur;
   if (refs.length) body.frame_images = [{ type: "image_url", image_url: { url: imgSrc(refs[0]) }, frame_type: "first_frame" }];
-  const res = await pfetch(p, baseUrl(p) + "/videos", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
-  if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+  let res = await pfetch(p, baseUrl(p) + "/videos", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+  if (!res.ok) {
+    const txt = await res.text();
+    // Länge passt nicht zum Modell: erlaubte Längen merken und einmal mit der nächstpassenden Länge neu versuchen
+    const mm = /supported durations?:?\s*([\d\s,.s]+)/i.exec(txt);
+    const ds = mm ? [...new Set(mm[1].split(/[^\d.]+/).map(Number).filter(n => n > 0))] : [];
+    if (res.status === 400 && ds.length) {
+      m.durations = ds;
+      const sm = (S.models || []).find(x => x.key === m.key);
+      if (sm) { sm.durations = ds.slice(); try { await saveSettings(true); } catch (e) { console.warn(e); } }
+      dur = clampDur(m, dur); body.duration = dur;
+      if (onStatus) onStatus(`Diese Länge kann ${m.label || m.id} nicht, nehme ${dur} Sek. …`);
+      res = await pfetch(p, baseUrl(p) + "/videos", { method: "POST", signal, headers: oaHeaders(p), body: JSON.stringify(body) });
+      if (!res.ok) throw { status: res.status, body: await res.text(), provider: p };
+    } else throw { status: res.status, body: txt, provider: p };
+  }
   const j = await res.json();
   if (!j.id) throw { msg: "Der Anbieter hat keinen Auftrag für das Video angelegt." };
   const job = { id: j.id, model: m.key, url: j.polling_url || baseUrl(p) + "/videos/" + j.id, started: Date.now(), dur };
